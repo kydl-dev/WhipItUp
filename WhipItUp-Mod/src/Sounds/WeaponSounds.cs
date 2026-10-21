@@ -12,7 +12,7 @@ namespace WhipItUp.Sounds
     /// Jotunn so other players hear it too. Lessons kept from the crop: own sound hash per prefab (AudioMan limits same-hash sounds),
     /// the slap is never refused, starts at once and is not positional; duplicate slaps of one swing are dropped (SlapOncePerSwingPatch).
     /// </summary>
-    internal enum HitSound { Slap, FloggerSlap }
+    internal enum HitSound { Slap, FloggerSlap, WhipSlap }
 
     internal static class WeaponSounds
     {
@@ -21,12 +21,15 @@ namespace WhipItUp.Sounds
         /// The flogger's hit (user 2026-10-21): played exactly as the file is ("don't cut or anything, just sync it"): the sample data is
         /// not changed; playback starts at the impact (SoundStartOffset) so the hit lands on time.
         public const string FloggerSlapAsset = "sfx_flogger_slap";
-        static AudioClip _whooshClip, _slapClip, _floggerClip;
+        /// The whip's hit (user 2026-10-21): handled like the flogger slap (file as it is, playback synced to the impact).
+        public const string WhipSlapAsset = "sfx_whip_slap";
+        static AudioClip _whooshClip, _slapClip, _floggerClip, _whipClip;
         static bool _prepared;
         public static GameObject WhooshPrefab { get; private set; }
         public static GameObject SlapPrefab { get; private set; }
         public static GameObject FloggerSlapPrefab { get; private set; }
-        public static bool IsHitPrefab(GameObject p) { return p != null && (p == SlapPrefab || p == FloggerSlapPrefab); }
+        public static GameObject WhipSlapPrefab { get; private set; }
+        public static bool IsHitPrefab(GameObject p) { return p != null && (p == SlapPrefab || p == FloggerSlapPrefab || p == WhipSlapPrefab); }
 
         /// Expected outcome: both clips found in the bundle (returns that check).
         public static bool Load(AssetBundle bundle)
@@ -35,6 +38,8 @@ namespace WhipItUp.Sounds
             _whooshClip = bundle.LoadAsset<AudioClip>(WhooshAsset);
             _slapClip = bundle.LoadAsset<AudioClip>(SlapAsset);
             _floggerClip = bundle.LoadAsset<AudioClip>(FloggerSlapAsset);
+            _whipClip = bundle.LoadAsset<AudioClip>(WhipSlapAsset);
+            if (_whipClip == null) ModLog.Warn("WeaponSounds: '" + WhipSlapAsset + "' is not in the bundle - the whip uses the paddle slap");
             if (_floggerClip == null) ModLog.Warn("WeaponSounds: '" + FloggerSlapAsset + "' is not in the bundle - the flogger uses the paddle slap");
             if (_whooshClip == null) ModLog.Warn("WeaponSounds: '" + WhooshAsset + "' is not in the bundle - the swing keeps the vanilla sound");
             if (_slapClip == null) ModLog.Warn("WeaponSounds: '" + SlapAsset + "' is not in the bundle - the hit keeps the vanilla sound");
@@ -48,7 +53,8 @@ namespace WhipItUp.Sounds
         public static bool Apply(ItemDrop.ItemData.SharedData shared, string itemName, HitSound hit)
         {
             Prepare(shared);
-            var hitPrefab = hit == HitSound.FloggerSlap && FloggerSlapPrefab != null ? FloggerSlapPrefab : SlapPrefab;
+            var hitPrefab = hit == HitSound.FloggerSlap && FloggerSlapPrefab != null ? FloggerSlapPrefab
+                          : hit == HitSound.WhipSlap && WhipSlapPrefab != null ? WhipSlapPrefab : SlapPrefab;
             if (WhooshPrefab != null)
             {
                 bool startHad = HasSound(shared.m_startEffect), triggerHad = HasSound(shared.m_triggerEffect);
@@ -83,12 +89,18 @@ namespace WhipItUp.Sounds
                 FloggerSlapPrefab = Create("sfx_whipitup_flogger_slap", template, true);
                 if (FloggerSlapPrefab != null) FloggerSlapPrefab.AddComponent<SoundStartOffset>();
             }
+            if (_whipClip != null)
+            {
+                WhipSlapPrefab = Create("sfx_whipitup_whip_slap", template, true);
+                if (WhipSlapPrefab != null) WhipSlapPrefab.AddComponent<SoundStartOffset>();
+            }
             Rebuild();
             // live: volume / gain / trim changes in KydlTools apply to the next sound played (no restart)
-            foreach (var t in new[] { ModSettings.WhooshVolume, ModSettings.SlapVolume, ModSettings.WhooshGain, ModSettings.SlapGain, ModSettings.FloggerSlapVolume })
+            foreach (var t in new[] { ModSettings.WhooshVolume, ModSettings.SlapVolume, ModSettings.WhooshGain, ModSettings.SlapGain, ModSettings.FloggerSlapVolume, ModSettings.WhipSlapVolume })
                 t.SettingChanged += (o, e) => Rebuild();
             ModSettings.SlapTrim.SettingChanged += (o, e) => Rebuild();
             ModSettings.FloggerSlapSync.SettingChanged += (o, e) => Rebuild();
+            ModSettings.WhipSlapSync.SettingChanged += (o, e) => Rebuild();
         }
 
         static AudioClip _whooshMade, _slapMade;     // the processed copies in use (destroyed when replaced)
@@ -120,8 +132,20 @@ namespace WhipItUp.Sounds
                 foreach (var o in FloggerSlapPrefab.GetComponentsInChildren<SoundStartOffset>(true)) o.StartSeconds = start;
                 ModLog.Verbose("WeaponSounds: flogger slap plays from " + start.ToString("0.000") + " s (sync " + ModSettings.FloggerSlapSync.Value + ")");
             }
+            ok &= AsIs(WhipSlapPrefab, _whipClip, ModSettings.WhipSlapVolume.Value, ModSettings.WhipSlapSync.Value, "whip slap");
             ModLog.Verbose("WeaponSounds: clips (re)built - whoosh gain " + ModSettings.WhooshGain.Value + " vol " + ModSettings.WhooshVolume.Value
                 + ", slap trim " + ModSettings.SlapTrim.Value + " gain " + ModSettings.SlapGain.Value + " vol " + ModSettings.SlapVolume.Value + ", ok " + ok);
+            return ok;
+        }
+
+        /// A hit sound played as the file is; sync = playback starts at the impact. Expected outcome: clip + start set (or no prefab).
+        static bool AsIs(GameObject prefab, AudioClip clip, float volume, bool sync, string label)
+        {
+            if (prefab == null) return clip == null;
+            bool ok = SetClip(prefab, clip, volume);
+            float start = sync ? ClipTools.OnsetSeconds(clip, label) : 0f;
+            foreach (var o in prefab.GetComponentsInChildren<SoundStartOffset>(true)) o.StartSeconds = start;
+            ModLog.Verbose("WeaponSounds: " + label + " plays from " + start.ToString("0.000") + " s (sync " + sync + ")");
             return ok;
         }
 

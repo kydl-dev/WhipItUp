@@ -34,6 +34,8 @@ namespace WhipItUp
         public static readonly Tunable<float> SlapGain = new Tunable<float>("Sound", "SlapGain", 1f, "Loudness multiplier on the slap data (1 = the file as it is; more squashes the peaks).");
         public static readonly Tunable<float> FloggerSlapVolume = new Tunable<float>("Sound", "FloggerSlapVolume", 1f, "Flogger hit volume (the file is played as it is).");
         public static readonly Tunable<bool> FloggerSlapSync = new Tunable<bool>("Sound", "FloggerSlapSync", true, "Start the flogger hit sound at its impact (skips the lead-in at playback, the file is not changed).");
+        public static readonly Tunable<float> WhipSlapVolume = new Tunable<float>("Sound", "WhipSlapVolume", 1f, "Whip hit volume (the file is played as it is).");
+        public static readonly Tunable<bool> WhipSlapSync = new Tunable<bool>("Sound", "WhipSlapSync", true, "Start the whip hit sound at its impact (skips the lead-in at playback, the file is not changed).");
         public static readonly Tunable<bool> SlapTrim = new Tunable<bool>("Sound", "SlapTrim", true, "Cut the quiet 50 ms lead-in of the slap so it lands on the hit (also normalises it).");
 
         // Paddle in the hand (degrees around the model's own axes; grip in metres along the handle, + = hand toward the blade; scale 1 = as modelled, 0.56 m)
@@ -67,6 +69,25 @@ namespace WhipItUp
         public static Vector3 FloggerRotation { get { return new Vector3(FloggerRotX.Value, FloggerRotY.Value, FloggerRotZ.Value); } }
         public static event System.Action FloggerAlignmentChanged;
 
+        // Whip in the hand + lash behaviour (WhipMotion). Live unless marked "game restart".
+        public static readonly Tunable<float> WhipRotX = new Tunable<float>("Whip", "RotationX", 270f, "Whip model rotation X (degrees) in the hand.");
+        public static readonly Tunable<float> WhipRotY = new Tunable<float>("Whip", "RotationY", 180f, "Whip model rotation Y (degrees) in the hand.");
+        public static readonly Tunable<float> WhipRotZ = new Tunable<float>("Whip", "RotationZ", 0f, "Whip model rotation Z (degrees) in the hand.");
+        public static readonly Tunable<float> WhipGrip = new Tunable<float>("Whip", "GripOffset", 0.15f, "Metres the hand sits from the middle of the grip (+ = toward the lash).");
+        public static readonly Tunable<float> WhipScale = new Tunable<float>("Whip", "Scale", 1f, "Whip model scale (1 = 1.8 m lash as modelled).");
+        public static Vector3 WhipRotation { get { return new Vector3(WhipRotX.Value, WhipRotY.Value, WhipRotZ.Value); } }
+        public static event System.Action WhipAlignmentChanged;
+        public static readonly Tunable<float> WhipReach = new Tunable<float>("Whip", "Reach", 2.8f, "Attack 1 range in metres (club: 2.4). Game restart.");
+        public static readonly Tunable<float> WhipLashStiffness = new Tunable<float>("Whip", "LashStiffness", 8f, "While attacking: pull toward the straight lash (1/s; higher = snappier).");
+        public static readonly Tunable<float> WhipLashGravity = new Tunable<float>("Whip", "LashGravity", 0.2f, "While attacking: gravity on the lash (x Falls Gravity).");
+        public static readonly Tunable<float> WhipCoilPull = new Tunable<float>("Whip", "CoilPull", 30f, "While idle: pull into the coil (1/s).");
+        public static readonly Tunable<float> WhipCoilReturnSeconds = new Tunable<float>("Whip", "CoilReturnSeconds", 0.6f, "Time after an attack until the lash is fully coiled again.");
+        public static readonly Tunable<float> WhipCoilRadius = new Tunable<float>("Whip", "CoilRadius", 0.12f, "Coil loop radius (m).");
+        public static readonly Tunable<float> WhipCoilDrop = new Tunable<float>("Whip", "CoilDrop", -0.12f, "Coil centre height relative to the collar along the handle (m; negative = toward the pommel).");
+        public static readonly Tunable<float> WhipCollarY = new Tunable<float>("Whip", "CollarY", 0.15f, "Where the lash starts on the model (m, model space). Matches whip_layout.py THONG_START.");
+        public static readonly Tunable<float> WhipLashLength = new Tunable<float>("Whip", "LashLength", 1.8f, "Lash length as modelled (m). Matches whip_layout.py TOTAL_LASH.");
+        public static readonly Tunable<int> WhipBones = new Tunable<int>("Whip", "Bones", 16, "Lash bones as modelled. Matches whip_layout.py BONES.");
+
         // Fall physics (FallChains: springs + gravity on the fall bones). Live.
         public static readonly Tunable<float> FallGravity = new Tunable<float>("Falls", "Gravity", 9.8f, "Downward pull on the falls (m/s2; the world's is 9.81).");
         public static readonly Tunable<float> FallStiffness = new Tunable<float>("Falls", "Stiffness", 0.03f, "Pull back toward the straight rest shape per second (0 = fully limp; above ~1 the falls stop hanging).");
@@ -77,6 +98,8 @@ namespace WhipItUp
         {
             foreach (var t in new[] { PaddleRotX, PaddleRotY, PaddleRotZ, PaddleGrip, PaddleScale })
                 t.SettingChanged += (s, e) => { ModLog.Verbose("Config: paddle alignment " + ((Tunable<float>)s)); PaddleAlignmentChanged?.Invoke(); };
+            foreach (var t in new[] { WhipRotX, WhipRotY, WhipRotZ, WhipGrip, WhipScale })
+                t.SettingChanged += (s, e) => { ModLog.Verbose("Config: whip alignment " + ((Tunable<float>)s)); WhipAlignmentChanged?.Invoke(); };
             foreach (var t in new[] { FloggerRotX, FloggerRotY, FloggerRotZ, FloggerGrip, FloggerScale })
                 t.SettingChanged += (s, e) => { ModLog.Verbose("Config: flogger alignment " + ((Tunable<float>)s)); FloggerAlignmentChanged?.Invoke(); };
         }

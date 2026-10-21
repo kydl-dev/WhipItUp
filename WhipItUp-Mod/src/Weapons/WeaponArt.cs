@@ -24,6 +24,9 @@ namespace WhipItUp.Weapons
         readonly List<Transform> _visuals = new List<Transform>();
         public const string VisualName = "WhipItUpVisual";
 
+        /// Extra components for each skinned visual (the whip adds WhipMotion). Set by the family before Apply.
+        public Action<GameObject> DecorateVisual;
+
         public WeaponArt(string family) { Family = family; }
 
         /// Loads everything; logs what is missing. Expected outcome: a mesh and all 7 albedos (returns that check).
@@ -112,6 +115,7 @@ namespace WhipItUp.Weapons
                 }
                 var anim = visual.GetComponent<Animator>();
                 if (anim != null) UnityEngine.Object.DestroyImmediate(anim);   // no animation: FallChains moves the bones
+                if (DecorateVisual != null) DecorateVisual(visual);   // before FallChains so it finds its driver
                 visual.AddComponent<FallChains>();
                 if (old != null) UnityEngine.Object.DestroyImmediate(old);
                 UnityEngine.Object.DestroyImmediate(f);

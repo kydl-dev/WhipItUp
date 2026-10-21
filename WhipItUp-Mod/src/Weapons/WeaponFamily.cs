@@ -36,13 +36,20 @@ namespace WhipItUp.Weapons
         protected abstract float MainDamage(int rank);
         /// Hook for skill etc. Default: keep the vanilla base's skill.
         protected virtual void ApplyExtras(ItemDrop.ItemData.SharedData shared, int rank, string name) { }
+        /// Extra components on each skinned visual (default none).
+        protected virtual void DecorateVisual(GameObject visual) { }
+        /// Attack 2. Default: the mace secondary (+ wrist roll). Expected outcome: the item has the attack 2 the family wants.
+        protected virtual bool ConfigureSecondary(ItemDrop.ItemData.SharedData shared, int rank, float main, string name)
+        {
+            return !HasMaceSecondary || SetSecondaryAttack(shared, rank, main, name);
+        }
         /// Called with the rank-1 icon once it rendered.
         protected virtual void OnFirstIcon(Sprite icon) { }
 
         /// Called from Plugin.Awake once the bundle is loaded. Expected outcome: the art is loaded and the item hook is set.
         public bool Register(AssetBundle bundle, Action<Action> subscribeAlignmentChanged)
         {
-            Art = new WeaponArt(Family);
+            Art = new WeaponArt(Family) { DecorateVisual = DecorateVisual };
             bool loaded = Art.Load(bundle);
             if (Art.Mesh == null) { ModLog.Error(Family + "Items: no " + Family + " mesh - the " + Family + " items are NOT added"); return Art.Mesh != null; }
             PrefabManager.OnVanillaPrefabsAvailable += AddAll;
@@ -107,7 +114,7 @@ namespace WhipItUp.Weapons
             shared.m_blockPower = Ladder.BlockArmor[i];
             shared.m_timedBlockBonus = Ladder.ParryBonus;
             shared.m_deflectionForce = Ladder.BlockForce[i];
-            if (HasMaceSecondary) SetSecondaryAttack(shared, rank, main, name);
+            ConfigureSecondary(shared, rank, main, name);
             ModLog.Verbose(Family + "Items: " + name + " main damage " + main.ToString("0.#") + ", stagger " + Ladder.Stagger[i] + ", durability " + shared.m_maxDurability
                 + ", attack 2 " + (shared.m_secondaryAttack != null && !string.IsNullOrEmpty(shared.m_secondaryAttack.m_attackAnimation) ? shared.m_secondaryAttack.m_attackAnimation : "none"));
             return damaged && shared.m_maxQuality == Ladder.MaxQuality;
@@ -115,7 +122,7 @@ namespace WhipItUp.Weapons
 
         /// Attack 2 (D-026): a copy of MaceEldner's secondary attack, mace multipliers on top of the rank; stamina = rank stamina x factor.
         /// Expected outcome: the item has a secondary attack with that animation.
-        bool SetSecondaryAttack(ItemDrop.ItemData.SharedData shared, int rank, float main, string name)
+        protected bool SetSecondaryAttack(ItemDrop.ItemData.SharedData shared, int rank, float main, string name)
         {
             var mace = PrefabManager.Instance.GetPrefab(SecondarySource);
             var maceDrop = mace != null ? mace.GetComponent<ItemDrop>() : null;

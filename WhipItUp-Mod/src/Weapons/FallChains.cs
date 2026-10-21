@@ -11,8 +11,24 @@ namespace WhipItUp.Weapons
     /// bone lengths, and each bone is turned to point at its simulated child. Purely visual and local (each client simulates its own copy,
     /// nothing is sent over the network). Tunables: ModSettings "Falls" (live).
     /// </summary>
+    /// Optional per-frame controller on the same GameObject (the whip's WhipMotion): sets the targets / strength before each step.
+    internal interface IFallDriver
+    {
+        /// Called at the start of every FallChains step. Set chains.Override / Pull / GravityScale / Grounded for this frame.
+        void Drive(FallChains chains, float dt);
+    }
+
     internal sealed class FallChains : MonoBehaviour
     {
+        /// When set: world-space target for (chain, node) instead of the rest pose (node 0 is always the handle end).
+        public System.Func<int, int, Vector3> Override;
+        /// When >= 0: pull toward the targets per second for this frame instead of the Falls Stiffness.
+        public float Pull = -1f;
+        public float GravityScale = 1f;
+        /// Keep nodes above the ground under the handle (dropped items: no falls through the floor).
+        public bool Grounded;
+        IFallDriver _driver;
+        static readonly int GroundMask = LayerMask.GetMask("Default", "static_solid", "terrain", "piece", "Default_small");
         sealed class Chain
         {
             public Transform[] Bones;
@@ -51,28 +67,39 @@ namespace WhipItUp.Weapons
                 c.Prev = new Vector3[bones.Length + 1];
                 _chains.Add(c);
             }
-            ModLog.Verbose("FallChains: " + _chains.Count + " chain(s) on " + name + (_chains.Count == 0 ? " - no fall_KK_B bones found" : ", " + _chains[0].Bones.Length + " bone(s) each"));
+            _driver = GetComponent<IFallDriver>();
+            ModLog.Verbose("FallChains: " + _chains.Count + " chain(s) on " + name + (_driver != null ? " (driver " + _driver.GetType().Name + ")" : "") + (_chains.Count == 0 ? " - no fall_KK_B bones found" : ", " + _chains[0].Bones.Length + " bone(s) each"));
         }
 
-        void OnEnable() { _primed = false; }
+        bool _held;
+
+        void OnEnable() { _primed = false; _held = GetComponentInParent<Character>() != null; if (_driver == null) _driver = GetComponent<IFallDriver>(); }
 
         void LateUpdate()
         {
             if (_chains.Count == 0) return;
             float dt = Mathf.Clamp(Time.deltaTime, 0.0001f, 1f / 30f);
-            var g = Vector3.down * ModSettings.FallGravity.Value * dt * dt;
-            // shape keeping: a weak pull toward the rest shape per second (linear; at the user's 0.03 gravity wins and the falls hang limp)
-            float pull = Mathf.Clamp01(ModSettings.FallStiffness.Value * dt);
+            Override = null; Pull = -1f; GravityScale = 1f; Grounded = !_held;
+            if (_driver != null) _driver.Drive(this, dt);
+            var g = Vector3.down * ModSettings.FallGravity.Value * GravityScale * dt * dt;
+            // shape keeping: a weak pull toward the rest shape per second (linear; at the user's 0.03 gravity wins and the falls hang limp);
+            // a driver may replace it (the whip's coil / lash / grab)
+            float pull = Mathf.Clamp01((Pull >= 0f ? Pull : ModSettings.FallStiffness.Value) * dt);
+            float ground = float.NegativeInfinity;
+            RaycastHit hit;
+            if (Grounded && Physics.Raycast(transform.position + Vector3.up * 0.5f, Vector3.down, out hit, 3f, GroundMask)) ground = hit.point.y + 0.01f;
             float keep = Mathf.Clamp01(1f - ModSettings.FallDamping.Value);
             float inertia = Mathf.Clamp01(ModSettings.FallInertia.Value);
-            foreach (var c in _chains)
+            for (int ci = 0; ci < _chains.Count; ci++)
             {
+                var c = _chains[ci];
                 // rest pose -> spring targets
                 for (int i = 0; i < c.Bones.Length; i++) c.Bones[i].localRotation = c.RestLocal[i];
                 int n = c.Bones.Length;
                 var target = new Vector3[n + 1];
                 for (int i = 0; i < n; i++) target[i] = c.Bones[i].position;
                 target[n] = c.Bones[n - 1].TransformPoint(c.TailLocal);
+                if (Override != null) for (int i = 1; i <= n; i++) target[i] = Override(ci, i);
                 if (!_primed || (target[0] - c.Pos[0]).sqrMagnitude > TeleportDistance * TeleportDistance)
                 {
                     for (int i = 0; i <= n; i++) { c.Pos[i] = target[i]; c.Prev[i] = target[i]; }
@@ -93,6 +120,7 @@ namespace WhipItUp.Weapons
                     var d = p - c.Pos[i - 1];
                     float len = d.magnitude;
                     c.Pos[i] = len > 1e-6f ? c.Pos[i - 1] + d * (c.Length[i - 1] / len) : target[i];
+                    if (c.Pos[i].y < ground) c.Pos[i].y = ground;
                 }
                 // bones point at their simulated child
                 for (int i = 0; i < n; i++)

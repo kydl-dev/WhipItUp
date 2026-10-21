@@ -85,8 +85,9 @@ namespace WhipItUp.EditorTools
         {
             var settings = ai.defaultSampleSettings;
             settings.loadType = AudioClipLoadType.DecompressOnLoad;
-            // the flogger slap is used exactly as the user's file (user: "don't cut or anything"): PCM, no re-compression
-            bool asIs = Path.GetFileNameWithoutExtension(path) == "sfx_flogger_slap";
+            // the flogger and whip slaps are used exactly as the user's files (user: "don't cut or anything"): PCM, no re-compression
+            var stem = Path.GetFileNameWithoutExtension(path);
+            bool asIs = stem == "sfx_flogger_slap" || stem == "sfx_whip_slap";
             settings.compressionFormat = asIs ? AudioCompressionFormat.PCM : AudioCompressionFormat.Vorbis;
             settings.quality = asIs ? 1f : 0.7f;
             settings.preloadAudioData = true;
