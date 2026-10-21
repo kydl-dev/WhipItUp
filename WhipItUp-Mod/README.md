@@ -1,6 +1,6 @@
 # WhipItUp
 
-TBD - ask the user and update this line.
+Adds three craftable weapon families: Paddle, Flogger and Whip, seven colour ranks each, with a new Whips skill.
 
 ## Features
 - (fill in)

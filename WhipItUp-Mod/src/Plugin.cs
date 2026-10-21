@@ -10,7 +10,7 @@ using WhipItUp.Ui;
 namespace WhipItUp
 {
     /// <summary>
-    /// WhipItUp: TBD - ask the user and update this line.
+    /// WhipItUp: Adds three craftable weapon families: Paddle, Flogger and Whip, seven colour ranks each, with a new Whips skill.
     /// Entry point. Order in Awake matters: log first, then the config (player settings), then text, then everything that uses them.
     /// </summary>
     [BepInPlugin(ModGuid, ModName, ModVersion)]
