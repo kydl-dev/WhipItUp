@@ -27,6 +27,12 @@ namespace WhipItUp
         public static readonly Tunable<float> ExampleSpeed = new Tunable<float>("Example", "ExampleSpeed", 1f,
             "Example dev-only value: replace or remove. Read it with ModSettings.ExampleSpeed.Value.");
 
+        // Weapon sounds (whoosh = swing, slap = hit). Read once when the items are made (game start).
+        public static readonly Tunable<float> WhooshVolume = new Tunable<float>("Sound", "WhooshVolume", 1f, "Swing (whoosh) volume 0..1. Game restart.");
+        public static readonly Tunable<float> SlapVolume = new Tunable<float>("Sound", "SlapVolume", 1f, "Hit (slap) volume 0..1. Game restart.");
+        public static readonly Tunable<float> SoundGain = new Tunable<float>("Sound", "Gain", 1.5f, "Loudness multiplier on the sound data (soft-limited). Game restart.");
+        public static readonly Tunable<bool> SlapTrim = new Tunable<bool>("Sound", "SlapTrim", true, "Cut the quiet lead-in of the slap and normalise it. Game restart.");
+
         // Paddle in the hand (degrees around the model's own axes; grip in metres along the handle, + = hand toward the blade; scale 1 = as modelled, 0.56 m)
         public static readonly Tunable<float> PaddleRotX = new Tunable<float>("Paddle", "RotationX", 270f, "Paddle model rotation X (degrees) in the hand.");
         public static readonly Tunable<float> PaddleRotY = new Tunable<float>("Paddle", "RotationY", 180f, "Paddle model rotation Y (degrees) in the hand.");

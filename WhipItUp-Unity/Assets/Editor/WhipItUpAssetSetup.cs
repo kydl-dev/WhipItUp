@@ -4,6 +4,7 @@
 //      - *_Normal.png     : Normal map (tangent space, +Y up as written by the Blender texture scripts)
 //      - *_MetalGloss.png : linear (sRGB off), alpha = smoothness
 //      - *.fbx            : scale 1 (metres), no materials, no animation, read/write off, tangents calculated if missing
+//      - *.ogg / *.mp3 / *.wav : Decompress On Load + preload (the mod reads the samples to trim / boost them), mono off
 //    and assigns all of them to the AssetBundle "whipitup" (the mod's only bundle, PROJECT_RULES rule 13).
 //  * Logs one line per asset and a summary with the imported mesh bounds (check: Paddle is about 0.56 m long).
 using System.IO;
@@ -29,12 +30,13 @@ namespace WhipItUp.EditorTools
 
             var guids = AssetDatabase.FindAssets("", new[] { Root });
             var paths = guids.Select(AssetDatabase.GUIDToAssetPath).Where(p => !AssetDatabase.IsValidFolder(p)).Distinct().ToArray();
-            int textures = 0, models = 0, skipped = 0;
+            int textures = 0, models = 0, sounds = 0, skipped = 0;
             foreach (var path in paths)
             {
                 var importer = AssetImporter.GetAtPath(path);
                 if (importer is TextureImporter ti) { SetUpTexture(path, ti); textures++; }
                 else if (importer is ModelImporter mi) { SetUpModel(path, mi); models++; }
+                else if (importer is AudioImporter ai) { SetUpAudio(path, ai); sounds++; }
                 else { skipped++; Debug.Log("[WhipItUpAssetSetup] skipped (not a texture/model): " + path); continue; }
                 importer.assetBundleName = BundleName;
                 importer.SaveAndReimport();
@@ -50,7 +52,7 @@ namespace WhipItUp.EditorTools
             }
 
             AssetDatabase.SaveAssets();
-            Debug.Log("[WhipItUpAssetSetup] done: " + textures + " texture(s), " + models + " model(s) set up and assigned to bundle '" + BundleName + "', " + skipped + " other file(s) skipped");
+            Debug.Log("[WhipItUpAssetSetup] done: " + textures + " texture(s), " + models + " model(s), " + sounds + " sound(s) set up and assigned to bundle '" + BundleName + "', " + skipped + " other file(s) skipped");
         }
 
         private static void SetUpTexture(string path, TextureImporter ti)
@@ -72,6 +74,19 @@ namespace WhipItUp.EditorTools
             ti.textureCompression = TextureImporterCompression.Compressed;
             ti.isReadable = false;
             Debug.Log("[WhipItUpAssetSetup] texture " + path + ": type " + ti.textureType + ", sRGB " + ti.sRGBTexture);
+        }
+
+        private static void SetUpAudio(string path, AudioImporter ai)
+        {
+            var settings = ai.defaultSampleSettings;
+            settings.loadType = AudioClipLoadType.DecompressOnLoad;
+            settings.compressionFormat = AudioCompressionFormat.Vorbis;
+            settings.quality = 0.7f;
+            settings.preloadAudioData = true;
+            ai.defaultSampleSettings = settings;
+            ai.forceToMono = false;
+            ai.loadInBackground = false;
+            Debug.Log("[WhipItUpAssetSetup] sound " + path + ": Decompress On Load, Vorbis 70%, preload");
         }
 
         private static void SetUpModel(string path, ModelImporter mi)

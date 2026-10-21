@@ -46,6 +46,7 @@ namespace WhipItUp
             Loc.Register(UiText.En, UiText.De);
 
             Bundle = LoadBundle();
+            Sounds.WeaponSounds.Load(Bundle);
             Weapons.PaddleItems.Register(Bundle);
             UiInputLock.Install(ModGuid);           // the character does not move while one of the mod's menus is open
             new Harmony(ModGuid).PatchAll(Assembly.GetExecutingAssembly());

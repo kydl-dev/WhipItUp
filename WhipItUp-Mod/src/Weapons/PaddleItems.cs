@@ -10,7 +10,7 @@ using UnityEngine;
 namespace WhipItUp.Weapons
 {
     /// <summary>
-    /// The Paddle family (T-004): Paddle_V1..V7, clones of the vanilla Club (Clubs skill, club animations, club sounds for now).
+    /// The Paddle family (T-004): Paddle_V1..V7, clones of the vanilla Club (Clubs skill, club animations, whoosh + slap sounds: Sounds/WeaponSounds).
     /// Stats: the crop ladder (Ladder) except no bleed; blunt = crop blunt + one crop bleed tick; crop's absolute stagger (user 2026-10-21).
     /// The Club's secondary attack is kept (attack 2; the back-handed wrist roll is T-005).
     /// Names are placeholders until T-012 (the user approves the real names).
@@ -68,6 +68,7 @@ namespace WhipItUp.Weapons
             _art.Apply(item.ItemPrefab, rank, () => ModSettings.PaddleRotation, () => ModSettings.PaddleGrip.Value, () => ModSettings.PaddleScale.Value);
             var shared = item.ItemDrop.m_itemData.m_shared;
             ApplyStats(shared, rank, name);
+            Sounds.WeaponSounds.Apply(shared, name);
             ItemManager.Instance.AddItem(item);
             Items.Add(item);
             RenderIcon(item, shared, name);
