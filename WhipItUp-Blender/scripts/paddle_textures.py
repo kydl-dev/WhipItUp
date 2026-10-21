@@ -38,6 +38,8 @@ PALETTE = {
 }
 WOOD = (112, 74, 42)
 WOOD_DARK = (70, 44, 24)
+# Per-rank medallion strand colour override (user: V6 gets a muddy, Asksvin-like yellow instead of black on green)
+INLAY_OVERRIDE = {6: (170, 150, 70)}
 TOOL_BG = 0.45      # recessed background inside the medallion = main x this
 TOOL_GROOVE = 0.30  # cut lines = main x this
 BURNISH = 0.60      # edge burnish = main x this
@@ -335,7 +337,7 @@ def build(out_dir):
         img = np.where((label == 2)[..., None], wood, img)
         img = np.where((label == 3)[..., None], acc_c * s, img)
         img = np.where((label == 4)[..., None], fit_c * s, img)
-        inlay_c = contrast_colour(main, fit, acc)
+        inlay_c = INLAY_OVERRIDE.get(rank) or contrast_colour(main, fit, acc)
         img = np.where((label == 9)[..., None], np.array(inlay_c, np.float32) * s, img)
         # background: darker leather behind light strands; plain leather behind dark strands (keeps the contrast)
         bg_f = TOOL_BG if luminance(inlay_c) > luminance(main) else 1.0
