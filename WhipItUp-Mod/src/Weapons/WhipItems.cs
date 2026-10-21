@@ -1,3 +1,5 @@
+using HarmonyLib;
+using Jotunn.Managers;
 using Kydl.Common;
 using UnityEngine;
 
@@ -5,12 +7,13 @@ namespace WhipItUp.Weapons
 {
     /// <summary>
     /// The Whip family (T-010, T-011, D-034): Whip_V1..V7, clones of the Club (club combo), Whips skill, slash + bleed like the flogger,
-    /// longer reach. Lash coiled in the hand while idle / snapping out while attacking (WhipMotion). No attack 2 (user, D-035).
+    /// longer reach. Lash coiled in the hand while idle / snapping out while attacking (WhipMotion). Attack 2 = lash around the neck of a near enemy + pull (D-036).
     /// Hit sound = the user's whip_slap (as is, synced). Whip_V1's icon becomes the Whips skill icon (D-028).
     /// </summary>
     internal sealed class WhipItems : WeaponFamily
     {
         public const string FamilyName = "Whip";
+        const string GrabSource = "SpearBronze";      // its secondary 'spear_throw' clip is the throw of attack 2
 
         public override string Family { get { return FamilyName; } }
         protected override string Description { get { return "A wolf-crested bullwhip with a long braided lash. Placeholder text until the names are chosen."; } }
@@ -38,12 +41,56 @@ namespace WhipItUp.Weapons
 
         protected override void ApplyExtras(ItemDrop.ItemData.SharedData shared, int rank, string name) { shared.m_skillType = WhipSkill.ForItems; }
 
-        /// No attack 2 (user 2026-10-21: "remove 2nd attack, the whip seems too short for that"). Expected outcome: no secondary.
+        /// Attack 2 (user 2026-10-21, back with whip scale 1.5): SpearBronze's secondary (spear_throw clip) turned into a long narrow melee hit;
+        /// an enemy it hits gets the lash around its neck and is pulled toward the player (GrabPullPatch).
         protected override bool ConfigureSecondary(ItemDrop.ItemData.SharedData shared, int rank, float main, string name)
         {
-            shared.m_secondaryAttack = new Attack();             // an Attack without an animation = no secondary attack
-            ModLog.Verbose("WhipItems: " + name + " has no attack 2");
-            return string.IsNullOrEmpty(shared.m_secondaryAttack.m_attackAnimation);
+            var spear = PrefabManager.Instance.GetPrefab(GrabSource);
+            var drop = spear != null ? spear.GetComponent<ItemDrop>() : null;
+            var src = drop != null ? drop.m_itemData.m_shared.m_secondaryAttack : null;
+            if (src == null || string.IsNullOrEmpty(src.m_attackAnimation)) { ModLog.Error("WhipItems: '" + GrabSource + "' secondary not found - " + name + " has no attack 2"); return src != null; }
+            var a = src.Clone();
+            a.m_attackType = Attack.AttackType.Horizontal;     // melee hit check instead of throwing the item
+            a.m_attackProjectile = null;
+            a.m_attackRange = ModSettings.WhipGrabRange.Value;
+            a.m_attackAngle = ModSettings.WhipGrabAngle.Value;
+            a.m_attackStamina = Ladder.Stamina[Ladder.Index(rank)] * ModSettings.BackhandStaminaFactor.Value;
+            a.m_damageMultiplier = 0.5f;                         // the pull is the point, not the damage
+            a.m_staggerMultiplier = Ladder.StaggerMultiplier(rank, main);
+            a.m_consumeItem = false;
+            shared.m_secondaryAttack = a;
+            ModLog.Verbose("WhipItems: " + name + " attack 2 = " + GrabSource + " '" + a.m_attackAnimation + "' as melee grab, range " + a.m_attackRange + ", angle " + a.m_attackAngle
+                + ", stamina " + a.m_attackStamina.ToString("0.#"));
+            return shared.m_secondaryAttack.m_attackType == Attack.AttackType.Horizontal;
+        }
+    }
+
+    /// <summary>
+    /// Attack 2 of a whip: before the hit is sent to the target's owner, turn its push into a pull toward the attacker and start the
+    /// neck wrap on the attacker's whip visual. Runs where the attack happens (the attacker's client); the pull travels with the hit.
+    /// </summary>
+    [HarmonyPatch(typeof(Character), nameof(Character.Damage))]
+    internal static class GrabPullPatch
+    {
+        static readonly AccessTools.FieldRef<Humanoid, bool> SecondaryRef = AccessTools.FieldRefAccess<Humanoid, bool>("m_currentAttackIsSecondary");
+
+        [HarmonyPrefix]
+        static void Prefix(Character __instance, HitData hit)
+        {
+            if (hit == null || __instance == null) return;
+            var attacker = hit.GetAttacker() as Humanoid;
+            if (attacker == null || attacker == __instance || !SecondaryRef(attacker)) return;
+            var weapon = attacker.GetCurrentWeapon();
+            var prefab = weapon != null ? weapon.m_dropPrefab : null;
+            if (prefab == null || !prefab.name.StartsWith(WhipItems.FamilyName + "_V")) return;
+            var dir = attacker.transform.position - __instance.transform.position;
+            dir.y = 0f;
+            float dist = dir.magnitude;
+            hit.m_dir = (dir.normalized + Vector3.up * 0.15f).normalized;
+            hit.m_pushForce = ModSettings.WhipPullForce.Value;
+            int wraps = 0;
+            foreach (var m in attacker.GetComponentsInChildren<WhipMotion>()) { m.StartGrab(__instance); wraps++; }
+            ModLog.Verbose("Whip: attack 2 grabbed " + __instance.name + " at " + dist.ToString("0.0") + " m, pull " + hit.m_pushForce + " toward " + attacker.name + " (" + wraps + " lash visual(s))");
         }
     }
 }
