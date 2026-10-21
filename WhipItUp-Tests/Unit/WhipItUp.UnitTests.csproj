@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Unit tests: pure logic, no game running. Logic worth testing lives in classes without Unity / Valheim types; link those files here
+       (<Compile Include="..\..\WhipItUp-Mod\src\...\X.cs" Link="Mod\X.cs" />) or reach them in the built DLL through ModAssembly. -->
+  <PropertyGroup>
+    <AssemblyName>WhipItUp.UnitTests</AssemblyName>
+    <RootNamespace>WhipItUp.Tests.Unit</RootNamespace>
+  </PropertyGroup>
+</Project>
