@@ -25,6 +25,9 @@ namespace WhipItUp.Weapons
         /// When >= 0: pull toward the targets per second for this frame instead of the Falls Stiffness.
         public float Pull = -1f;
         public float GravityScale = 1f;
+        /// 0..1 for this frame: how much the nodes are placed exactly on the Override targets after the simulation step (1 = fully
+        /// kinematic: no velocity, no wobble - the whip's settled coil). Targets must keep the bone lengths (the driver's job).
+        public float Snap;
         /// Keep nodes above the ground under the handle (dropped items: no falls through the floor).
         public bool Grounded;
         IFallDriver _driver;
@@ -88,7 +91,7 @@ namespace WhipItUp.Weapons
         {
             if (_chains.Count == 0) return;
             float dt = Mathf.Clamp(Time.deltaTime, 0.0001f, 1f / 30f);
-            Override = null; Pull = -1f; GravityScale = 1f; if (!_held) _held = GetComponentInParent<Character>() != null;   // parented to the hand after OnEnable
+            Override = null; Pull = -1f; GravityScale = 1f; Snap = 0f; if (!_held) _held = GetComponentInParent<Character>() != null;   // parented to the hand after OnEnable
             Grounded = !_held;
             if (_driver != null) _driver.Drive(this, dt);
             var g = Vector3.down * ModSettings.FallGravity.Value * GravityScale * dt * dt;
@@ -132,6 +135,12 @@ namespace WhipItUp.Weapons
                     c.Pos[i] = len > 1e-6f ? c.Pos[i - 1] + d * (c.Length[i - 1] / len) : target[i];
                     if (c.Pos[i].y < ground) c.Pos[i].y = ground;
                 }
+                if (Override != null && Snap > 0f)
+                    for (int i = 1; i <= n; i++)
+                    {
+                        c.Pos[i] = Vector3.Lerp(c.Pos[i], target[i], Snap);
+                        if (Snap >= 0.999f) c.Prev[i] = c.Pos[i];     // settled: no velocity left to carry over
+                    }
                 // bones point at their simulated child
                 for (int i = 0; i < n; i++)
                 {

@@ -32,6 +32,13 @@ namespace WhipItUp.Weapons
 
         public WeaponArt(string family) { Family = family; }
 
+        static long BoneKey(string n)
+        {
+            var p = n.Split('_');
+            int c, b;
+            return p.Length == 3 && int.TryParse(p[1], out c) && int.TryParse(p[2], out b) ? c * 1000L + b : long.MaxValue;
+        }
+
         /// A static copy of the skinned mesh in the PoseForIcon pose (BakeMesh). Null on failure (the icon then uses the rest pose).
         Mesh BakePosed(string name)
         {
@@ -45,7 +52,7 @@ namespace WhipItUp.Weapons
                 if (smr == null) return null;
                 var bones = new List<Transform>();
                 foreach (var t in inst.GetComponentsInChildren<Transform>(true)) if (t.name.StartsWith("fall_")) bones.Add(t);
-                bones.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+                bones.Sort((a, b) => BoneKey(a.name).CompareTo(BoneKey(b.name)));   // chain, then bone number (fall_00_10 after fall_00_9)
                 PoseForIcon(inst.transform, bones.ToArray());
                 var baked = new Mesh { name = name + "_IconMesh" };
                 smr.BakeMesh(baked);

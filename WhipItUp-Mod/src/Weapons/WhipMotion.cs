@@ -73,6 +73,7 @@ namespace WhipItUp.Weapons
             chains.Override = (c, i) => _coil[Mathf.Clamp(i, 0, _coil.Length - 1)];
             chains.Pull = Mathf.Lerp(ModSettings.WhipLashStiffness.Value, ModSettings.WhipCoilPull.Value, back);
             chains.GravityScale = 1f - back;
+            chains.Snap = back * back;                 // ends fully kinematic: the settled coil does not wobble or spin
             SetMode(back < 1f ? "coiling" : "coiled");
         }
 
@@ -100,14 +101,20 @@ namespace WhipItUp.Weapons
             float r0 = d0.magnitude;
             float a0 = Mathf.Atan2(Vector3.Dot(d0, down), Vector3.Dot(d0, axis));
             _coil[0] = start;
-            float s = 0f;
+            // points on the circle spaced by the CHORD of each bone (2 R sin(da/2) = bone length), so the targets keep the bone
+            // lengths exactly; the first point sits on a circle of radius r0 through the lash start and the radius eases to r
+            float a = a0, turned = 0f;
             for (int i = 1; i < n; i++)
             {
-                s += chains.SegmentLength(0, i);
-                float rr = Mathf.Lerp(r0, r, Mathf.Clamp01(s / (r * 1.5f)));
-                float a = a0 + s / r;
-                float loop = s / (2f * Mathf.PI * r);
-                _coil[i] = centre + (axis * Mathf.Cos(a) + down * Mathf.Sin(a)) * rr + normal * (0.012f * scale * loop);
+                float len = chains.SegmentLength(0, i);
+                float rr = Mathf.Lerp(r0, r, Mathf.Clamp01(i / 3f));
+                float da = 2f * Mathf.Asin(Mathf.Clamp(len / (2f * rr), -1f, 1f));
+                a += da;
+                turned += da;
+                var p = centre + (axis * Mathf.Cos(a) + down * Mathf.Sin(a)) * rr + normal * (0.012f * scale * turned / (2f * Mathf.PI));
+                // exact length from the previous point (the side shift and the radius change would stretch it a little)
+                var d = p - _coil[i - 1];
+                _coil[i] = d.sqrMagnitude > 1e-10f ? _coil[i - 1] + d.normalized * len : p;
             }
             return _coil.Length == n;
         }

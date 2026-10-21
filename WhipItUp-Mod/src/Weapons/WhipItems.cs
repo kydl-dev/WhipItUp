@@ -31,7 +31,7 @@ namespace WhipItUp.Weapons
             int n = bones.Length;
             for (int i = 0; i < n; i++)
             {
-                float angle = 52f * (1f - 0.35f * i / Mathf.Max(1, n - 1));    // tighter first, wider later: loops beside each other
+                float angle = 52f * 16f / Mathf.Max(1, n) * (1f - 0.35f * i / Mathf.Max(1, n - 1));   // ~2 loops whatever the bone count; tighter first
                 bones[i].rotation = Quaternion.AngleAxis(angle, root.forward) * bones[i].rotation;
             }
         }
