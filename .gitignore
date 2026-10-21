@@ -66,3 +66,6 @@ __pycache__/
 Thumbs.db
 .DS_Store
 Desktop.ini
+
+# --- Blender preview renders (regenerate with scripts/preview_render.py) ---
+/WhipItUp-Blender/renders/
