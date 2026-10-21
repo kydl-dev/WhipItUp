@@ -5,7 +5,7 @@ Axes (Blender): X = blade width, Y = thickness, Z = length (up). Origin (0,0,0) 
 UV rects are (u0, v0, u1, v1) in 0..1, v up (Blender convention; the texture script flips rows for the PNG).
 """
 
-# ---- geometry (metres). Total length = RAVEN_BOTTOM .. BLADE_TOP = 0.55 m (D-015) ----
+# ---- geometry (metres). Total length = POMMEL_BOTTOM .. BLADE_TOP = 0.56 m (D-015: ~0.55 m) ----
 BLADE_BOTTOM = 0.135
 BLADE_TOP = 0.420
 BLADE_THICK = 0.012
@@ -38,15 +38,10 @@ STUD_INSET = 0.0085          # stud centre distance from the blade edge
 STUD_SPACING = 0.019
 STUD_FROM_T = 0.14           # first stud at this fraction of the blade length (above the neck)
 
-RAVEN_CENTER = (0.0, 0.0, -0.106)
-RAVEN_HEAD = (0.0210, 0.0170, 0.0225)     # ellipsoid radii x, y, z
-RAVEN_BEAK_DIR = (0.62, 0.0, -0.78)
-RAVEN_BEAK_LEN = 0.040
-RAVEN_BEAK_RADIUS = 0.0095
-RAVEN_HOOK = (0.012, 0.0045)      # length, base radius of the downward beak hook
-RAVEN_EYE = (0.0105, 0.0138, -0.099, 0.0030)  # x, |y|, z, radius
-RAVEN_BOTTOM = -0.130        # lowest point of the pommel (beak tip / thong excluded)
-THONG = (-0.008, -0.126, 0.016, 0.0026)   # centre x, centre z, major radius, minor radius (ring in the XZ plane)
+POMMEL_DISC = (-0.1135, 0.0265, 0.0120)  # centre z, radius, thickness (disc in the XZ plane, faces +-Y like the blade)
+POMMEL_BEVEL = 0.0016
+POMMEL_FACE_RADIUS = 0.0215              # radius of the wolf inlay on each face (inside the raised metal rim)
+POMMEL_BOTTOM = POMMEL_DISC[0] - POMMEL_DISC[1]
 
 # ---- tooling on the blade (both faces, back face mirrored so it reads correctly) ----
 MEDALLION_Z = 0.300
@@ -56,15 +51,14 @@ VALKNUT_SIZE = 0.030         # height of the valknut
 
 # ---- UV atlas (one 1024x1024 texture per rank) ----
 BLADE_X_RANGE = (-0.090, 0.090)           # x mapped onto the blade rects
-UV_BLADE_FRONT = (0.00, 0.15, 0.50, 1.00)
-UV_BLADE_BACK = (0.50, 0.15, 1.00, 1.00)
-UV_BLADE_RIM = (0.00, 0.00, 0.25, 0.04)
-UV_WOOD = (0.00, 0.04, 0.25, 0.15)
-UV_WRAP = (0.25, 0.00, 0.50, 0.15)
-UV_GUARD_FACE = (0.50, 0.06, 0.75, 0.15)
-UV_METAL = (0.50, 0.00, 0.75, 0.06)
-UV_EYE = (0.75, 0.00, 0.80, 0.05)
-UV_THONG = (0.80, 0.00, 1.00, 0.15)
+UV_BLADE_FRONT = (0.00, 0.20, 0.50, 1.00)
+UV_BLADE_BACK = (0.50, 0.20, 1.00, 1.00)
+UV_BLADE_RIM = (0.00, 0.00, 0.25, 0.05)
+UV_WOOD = (0.00, 0.05, 0.25, 0.20)
+UV_WRAP = (0.25, 0.00, 0.45, 0.20)
+UV_GUARD_FACE = (0.45, 0.08, 0.75, 0.20)
+UV_METAL = (0.45, 0.00, 0.75, 0.08)
+UV_POMMEL_FACE = (0.78, 0.00, 0.98, 0.20)   # square: both disc faces (back mirrored so the wolf reads correctly)
 
 TEXTURE_SIZE = 1024
 

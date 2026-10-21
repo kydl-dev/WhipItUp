@@ -16,9 +16,14 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import paddle_layout as L  # noqa: E402
+import medallion_knot  # noqa: E402
 
 N = L.TEXTURE_SIZE
 RNG = np.random.default_rng(1234)
+WOLF_ICON = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "reference", "TrophyWolf_icon_64.png"))
+ICON_RGB = np.zeros((N, N, 3), np.float32)
+ICON_A = np.zeros((N, N), np.float32)
+MED_BG = np.zeros((N, N), bool)                 # recessed background inside the medallion / valknut
 
 # Rank palette sampled from the RidingCropMod albedos (median of the shaft / fitting block / collar areas).
 # rank: (crop texture, main leather, fittings, accent)
@@ -36,6 +41,9 @@ WOOD_DARK = (70, 44, 24)
 TOOL_BG = 0.45      # recessed background inside the medallion = main x this
 TOOL_GROOVE = 0.30  # cut lines = main x this
 BURNISH = 0.60      # edge burnish = main x this
+MED_PITCH = 0.25    # plait strand spacing as a fraction of the medallion radius
+MED_SWIRL = 1.1     # radians of extra rotation at the centre (curves the plait)
+MED_CORE = 0.36     # half size of the square core frame / medallion radius
 
 
 def log(msg):
@@ -121,26 +129,13 @@ def edge_distance(X, Z):
 
 
 def medallion(X, Z):
-    """Circular knot like the user's photo: outer double ring + 4 interlaced loops + an inner ring."""
+    """Celtic knot medallion (medallion_knot.py) sampled at blade points. Returns fill, groove, profile, area masks."""
     R = L.MEDALLION_RADIUS
-    px, pz = X, Z - L.MEDALLION_Z
-    r = np.hypot(px, pz)
-    w = R * 0.085
-    b = R * 0.035
-    strands = []
-    ang = np.arctan2(pz, px)
-    strands.append((np.abs(r - R * 0.96), np.sin(ang * 8)))            # outer ring, weaves 8 times
-    strands.append((np.abs(r - R * 0.30), np.sin(ang * 4 + 0.6)))      # inner ring
-    for k in range(4):
-        a = k * math.pi / 2 + math.pi / 4
-        cx, cz = math.cos(a) * R * 0.38, math.sin(a) * R * 0.38
-        rr = np.hypot(px - cx, pz - cz)
-        la = np.arctan2(pz - cz, px - cx)
-        strands.append((np.abs(rr - R * 0.46), np.sin(la * 3 + k * 1.7)))
-    fill, groove, profile = interlace(strands, px, pz, w, b)
-    frame = np.abs(r - R * 1.10) < R * 0.022       # thin cut line framing the medallion
-    area = r < R * 1.12
-    return fill & area, (groove & area) | frame, profile, area
+    mx, mz = X / R, (Z - L.MEDALLION_Z) / R
+    f, g, p = medallion_knot.sample(mx, mz)
+    r = np.hypot(mx, mz)
+    area = r < 1.04
+    return f & area, g & area, p, area
 
 
 def valknut(X, Z):
@@ -178,6 +173,20 @@ def stitches(X, Z, de):
     return near & dash & (Z > L.GUARD[1] + 0.002)
 
 
+def luminance(c):
+    r, g, b = [(v / 255.0) ** 2.2 for v in c]
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast_colour(main, fit, acc):
+    """Medallion strand colour (user 2026-10-21, 'auto: highest contrast'): the fitting or accent colour whose
+    WCAG contrast ratio against the rank's main leather is the highest."""
+    def ratio(a, b):
+        la, lb = luminance(a) + 0.05, luminance(b) + 0.05
+        return max(la, lb) / min(la, lb)
+    return fit if ratio(fit, main) >= ratio(acc, main) else acc
+
+
 # ------------------------------------------------------------------------------------------------ build
 def build(out_dir):
     os.makedirs(out_dir, exist_ok=True)
@@ -185,7 +194,7 @@ def build(out_dir):
     metal = np.zeros((N, N), np.float32)
     smooth = np.full((N, N), 0.3, np.float32)
     # region label + per-pixel colour factors; albedo is built per rank from these
-    label = np.zeros((N, N), np.uint8)             # 0 empty 1 leather 2 wood 3 wrap 4 metal 5 eye 6 thong 7 rim
+    label = np.zeros((N, N), np.uint8)             # 0 empty 1 leather 2 wood 3 wrap 4 metal 7 rim 8 wolf icon 9 tooling inlay (2nd colour)
     shade = np.ones((N, N), np.float32)            # multiplier on the region colour
     stitch = np.zeros((N, N), bool)
     tooled = np.zeros((N, N), bool)                # pixel belongs to tooling (keeps the leather hue, darker)
@@ -201,7 +210,7 @@ def build(out_dir):
         burn = np.clip(1 - de / 0.014, 0, 1) ** 1.5
         sh *= 1 - (1 - BURNISH) * burn
         bg = (marea | varea) & ~(mf | vf)
-        sh = np.where(bg, sh * TOOL_BG, sh)
+        MED_BG[y0:y1, x0:x1] = bg
         sh = np.where(mg | vg, TOOL_GROOVE, sh)
         h = 0.55 + 0.05 * grain
         h = np.where(bg, 0.25, h)
@@ -214,6 +223,7 @@ def build(out_dir):
         shade[y0:y1, x0:x1] = sh
         stitch[y0:y1, x0:x1] = st
         tooled[y0:y1, x0:x1] = bg | mg | vg | mf | vf
+        label[y0:y1, x0:x1] = np.where(mf | vf, 9, 1)
         smooth[y0:y1, x0:x1] = sm
         log(f"blade {'back' if back else 'front'}: medallion {int(mf.sum())} px raised, valknut {int(vf.sum())} px, stitches {int(st.sum())} px")
 
@@ -269,17 +279,27 @@ def build(out_dir):
     metal[y0:y1, x0:x1] = 0.9
     smooth[y0:y1, x0:x1] = np.where(kf, 0.65, 0.45)
 
-    (x0, y0, x1, y1), U, V = rect_grid(L.UV_EYE)
-    label[y0:y1, x0:x1] = 5
-    H[y0:y1, x0:x1] = 0.5
-    smooth[y0:y1, x0:x1] = 0.85
-
-    (x0, y0, x1, y1), U, V = rect_grid(L.UV_THONG)
-    n = noise(*U.shape, scale=4, seed=15)
-    label[y0:y1, x0:x1] = 6
-    shade[y0:y1, x0:x1] = 0.85 + 0.25 * n
-    H[y0:y1, x0:x1] = 0.5 + 0.1 * n
-    smooth[y0:y1, x0:x1] = 0.35
+    # pommel disc faces: vanilla TrophyWolf icon inlaid in a raised metal rim (D-020, the user's choice)
+    (x0, y0, x1, y1), U, V = rect_grid(L.UV_POMMEL_FACE)
+    rr = np.hypot(U - 0.5, V - 0.5) * 2 * L.POMMEL_DISC[1]          # metres from the disc centre
+    fr = L.POMMEL_FACE_RADIUS
+    rim = rr >= fr
+    icon = Image.open(WOLF_ICON).convert("RGBA")
+    side = int(round(2 * fr / (2 * L.POMMEL_DISC[1]) * (x1 - x0)))
+    icon = icon.resize((side, side), Image.LANCZOS)
+    canvas = Image.new("RGBA", (x1 - x0, y1 - y0), (0, 0, 0, 0))
+    canvas.paste(icon, ((x1 - x0 - side) // 2, (y1 - y0 - side) // 2))
+    ic = np.asarray(canvas, np.float32) / 255.0
+    alpha = ic[..., 3] * ~rim
+    n = noise(*U.shape, scale=6, seed=17)
+    label[y0:y1, x0:x1] = 4
+    shade[y0:y1, x0:x1] = np.where(rim, 1.0 + 0.1 * n, 0.55 + 0.1 * n)    # rim bright, recessed field darker
+    ICON_RGB[y0:y1, x0:x1] = ic[..., :3] * 255
+    ICON_A[y0:y1, x0:x1] = alpha
+    lum = ic[..., :3].mean(-1)
+    H[y0:y1, x0:x1] = np.where(rim, 0.75, 0.3 + alpha * (0.3 + 0.2 * lum))
+    metal[y0:y1, x0:x1] = np.where(alpha > 0.5, 0.2, 0.9)
+    smooth[y0:y1, x0:x1] = np.where(rim, 0.6, np.where(alpha > 0.5, 0.4, 0.35))
 
     # ---- normal map (shared). Image rows go down: dH/dv (v up) = -(row gradient).
     strength = 6.0
@@ -315,14 +335,17 @@ def build(out_dir):
         img = np.where((label == 2)[..., None], wood, img)
         img = np.where((label == 3)[..., None], acc_c * s, img)
         img = np.where((label == 4)[..., None], fit_c * s, img)
-        dark_fit = sum(fit) / 3 < 60
-        eye = np.array((205, 160, 60) if dark_fit else (12, 12, 12), np.float32)
-        img = np.where((label == 5)[..., None], eye, img)
-        img = np.where((label == 6)[..., None], acc_c * s, img)
+        inlay_c = contrast_colour(main, fit, acc)
+        img = np.where((label == 9)[..., None], np.array(inlay_c, np.float32) * s, img)
+        # background: darker leather behind light strands; plain leather behind dark strands (keeps the contrast)
+        bg_f = TOOL_BG if luminance(inlay_c) > luminance(main) else 1.0
+        img = np.where(MED_BG[..., None], img * bg_f, img)
+        a = ICON_A[..., None]
+        img = img * (1 - a) + ICON_RGB * a
         path = os.path.join(out_dir, f"paddle_Albedo_V{rank}.png")
         Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), "RGB").save(path)
         written.append(path)
-        log(f"V{rank}: {crop} colours main {main} fittings {fit} accent {acc} -> {os.path.basename(path)}")
+        log(f"V{rank}: {crop} colours main {main} fittings {fit} accent {acc}, medallion strands {inlay_c} -> {os.path.basename(path)}")
     log(f"normal + metalgloss + {len(written)} albedos written to {out_dir}")
     return len(written) == len(PALETTE)
 

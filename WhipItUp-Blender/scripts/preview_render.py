@@ -1,7 +1,8 @@
 """Renders preview images of one object (default 'Paddle') from several angles into WhipItUp-Blender/renders/.
 
 Run inside Blender. Creates/reuses a camera 'PreviewCam' and lights 'PreviewKey'/'PreviewFill' (in collection 'Preview').
-Globals you can set before exec: TARGET (object name), VIEWS (list of (name, azimuth_deg, elevation_deg)), RES (pixels).
+Globals you can set before exec: TARGET (object name), VIEWS (list of (name, azimuth_deg, elevation_deg)), RES (pixels),
+CENTER + SIZE (close-up on a world point, frame size in m).
 """
 import math
 import os
@@ -63,6 +64,8 @@ def main():
     bb = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
     center = sum(bb, Vector()) / 8
     size = max((max(v[i] for v in bb) - min(v[i] for v in bb)) for i in range(3))
+    if globals().get("CENTER") is not None:      # optional close-up: world point + frame size (m)
+        center, size = Vector(globals()["CENTER"]), globals().get("SIZE", size)
     cam.data.type = 'ORTHO'
     cam.data.ortho_scale = size * 1.15
     hidden = [o for o in sc.objects if o.type == 'MESH' and o is not obj and not o.hide_render]

@@ -2,7 +2,7 @@
 
 Run inside Blender 5.x (Blender MCP, or: blender -b source/Paddle.blend --python scripts/build_paddle.py).
 Layout and UV regions: paddle_layout.py (shared with paddle_textures.py). Re-running replaces the old 'Paddle' object.
-Parts: raven-head pommel + thong loop, ferrules, wood handle, grip wrap, knotwork guard + rivets, blade with studded rim.
+Parts: round metal pommel disc (TrophyWolf inlay), ferrules, wood handle, grip wrap, knotwork guard + rivets, blade with studded rim.
 """
 import math
 import os
@@ -44,36 +44,29 @@ blade_half_width = L.blade_half_width
 blade_outline = L.blade_outline
 
 
-def build_blade(bm):
-    outline = blade_outline()
-    hy = L.BLADE_THICK / 2
+def build_slab(bm, uv_layer, outline, thick, bevel, front_rect, back_rect, rim_rect, x_range, z_range, name):
+    """Flat part in the XZ plane, faces +-Y: an extruded closed outline with bevelled edges and planar UVs
+    (front -> front_rect, back -> back_rect mirrored so its image reads correctly from behind, sides -> rim_rect)."""
+    hy = thick / 2
+    before = set(bm.faces)
     front = [bm.verts.new((x, hy, z)) for (x, z) in outline]
     back = [bm.verts.new((x, -hy, z)) for (x, z) in outline]
     n = len(outline)
-    f_front = bm.faces.new(front)            # normal should face +Y
+    f_front = bm.faces.new(front)
     f_back = bm.faces.new(list(reversed(back)))
-    sides = []
-    for i in range(n):
-        j = (i + 1) % n
-        sides.append(bm.faces.new((front[j], front[i], back[i], back[j])))
+    sides = [bm.faces.new((front[(i + 1) % n], front[i], back[i], back[(i + 1) % n])) for i in range(n)]
     bm.normal_update()
     if f_front.normal.y < 0:
         for f in [f_front, f_back] + sides:
             f.normal_flip()
-    edges = [e for e in f_front.edges] + [e for e in f_back.edges]
-    bmesh.ops.bevel(bm, geom=edges, offset=L.BLADE_BEVEL, segments=2, affect='EDGES', profile=0.5)
-    log(f"blade: outline {n} points, thickness {L.BLADE_THICK} m")
-    return outline
-
-
-def uv_blade(bm, uv_layer, blade_faces, outline):
-    x0, x1 = L.BLADE_X_RANGE
-    zb, zt = L.BLADE_BOTTOM, L.BLADE_TOP
-    # perimeter parameter for the rim
+    edges = list(f_front.edges) + list(f_back.edges)
+    bmesh.ops.bevel(bm, geom=edges, offset=bevel, segments=2, affect='EDGES', profile=0.5)
+    bm.normal_update()
+    faces = [f for f in bm.faces if f not in before]
     perim = [0.0]
-    for i in range(1, len(outline) + 1):
-        a, b = outline[i - 1], outline[i % len(outline)]
-        perim.append(perim[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    for i in range(1, n + 1):
+        p0, p1 = outline[i - 1], outline[i % n]
+        perim.append(perim[-1] + math.hypot(p1[0] - p0[0], p1[1] - p0[1]))
     total = perim[-1]
 
     def perim_at(x, z):
@@ -84,22 +77,39 @@ def uv_blade(bm, uv_layer, blade_faces, outline):
                 best, bi = d, i
         return perim[bi] / total
 
+    x0, x1 = x_range
+    z0, z1 = z_range
     counts = {"front": 0, "back": 0, "rim": 0}
-    for f in blade_faces:
+    for f in faces:
         ny = f.normal.y
+        kind = "front" if ny > 0.95 else "back" if ny < -0.95 else "rim"
+        counts[kind] += 1
         for loop in f.loops:
             co = loop.vert.co
             u = (co.x - x0) / (x1 - x0)
-            v = (co.z - zb) / (zt - zb)
-            if ny > 0.95:
-                loop[uv_layer].uv = lerp_rect(L.UV_BLADE_FRONT, u, v)
-            elif ny < -0.95:
-                loop[uv_layer].uv = lerp_rect(L.UV_BLADE_BACK, 1.0 - u, v)
+            v = (co.z - z0) / (z1 - z0)
+            if kind == "front":
+                loop[uv_layer].uv = lerp_rect(front_rect, u, v)
+            elif kind == "back":
+                loop[uv_layer].uv = lerp_rect(back_rect, 1.0 - u, v)
             else:
-                loop[uv_layer].uv = lerp_rect(L.UV_BLADE_RIM, perim_at(co.x, co.z), co.y / L.BLADE_THICK + 0.5)
-        counts["front" if ny > 0.95 else "back" if ny < -0.95 else "rim"] += 1
-    # rim faces that straddle the perimeter seam get a wrapped u: fix by snapping u to the face's majority side
-    log(f"blade UV: {counts}")
+                loop[uv_layer].uv = lerp_rect(rim_rect, perim_at(co.x, co.z), co.y / thick + 0.5)
+    log(f"{name}: outline {n} points, thickness {thick} m, UV faces {counts}")
+    return faces
+
+
+def build_blade(bm, uv_layer):
+    return build_slab(bm, uv_layer, blade_outline(), L.BLADE_THICK, L.BLADE_BEVEL, L.UV_BLADE_FRONT, L.UV_BLADE_BACK,
+                      L.UV_BLADE_RIM, L.BLADE_X_RANGE, (L.BLADE_BOTTOM, L.BLADE_TOP), "blade")
+
+
+def build_pommel(bm, uv_layer):
+    """Round metal disc at the end of the handle (D-020). Faces carry the vanilla TrophyWolf icon (texture)."""
+    cz, r, t = L.POMMEL_DISC
+    outline = [(r * math.cos(2 * math.pi * k / 40), cz + r * math.sin(2 * math.pi * k / 40)) for k in range(40)]
+    # the face rect covers the whole disc diameter; paddle_textures.py draws the wolf inside POMMEL_FACE_RADIUS and the metal rim outside
+    return build_slab(bm, uv_layer, outline, t, L.POMMEL_BEVEL, L.UV_POMMEL_FACE, L.UV_POMMEL_FACE, L.UV_METAL,
+                      (-r, r), (cz - r, cz + r), "pommel disc")
 
 
 # ---------------------------------------------------------------------------------------------------- lathe
@@ -223,56 +233,6 @@ def build_studs(objs):
         objs.append(o)
 
 
-def build_raven(objs):
-    cx, cy, cz = L.RAVEN_CENTER
-    rx, ry, rz = L.RAVEN_HEAD
-    head = add_primitive_mesh(bpy.ops.mesh.primitive_uv_sphere_add, L.UV_METAL, segments=16, ring_count=10,
-                              radius=1.0, location=(cx, cy, cz))
-    head.scale = (rx, ry, rz)
-    objs.append(head)
-    # beak: cone along RAVEN_BEAK_DIR starting inside the head front
-    d = Vector(L.RAVEN_BEAK_DIR).normalized()
-    start = Vector((cx, cy, cz)) + Vector((d.x * rx * 0.55, 0, d.z * rz * 0.55))
-    mid = start + d * (L.RAVEN_BEAK_LEN / 2)
-    beak = add_primitive_mesh(bpy.ops.mesh.primitive_cone_add, L.UV_METAL, vertices=12, radius1=L.RAVEN_BEAK_RADIUS,
-                              radius2=0.0006, depth=L.RAVEN_BEAK_LEN, location=mid)
-    beak.rotation_mode = 'QUATERNION'
-    beak.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(d)
-    beak.scale = (1.0, 0.72, 1.0)           # flatter sideways
-    objs.append(beak)
-    # downward hook at the beak tip
-    tip = start + d * L.RAVEN_BEAK_LEN * 0.92
-    hd = Vector((0.25, 0, -1)).normalized()
-    hook = add_primitive_mesh(bpy.ops.mesh.primitive_cone_add, L.UV_METAL, vertices=10, radius1=L.RAVEN_HOOK[1],
-                              radius2=0.0004, depth=L.RAVEN_HOOK[0], location=tip + hd * L.RAVEN_HOOK[0] * 0.4)
-    hook.rotation_mode = 'QUATERNION'
-    hook.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(hd)
-    hook.scale = (1.0, 0.72, 1.0)
-    objs.append(hook)
-    # swept-back neck feathers: smooth flattened ellipsoids from the back of the head up to the ferrule
-    for (ang, ln, w) in [(140, 0.016, 0.009), (115, 0.015, 0.008), (165, 0.013, 0.007)]:
-        a = math.radians(ang)
-        fd = Vector((math.cos(a), 0, math.sin(a))).normalized()
-        base = Vector((cx, cy, cz)) + Vector((fd.x * rx * 0.75, 0, fd.z * rz * 0.75))
-        f = add_primitive_mesh(bpy.ops.mesh.primitive_uv_sphere_add, L.UV_METAL, segments=10, ring_count=6,
-                               radius=1.0, location=base + fd * ln * 0.35)
-        f.rotation_mode = 'QUATERNION'
-        f.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(fd)
-        f.scale = (w, w * 1.15, ln)
-        objs.append(f)
-    ex, ey, ez, er = L.RAVEN_EYE
-    for sgn in (1, -1):
-        e = add_primitive_mesh(bpy.ops.mesh.primitive_uv_sphere_add, L.UV_EYE, segments=8, ring_count=5, radius=er,
-                               location=(ex, sgn * ey, ez))
-        objs.append(e)
-    tx, tz, R, r = L.THONG
-    th = add_primitive_mesh(bpy.ops.mesh.primitive_torus_add, L.UV_THONG, major_radius=R, minor_radius=r,
-                            major_segments=24, minor_segments=8, location=(tx, 0, tz - R * 0.55),
-                            rotation=(math.pi / 2, 0, 0))
-    objs.append(th)
-    log("raven pommel: head, beak + hook, 3 neck feathers, 2 eyes, thong loop")
-
-
 # ---------------------------------------------------------------------------------------------------- main
 def main():
     old = bpy.data.objects.get("Paddle")
@@ -288,10 +248,8 @@ def main():
     me = bpy.data.meshes.new("Paddle")
     bm = bmesh.new()
     uv_layer = bm.loops.layers.uv.new("UVMap")
-    outline = build_blade(bm)
-    blade_faces = list(bm.faces)
-    bm.normal_update()
-    uv_blade(bm, uv_layer, blade_faces, outline)
+    build_blade(bm, uv_layer)
+    build_pommel(bm, uv_layer)
 
     zs = [L.HANDLE_BOTTOM + (L.HANDLE_TOP - L.HANDLE_BOTTOM) * i / 10 for i in range(11)]
     mid = (L.HANDLE_BOTTOM + L.HANDLE_TOP) / 2
@@ -311,10 +269,9 @@ def main():
     main_obj = bpy.data.objects.new("Paddle", me)
     bpy.context.scene.collection.objects.link(main_obj)
 
-    # 2) primitive parts (studs, rivets, raven, thong) -> joined into Paddle
+    # 2) primitive parts (studs, rivets) -> joined into Paddle
     parts = []
     build_studs(parts)
-    build_raven(parts)
     bpy.ops.object.select_all(action='DESELECT')
     for o in parts:
         o.select_set(True)

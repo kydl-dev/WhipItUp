@@ -7,3 +7,5 @@
   `scripts/preview_render.py`: preview renders into `renders/` (git-ignored); `scripts/sheet.py` joins them.
 - Order after a layout change: paddle_textures.py, then build_paddle.py, then export.
 - `exports/`: FBX for Unity (export contract in `exports/README.md` once the first export is done).
+- `scripts/medallion_knot.py`: the medallion knot (distance-field render; `python scripts/medallion_knot.py renders/knot.png` previews it). Used by paddle_textures.py.
+- `reference/TrophyWolf_icon_64.png`: the vanilla TrophyWolf icon, cropped from the rip's IconAtlas (x 2088, y 1800, 64x64, Unity y-up) for the pommel inlay.
