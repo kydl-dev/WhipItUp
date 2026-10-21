@@ -12,13 +12,14 @@ namespace WhipItUp.Weapons
     /// <summary>
     /// The Paddle family (T-004): Paddle_V1..V7, clones of the vanilla Club (Clubs skill, club animations, whoosh + slap sounds: Sounds/WeaponSounds).
     /// Stats: the crop ladder (Ladder) except no bleed; blunt = crop blunt + one crop bleed tick; crop's absolute stagger (user 2026-10-21).
-    /// The Club's secondary attack is kept (attack 2; the back-handed wrist roll is T-005).
+    /// Attack 2 = the Flametal mace's secondary attack with a back-handed wrist roll (SetSecondaryAttack, BackhandRoll; T-005).
     /// Names are placeholders until T-012 (the user approves the real names).
     /// </summary>
     internal static class PaddleItems
     {
         public const string Family = "Paddle";
         const string VanillaBase = "Club";
+        const string SecondarySource = "MaceEldner";     // Flametal mace: its secondary attack is the paddle's attack 2
         const float IconTiltDegrees = 45f;
 
         static WeaponArt _art;
@@ -93,13 +94,37 @@ namespace WhipItUp.Weapons
             shared.m_blockPower = Ladder.BlockArmor[i];
             shared.m_timedBlockBonus = Ladder.ParryBonus;
             shared.m_deflectionForce = Ladder.BlockForce[i];
-            // the Club's secondary attack stays (attack 2); it gets the same stagger rule so its absolute stagger matches the ladder
-            if (shared.m_secondaryAttack != null) shared.m_secondaryAttack.m_staggerMultiplier = Ladder.StaggerMultiplier(rank, blunt);
+            SetSecondaryAttack(shared, rank, blunt, name);
             shared.m_attackStatusEffect = null;     // no bleed on the paddle (user)
             ModLog.Verbose("PaddleItems: " + name + " blunt " + blunt.ToString("0.#") + " (Club " + clubBlunt.ToString("0.#") + ", crop " + Ladder.CropBlunt(rank).ToString("0.#")
                 + " + bleed tick " + Ladder.CropBleedPerSecond(rank).ToString("0.#") + "), stagger " + Ladder.Stagger[i] + ", durability " + shared.m_maxDurability
-                + ", secondary attack " + (shared.m_secondaryAttack != null && !string.IsNullOrEmpty(shared.m_secondaryAttack.m_attackAnimation) ? shared.m_secondaryAttack.m_attackAnimation : "none"));
+                + ", attack 2 " + (shared.m_secondaryAttack != null && !string.IsNullOrEmpty(shared.m_secondaryAttack.m_attackAnimation) ? shared.m_secondaryAttack.m_attackAnimation : "none"));
             return Mathf.Approximately(shared.m_damages.m_blunt, blunt) && shared.m_maxQuality == Ladder.MaxQuality;
+        }
+
+        /// Attack 2 (T-005, user 2026-10-21): a copy of the Flametal mace's (MaceEldner) secondary attack, "mace_secondary", with the mace's own
+        /// damage / force / stagger multipliers on top of this rank; stamina = the rank's attack-1 stamina x BackhandStaminaFactor.
+        /// The wrist roll during it is BackhandRoll. Expected outcome: the paddle has a secondary attack with that animation.
+        static bool SetSecondaryAttack(ItemDrop.ItemData.SharedData shared, int rank, float blunt, string name)
+        {
+            var mace = PrefabManager.Instance.GetPrefab(SecondarySource);
+            var maceDrop = mace != null ? mace.GetComponent<ItemDrop>() : null;
+            var src = maceDrop != null ? maceDrop.m_itemData.m_shared.m_secondaryAttack : null;
+            if (src == null || string.IsNullOrEmpty(src.m_attackAnimation))
+            {
+                ModLog.Error("PaddleItems: '" + SecondarySource + "' or its secondary attack not found - " + name + " has no attack 2");
+                return shared.m_secondaryAttack != null && !string.IsNullOrEmpty(shared.m_secondaryAttack.m_attackAnimation);
+            }
+            var a = src.Clone();
+            int i = Ladder.Index(rank);
+            float maceStagger = a.m_staggerMultiplier;
+            a.m_attackStamina = Ladder.Stamina[i] * ModSettings.BackhandStaminaFactor.Value;
+            a.m_staggerMultiplier = Ladder.StaggerMultiplier(rank, blunt) * maceStagger;   // keeps the mace's "x2 of attack 1" stagger
+            shared.m_secondaryAttack = a;
+            BackhandRoll.RegisterPaddle(name);
+            ModLog.Verbose("PaddleItems: " + name + " attack 2 = " + SecondarySource + " '" + a.m_attackAnimation + "' (type " + a.m_attackType + ", damage x" + a.m_damageMultiplier
+                + ", force x" + a.m_forceMultiplier + ", stagger x" + maceStagger + ", stamina " + a.m_attackStamina.ToString("0.#") + ")");
+            return shared.m_secondaryAttack.m_attackAnimation == BackhandRoll.SecondaryState;
         }
 
         static void RenderIcon(CustomItem item, ItemDrop.ItemData.SharedData shared, string name)

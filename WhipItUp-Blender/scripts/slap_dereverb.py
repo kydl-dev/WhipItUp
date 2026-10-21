@@ -1,4 +1,5 @@
-"""Makes WhipItUp-Unity/Assets/WhipItUp/Sounds/sfx_slap.ogg from the user's reference/sounds/slap3_original.ogg (user 2026-10-21:
+"""NOT IN USE (D-025: the user preferred the original slap3, "no weight" after this). Kept for reference.
+Makes WhipItUp-Unity/Assets/WhipItUp/Sounds/sfx_slap.ogg from the user's reference/sounds/slap3_original.ogg (user 2026-10-21:
 "if there is any reverb, reduce it"). Needs ffmpeg + numpy (run where both exist; the agent ran it in its cloud workspace).
 
 The original: impact at ~50 ms, body until ~125 ms, then a slow room tail (-10 dB -> -50 dB over ~300 ms) = the reverb.

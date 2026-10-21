@@ -27,11 +27,12 @@ namespace WhipItUp
         public static readonly Tunable<float> ExampleSpeed = new Tunable<float>("Example", "ExampleSpeed", 1f,
             "Example dev-only value: replace or remove. Read it with ModSettings.ExampleSpeed.Value.");
 
-        // Weapon sounds (whoosh = swing, slap = hit). Read once when the items are made (game start).
-        public static readonly Tunable<float> WhooshVolume = new Tunable<float>("Sound", "WhooshVolume", 1f, "Swing (whoosh) volume 0..1. Game restart.");
-        public static readonly Tunable<float> SlapVolume = new Tunable<float>("Sound", "SlapVolume", 1f, "Hit (slap) volume 0..1. Game restart.");
-        public static readonly Tunable<float> SoundGain = new Tunable<float>("Sound", "Gain", 1.5f, "Loudness multiplier on the sound data (soft-limited). Game restart.");
-        public static readonly Tunable<bool> SlapTrim = new Tunable<bool>("Sound", "SlapTrim", true, "Cut the quiet lead-in of the slap and normalise it. Game restart.");
+        // Weapon sounds (whoosh = swing, slap = hit). Live: a change applies to the next sound played.
+        public static readonly Tunable<float> WhooshVolume = new Tunable<float>("Sound", "WhooshVolume", 1f, "Swing (whoosh) volume 0..1.");
+        public static readonly Tunable<float> SlapVolume = new Tunable<float>("Sound", "SlapVolume", 1f, "Hit (slap) volume 0..1.");
+        public static readonly Tunable<float> WhooshGain = new Tunable<float>("Sound", "WhooshGain", 1.5f, "Loudness multiplier on the whoosh data (above ~0.7 peaks are soft-limited).");
+        public static readonly Tunable<float> SlapGain = new Tunable<float>("Sound", "SlapGain", 1f, "Loudness multiplier on the slap data (1 = the file as it is; more squashes the peaks).");
+        public static readonly Tunable<bool> SlapTrim = new Tunable<bool>("Sound", "SlapTrim", true, "Cut the quiet 50 ms lead-in of the slap so it lands on the hit (also normalises it).");
 
         // Paddle in the hand (degrees around the model's own axes; grip in metres along the handle, + = hand toward the blade; scale 1 = as modelled, 0.56 m)
         public static readonly Tunable<float> PaddleRotX = new Tunable<float>("Paddle", "RotationX", 270f, "Paddle model rotation X (degrees) in the hand.");
@@ -39,6 +40,18 @@ namespace WhipItUp
         public static readonly Tunable<float> PaddleRotZ = new Tunable<float>("Paddle", "RotationZ", 0f, "Paddle model rotation Z (degrees) in the hand.");
         public static readonly Tunable<float> PaddleGrip = new Tunable<float>("Paddle", "GripOffset", 0.15f, "Metres the hand sits from the middle of the grip (+ = toward the blade).");
         public static readonly Tunable<float> PaddleScale = new Tunable<float>("Paddle", "Scale", 1f, "Paddle model scale (1 = 0.56 m as modelled).");
+        // Paddle attack 2 (mace_secondary + wrist roll, T-005). Times = normalised clip time 0..1. Live.
+        public static readonly Tunable<float> BackhandAngle = new Tunable<float>("Paddle", "BackhandAngle", 90f, "Wrist roll in degrees during attack 2 (0 = no roll, negative = the other way).");
+        public static readonly Tunable<float> BackhandAxisX = new Tunable<float>("Paddle", "BackhandAxisX", 0f, "Roll axis X in the hand bone's own space.");
+        public static readonly Tunable<float> BackhandAxisY = new Tunable<float>("Paddle", "BackhandAxisY", 1f, "Roll axis Y in the hand bone's own space (Y = along the forearm on Valheim's rig).");
+        public static readonly Tunable<float> BackhandAxisZ = new Tunable<float>("Paddle", "BackhandAxisZ", 0f, "Roll axis Z in the hand bone's own space.");
+        public static readonly Tunable<float> BackhandInStart = new Tunable<float>("Paddle", "BackhandInStart", 0.30f, "Clip time where the roll starts.");
+        public static readonly Tunable<float> BackhandInFull = new Tunable<float>("Paddle", "BackhandInFull", 0.45f, "Clip time where the roll is complete (just before the swing).");
+        public static readonly Tunable<float> BackhandOutStart = new Tunable<float>("Paddle", "BackhandOutStart", 0.68f, "Clip time where the roll starts to unwind (after the hit).");
+        public static readonly Tunable<float> BackhandOutEnd = new Tunable<float>("Paddle", "BackhandOutEnd", 0.85f, "Clip time where the hand is back to normal.");
+        public static readonly Tunable<float> BackhandStaminaFactor = new Tunable<float>("Paddle", "BackhandStaminaFactor", 1.75f, "Attack 2 stamina = rank attack-1 stamina x this (the Flametal mace: 28 / 16). Game restart.");
+        public static Vector3 BackhandAxis { get { var v = new Vector3(BackhandAxisX.Value, BackhandAxisY.Value, BackhandAxisZ.Value); return v.sqrMagnitude > 1e-6f ? v.normalized : Vector3.up; } }
+
         public static Vector3 PaddleRotation { get { return new Vector3(PaddleRotX.Value, PaddleRotY.Value, PaddleRotZ.Value); } }
         /// Raised when any paddle alignment Tunable changes (KydlTools): the visuals are re-aligned live.
         public static event System.Action PaddleAlignmentChanged;

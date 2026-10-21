@@ -66,25 +66,62 @@ namespace WhipItUp.Sounds
             var template = FindTemplate(shared);
             if (template == null) { ModLog.Warn("WeaponSounds: no vanilla sound prefab to copy - weapons keep the vanilla sounds"); return; }
             ModLog.Verbose("WeaponSounds: template sound prefab '" + template.name + "'");
-            if (_whooshClip != null) WhooshPrefab = Create("sfx_whipitup_whoosh", template, ClipTools.Boost(_whooshClip, ModSettings.SoundGain.Value, "whoosh"), ModSettings.WhooshVolume.Value, false);
-            if (_slapClip != null)
-            {
-                var clip = ModSettings.SlapTrim.Value ? ClipTools.TrimLeadIn(_slapClip, "slap") : _slapClip;
-                var boosted = ClipTools.Boost(clip, ModSettings.SoundGain.Value, "slap");
-                if (clip != _slapClip && boosted != clip) Object.Destroy(clip);     // intermediate copy no longer needed
-                SlapPrefab = Create("sfx_whipitup_slap", template, boosted, ModSettings.SlapVolume.Value, true);
-            }
+            if (_whooshClip != null) WhooshPrefab = Create("sfx_whipitup_whoosh", template, false);
+            if (_slapClip != null) SlapPrefab = Create("sfx_whipitup_slap", template, true);
+            Rebuild();
+            // live: volume / gain / trim changes in KydlTools apply to the next sound played (no restart)
+            foreach (var t in new[] { ModSettings.WhooshVolume, ModSettings.SlapVolume, ModSettings.WhooshGain, ModSettings.SlapGain })
+                t.SettingChanged += (o, e) => Rebuild();
+            ModSettings.SlapTrim.SettingChanged += (o, e) => Rebuild();
         }
 
-        static GameObject Create(string name, GameObject template, AudioClip clip, float volume, bool critical)
+        static AudioClip _whooshMade, _slapMade;     // the processed copies in use (destroyed when replaced)
+
+        /// (Re)makes the processed clips from the original bundle clips with the current Tunables and puts them + the volumes on the
+        /// sound prefabs. Expected outcome: every existing sound prefab plays the new clip (returns that check).
+        public static bool Rebuild()
+        {
+            bool ok = true;
+            if (WhooshPrefab != null)
+            {
+                var clip = ClipTools.Boost(_whooshClip, ModSettings.WhooshGain.Value, "whoosh");
+                ok &= SetClip(WhooshPrefab, clip, ModSettings.WhooshVolume.Value);
+                Replace(ref _whooshMade, clip, _whooshClip);
+            }
+            if (SlapPrefab != null)
+            {
+                var trimmed = ModSettings.SlapTrim.Value ? ClipTools.TrimLeadIn(_slapClip, "slap") : _slapClip;
+                var clip = ClipTools.Boost(trimmed, ModSettings.SlapGain.Value, "slap");
+                if (trimmed != _slapClip && clip != trimmed) Object.Destroy(trimmed);    // intermediate copy no longer needed
+                ok &= SetClip(SlapPrefab, clip, ModSettings.SlapVolume.Value);
+                Replace(ref _slapMade, clip, _slapClip);
+            }
+            ModLog.Verbose("WeaponSounds: clips (re)built - whoosh gain " + ModSettings.WhooshGain.Value + " vol " + ModSettings.WhooshVolume.Value
+                + ", slap trim " + ModSettings.SlapTrim.Value + " gain " + ModSettings.SlapGain.Value + " vol " + ModSettings.SlapVolume.Value + ", ok " + ok);
+            return ok;
+        }
+
+        static void Replace(ref AudioClip made, AudioClip next, AudioClip original)
+        {
+            if (made != null && made != next && made != original) Object.Destroy(made);
+            made = next != original ? next : null;
+        }
+
+        static bool SetClip(GameObject prefab, AudioClip clip, float volume)
+        {
+            int n = 0;
+            foreach (var sfx in prefab.GetComponentsInChildren<ZSFX>(true)) { sfx.m_audioClips = new[] { clip }; sfx.m_minVol = volume; sfx.m_maxVol = volume; n++; }
+            foreach (var src in prefab.GetComponentsInChildren<AudioSource>(true)) src.clip = clip;
+            ModLog.Verbose("WeaponSounds: " + prefab.name + " <- '" + (clip != null ? clip.name : "none") + "' volume " + volume.ToString("0.##") + " (" + n + " ZSFX)");
+            return n > 0 && clip != null;
+        }
+
+        static GameObject Create(string name, GameObject template, bool critical)
         {
             var prefab = PrefabManager.Instance.CreateClonedPrefab(name, template);
             if (prefab == null) { ModLog.Warn("WeaponSounds: could not clone '" + template.name + "' as " + name); return null; }
             foreach (var sfx in prefab.GetComponentsInChildren<ZSFX>(true))
             {
-                sfx.m_audioClips = new[] { clip };
-                sfx.m_minVol = volume;
-                sfx.m_maxVol = volume;
                 sfx.m_hash = name.GetStableHashCode();      // own hash: the clone inherited the template's
                 if (!critical) continue;
                 sfx.m_maxConcurrentSources = 0;              // never refused (duplicates: SlapOncePerSwingPatch)
@@ -92,14 +129,13 @@ namespace WhipItUp.Sounds
             }
             foreach (var src in prefab.GetComponentsInChildren<AudioSource>(true))
             {
-                src.clip = clip;
                 if (!critical) continue;
                 src.priority = 0;          // dropped last when Unity runs out of voices
                 src.spatialBlend = 0f;     // camera sits metres behind the player: a 3D slap at the hit point is quieted by that distance
                 src.loop = false;
             }
             PrefabManager.Instance.AddPrefab(prefab);
-            ModLog.Verbose("WeaponSounds: prefab " + name + " made (clip '" + clip.name + "', " + clip.length.ToString("0.00") + " s, volume " + volume.ToString("0.##") + ", critical " + critical + ")");
+            ModLog.Verbose("WeaponSounds: prefab " + name + " made from '" + template.name + "' (critical " + critical + ")");
             return prefab;
         }
 
