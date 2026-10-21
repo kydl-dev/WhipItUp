@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace WhipItUp.Ui
 {
     /// <summary>
-    /// Player-facing text of the mod (English + German). Shared by the game (registered with Jotunn in Plugin.Awake through Kydl.Common.Loc)
+    /// Player-facing text of the mod, English only (user rule: no other languages). Shared by the game (registered with Jotunn in Plugin.Awake through Kydl.Common.Loc)
     /// and the Unity preview (English). Every key starts with "whipitup_" so it never clashes with another mod.
     /// </summary>
     internal static class UiText
@@ -19,18 +19,8 @@ namespace WhipItUp.Ui
             { "whipitup_menu_close", "Close" },
         };
 
-        internal static readonly Dictionary<string, string> De = new Dictionary<string, string>
-        {
-            { "whipitup_menu_title", "WhipItUp" },
-            { "whipitup_menu_footer", "Esc zum Schließen" },
-            { "whipitup_menu_section", "Beispiel" },
-            { "whipitup_menu_note", "Das ist das Startmenü der Mod. Den Inhalt in MainMenuView ersetzen." },
-            { "whipitup_menu_example_switch", "Beispielschalter" },
-            { "whipitup_menu_example_slider", "Beispielwert" },
-            { "whipitup_menu_close", "Schließen" },
-        };
 
-        /// English text (the Unity preview; the game uses its own localization).
+        /// English text (the Unity preview; the game reads the same table through Jotunn).
         internal static string English(string key)
         {
             string s;

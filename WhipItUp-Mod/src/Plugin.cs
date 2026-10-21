@@ -43,7 +43,7 @@ namespace WhipItUp
 
             ModSettings.Bind(Config);
             _cfgWatcher = new ConfigReloader(Config);
-            Loc.Register(UiText.En, UiText.De);
+            Loc.Register(Weapons.WeaponNames.MergeInto(UiText.En));   // English only (PROJECT_RULES 15)
 
             Bundle = LoadBundle();
             Weapons.WhipSkill.Register();          // before the game creates the player's Skills

@@ -82,7 +82,7 @@ namespace WhipItUp.Weapons
             int i = Ladder.Index(rank);
             var config = new ItemConfig
             {
-                Name = Family + " V" + rank,
+                Name = Kydl.Common.Loc.Token(WeaponNames.Key(Family, rank)),
                 Description = Description,
                 CraftingStation = Ladder.Station[i],
                 MinStationLevel = Ladder.StationLevel[i],
@@ -99,7 +99,7 @@ namespace WhipItUp.Weapons
             ItemManager.Instance.AddItem(item);
             Items.Add(item);
             RenderIcon(item, shared, name, rank);
-            ModLog.Verbose(Family + "Items: " + name + " added (" + config.CraftingStation + " " + config.MinStationLevel + ", " + string.Join(", ", Ladder.Ingredients[i].Select(g => g.ToString())) + ")");
+            ModLog.Verbose(Family + "Items: " + name + " '" + Kydl.Common.Loc.T(WeaponNames.Key(Family, rank)) + "' added (" + config.CraftingStation + " " + config.MinStationLevel + ", " + string.Join(", ", Ladder.Ingredients[i].Select(g => g.ToString())) + ")");
         }
 
         /// Expected outcome: the shared data holds the ladder's values for this rank (returns that check).
