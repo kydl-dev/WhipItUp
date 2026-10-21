@@ -4,7 +4,7 @@ namespace WhipItUp.Weapons
 {
     /// <summary>
     /// Item names (English only, PROJECT_RULES 15), keys "whipitup_&lt;family&gt;_v&lt;rank&gt;". Paddle + Flogger names approved by the user
-    /// (2026-10-22, T-012); Whip names still being worked on with the user - placeholders until then.
+    /// (2026-10-22, T-012); Whip names chosen by the user (2026-10-22).
     /// </summary>
     internal static class WeaponNames
     {
@@ -24,13 +24,13 @@ namespace WhipItUp.Weapons
             { "whipitup_flogger_v5", "Fuling Around" },
             { "whipitup_flogger_v6", "Charred Tails" },
             { "whipitup_flogger_v7", "Moose Tassels" },
-            { "whipitup_whip_v1", "Whip V1" },
-            { "whipitup_whip_v2", "Whip V2" },
-            { "whipitup_whip_v3", "Whip V3" },
-            { "whipitup_whip_v4", "Whip V4" },
-            { "whipitup_whip_v5", "Whip V5" },
-            { "whipitup_whip_v6", "Whip V6" },
-            { "whipitup_whip_v7", "Whip V7" },
+            { "whipitup_whip_v1", "Boar to be Wild" },
+            { "whipitup_whip_v2", "Troll Toll" },
+            { "whipitup_whip_v3", "Bear Witness" },
+            { "whipitup_whip_v4", "Moder of Discipline" },
+            { "whipitup_whip_v5", "Barley Legal" },
+            { "whipitup_whip_v6", "Charred and Dangerous" },
+            { "whipitup_whip_v7", "Jötun Tamer" },
         };
 
         public static string Key(string family, int rank) { return "whipitup_" + family.ToLowerInvariant() + "_v" + rank; }
