@@ -74,7 +74,7 @@ namespace WhipItUp.Weapons
             chains.Pull = Mathf.Lerp(ModSettings.WhipLashStiffness.Value, ModSettings.WhipCoilPull.Value, back);
             chains.GravityScale = 1f - back;
             chains.Snap = back * back;                 // ends fully kinematic: the settled coil does not wobble or spin
-            SetMode(back < 1f ? "coiling" : "coiled");
+            SetMode(back < 1f ? "coiling" : "coiled (bone/node mismatch " + chains.LastMismatch.ToString("0.000") + " m, max bone turn " + chains.LastMaxTurn.ToString("0") + " deg)");
         }
 
         Vector3[] _coil;
@@ -95,8 +95,10 @@ namespace WhipItUp.Weapons
             var normal = Vector3.Cross(axis, down).normalized;
             float scale = transform.lossyScale.y;
             float r = ModSettings.WhipCoilRadius.Value * scale;
-            // centre: below the lash start (CoilDrop = along the handle, negative = back toward the hand)
-            var centre = start + down * r + axis * (ModSettings.WhipCoilDrop.Value * scale);
+            // centre straight below the lash start: the lash leaves the handle going forward (tangent = handle axis), loops down,
+            // back and up - no sharp turn at the collar. CoilDrop slides the whole coil along the handle afterwards.
+            var shift = axis * (ModSettings.WhipCoilDrop.Value * scale);
+            var centre = start + down * r;
             var d0 = start - centre;
             float r0 = d0.magnitude;
             float a0 = Mathf.Atan2(Vector3.Dot(d0, down), Vector3.Dot(d0, axis));
@@ -116,6 +118,7 @@ namespace WhipItUp.Weapons
                 var d = p - _coil[i - 1];
                 _coil[i] = d.sqrMagnitude > 1e-10f ? _coil[i - 1] + d.normalized * len : p;
             }
+            for (int i = 1; i < n; i++) _coil[i] += shift * Mathf.Clamp01(i / 4f);     // ease the shift in so the first bones stay attached
             return _coil.Length == n;
         }
 

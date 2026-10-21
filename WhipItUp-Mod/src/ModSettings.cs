@@ -89,7 +89,7 @@ namespace WhipItUp
         public static readonly Tunable<float> WhipCoilPull = new Tunable<float>("Whip", "CoilPull", 40f, "While idle: pull into the coil (1/s; 40+ = it snaps into the coil).");
         public static readonly Tunable<float> WhipCoilReturnSeconds = new Tunable<float>("Whip", "CoilReturnSeconds", 0.3f, "Time after an attack until the lash is fully coiled again.");
         public static readonly Tunable<float> WhipCoilRadius = new Tunable<float>("Whip", "CoilRadius", 0.12f, "Coil loop radius (m, x Scale).");
-        public static readonly Tunable<float> WhipCoilDrop = new Tunable<float>("Whip", "CoilDrop", -0.10f, "Coil centre along the handle from where the lash starts (m, x Scale; negative = back toward the hand).");
+        public static readonly Tunable<float> WhipCoilDrop = new Tunable<float>("Whip", "CoilDrop", 0f, "Slides the coil along the handle (m, x Scale; negative = back toward the hand, the first bones stay at the collar).");
 
         // Fall physics (FallChains: springs + gravity on the fall bones). Live.
         public static readonly Tunable<float> FallGravity = new Tunable<float>("Falls", "Gravity", 9.8f, "Downward pull on the falls (m/s2; the world's is 9.81).");

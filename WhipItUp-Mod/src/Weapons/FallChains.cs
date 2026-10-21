@@ -39,6 +39,7 @@ namespace WhipItUp.Weapons
             public Vector3 TailLocal;           // tip of the last bone in its own space
             public Vector3[] Pos, Prev;         // nodes 0..n (node i = head of bone i, node n = tip)
             public float[] Length;
+            public Vector3[] LastAxis;          // last turn axis per bone: keeps near-180-degree turns from picking a random axis
         }
 
         readonly List<Chain> _chains = new List<Chain>();
@@ -49,6 +50,10 @@ namespace WhipItUp.Weapons
         public Vector3 NodePosition(int chain, int node) { return _chains[chain].Pos[node]; }
         /// World length of the segment that ends at node (node >= 1), measured from the rest pose (includes the visual's scale).
         public float SegmentLength(int chain, int node) { var c = _chains[chain]; return node >= 1 && node <= c.Length.Length ? c.Length[node - 1] : 0f; }
+        /// After the last step: the largest distance (m) between a bone head and its simulated node (should stay ~0; big = the mesh
+        /// does not follow the simulation), and the largest single-bone turn in degrees.
+        public float LastMismatch { get; private set; }
+        public float LastMaxTurn { get; private set; }
         /// World position of the first lash node (where the lash leaves the handle).
         public Vector3 RootPosition(int chain) { return _chains[chain].Bones[0].position; }
         bool _primed;
@@ -77,6 +82,7 @@ namespace WhipItUp.Weapons
                 c.TailLocal = bones.Length > 1 ? bones[bones.Length - 1].localPosition : Vector3.up * 0.1f;
                 c.Pos = new Vector3[bones.Length + 1];
                 c.Prev = new Vector3[bones.Length + 1];
+                c.LastAxis = new Vector3[bones.Length];
                 _chains.Add(c);
             }
             _driver = GetComponent<IFallDriver>();
@@ -84,6 +90,26 @@ namespace WhipItUp.Weapons
         }
 
         bool _held;
+
+        /// Rotation turning 'from' onto 'to' around a stable axis. Quaternion.FromToRotation picks an arbitrary axis when the two are
+        /// (nearly) opposite - in a coil that happens every frame and made the lash twist / spin; then the bone's last axis is reused.
+        static Quaternion Turn(Chain c, int i, Vector3 from, Vector3 to)
+        {
+            var f = from.normalized;
+            var t = to.normalized;
+            float angle = Vector3.Angle(f, t);
+            if (angle < 0.01f) return Quaternion.identity;
+            var axis = Vector3.Cross(f, t);
+            if (axis.sqrMagnitude < 1e-4f || angle > 170f)
+            {
+                var last = c.LastAxis[i];
+                axis = last.sqrMagnitude > 0.5f ? Vector3.ProjectOnPlane(last, f) : Vector3.Cross(f, Vector3.up);
+                if (axis.sqrMagnitude < 1e-6f) axis = Vector3.Cross(f, Vector3.right);
+            }
+            axis.Normalize();
+            c.LastAxis[i] = axis;
+            return Quaternion.AngleAxis(angle, axis);
+        }
 
         void OnEnable() { _primed = false; _held = GetComponentInParent<Character>() != null; if (_driver == null) _driver = GetComponent<IFallDriver>(); }
 
@@ -103,6 +129,7 @@ namespace WhipItUp.Weapons
             if (Grounded && Physics.Raycast(transform.position + Vector3.up * 0.5f, Vector3.down, out hit, 3f, GroundMask)) ground = hit.point.y + 0.01f;
             float keep = Mathf.Clamp01(1f - ModSettings.FallDamping.Value);
             float inertia = Mathf.Clamp01(ModSettings.FallInertia.Value);
+            float mismatch = 0f, maxTurn = 0f;
             for (int ci = 0; ci < _chains.Count; ci++)
             {
                 var c = _chains[ci];
@@ -147,10 +174,17 @@ namespace WhipItUp.Weapons
                     var b = c.Bones[i];
                     var restChild = i + 1 < n ? c.Bones[i + 1].position : b.TransformPoint(c.TailLocal);
                     var from = restChild - b.position;
-                    var to = c.Pos[i + 1] - b.position;
-                    if (from.sqrMagnitude > 1e-10f && to.sqrMagnitude > 1e-10f) b.rotation = Quaternion.FromToRotation(from, to) * b.rotation;
+                    var to = c.Pos[i + 1] - c.Pos[i];
+                    if (from.sqrMagnitude > 1e-10f && to.sqrMagnitude > 1e-10f)
+                    {
+                        maxTurn = Mathf.Max(maxTurn, Vector3.Angle(from, to));
+                        b.rotation = Turn(c, i, from, to) * b.rotation;
+                    }
+                    mismatch = Mathf.Max(mismatch, (b.position - c.Pos[i]).magnitude);
                 }
             }
+            LastMismatch = mismatch;
+            LastMaxTurn = maxTurn;
             if (!_primed) { _primed = true; ModLog.Verbose("FallChains: " + name + " primed (" + _chains.Count + " chains)"); }
         }
     }
