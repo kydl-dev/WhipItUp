@@ -19,13 +19,13 @@ namespace WhipItUp.Weapons
         static readonly AccessTools.FieldRef<Character, Animator> AnimatorRef = AccessTools.FieldRefAccess<Character, Animator>("m_animator");
         static readonly AccessTools.FieldRef<Humanoid, VisEquipment> VisRef = AccessTools.FieldRefAccess<Humanoid, VisEquipment>("m_visEquipment");
         static readonly AccessTools.FieldRef<VisEquipment, int> RightItemRef = AccessTools.FieldRefAccess<VisEquipment, int>("m_rightItem");
-        /// Stable hashes of every Paddle_V# prefab name (VisEquipment.m_rightItem holds the hash of the equipped item's prefab name).
-        static readonly HashSet<int> PaddleHashes = new HashSet<int>();
+        /// Stable hashes of every item with the mace attack 2 (Paddle_V#, Flogger_V#) (VisEquipment.m_rightItem holds the hash of the equipped item's prefab name).
+        static readonly HashSet<int> RollItems = new HashSet<int>();
 
         Player _player;
         string _phase = "idle";
 
-        public static bool RegisterPaddle(string prefabName) { return PaddleHashes.Add(prefabName.GetStableHashCode()); }
+        public static bool RegisterItem(string prefabName) { return RollItems.Add(prefabName.GetStableHashCode()); }
 
         void Awake() { _player = GetComponent<Player>(); }
 
@@ -33,7 +33,7 @@ namespace WhipItUp.Weapons
         {
             if (_player == null || !ModSettings.On) return;
             var vis = VisRef(_player);
-            if (vis == null || !PaddleHashes.Contains(RightItemRef(vis))) { SetPhase("idle", 0f, 0f); return; }
+            if (vis == null || !RollItems.Contains(RightItemRef(vis))) { SetPhase("idle", 0f, 0f); return; }
             var animator = AnimatorRef(_player);
             float t;
             if (animator == null || !TryStateTime(animator, out t)) { SetPhase("idle", 0f, 0f); return; }

@@ -44,6 +44,11 @@ namespace WhipItUp.EditorTools
 
             foreach (var path in paths.Where(p => p.EndsWith(".fbx", System.StringComparison.OrdinalIgnoreCase)))
             {
+                var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                var skinned = root != null ? root.GetComponentsInChildren<SkinnedMeshRenderer>(true) : new SkinnedMeshRenderer[0];
+                foreach (var smr in skinned)
+                    Debug.Log("[WhipItUpAssetSetup] " + path + ": skinned renderer '" + smr.name + "', " + smr.bones.Length + " bones, root bone " + (smr.rootBone != null ? smr.rootBone.name : "none")
+                              + ", model root rotation " + root.transform.localRotation.eulerAngles.ToString("F1") + " scale " + root.transform.localScale.ToString("F3"));
                 var mesh = AssetDatabase.LoadAllAssetsAtPath(path).OfType<Mesh>().FirstOrDefault();
                 if (mesh == null) { Debug.LogError("[WhipItUpAssetSetup] no mesh inside " + path); continue; }
                 Debug.Log("[WhipItUpAssetSetup] mesh '" + mesh.name + "' from " + path + ": " + mesh.vertexCount + " verts, " +
@@ -95,11 +100,15 @@ namespace WhipItUp.EditorTools
             mi.useFileScale = true;
             mi.materialImportMode = ModelImporterMaterialImportMode.None;
             mi.importAnimation = false;
-            mi.animationType = ModelImporterAnimationType.None;
+            // skinned items (an armature in the FBX, e.g. the flogger's fall bones) need a rig for their SkinnedMeshRenderer: Generic, no avatar
+            bool skinned = Path.GetFileNameWithoutExtension(path) == "Flogger" || Path.GetFileNameWithoutExtension(path) == "Whip";
+            mi.animationType = skinned ? ModelImporterAnimationType.Generic : ModelImporterAnimationType.None;
+            if (skinned) mi.avatarSetup = ModelImporterAvatarSetup.NoAvatar;
+            mi.optimizeGameObjects = false;      // the mod drives the bone transforms by name
             mi.isReadable = false;
             mi.importTangents = ModelImporterTangents.CalculateMikk;
             mi.importNormals = ModelImporterNormals.Import;
-            Debug.Log("[WhipItUpAssetSetup] model " + path + ": scale 1 (file scale), no materials, no animation, tangents Mikk");
+            Debug.Log("[WhipItUpAssetSetup] model " + path + ": scale 1 (file scale), no materials, no animation, rig " + mi.animationType + ", tangents Mikk");
         }
     }
 }

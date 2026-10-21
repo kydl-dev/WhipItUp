@@ -17,6 +17,7 @@ namespace WhipItUp.Weapons
         public const float CropBaseBleedPerSecond = 10f;
         public const float BluntGrowthPerRank = 0.40f;
         public const float BleedGrowthPerRank = 0.25f;
+        public const float BleedSeconds = 5f;
         public const float BaseDurability = 200f;
         public const float DurabilityStepPerRank = 50f;
         public const float UpgradeBluntFractionOfBase = 0.30f;       // +6 blunt per upgrade level, every rank

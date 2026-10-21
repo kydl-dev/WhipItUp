@@ -15,6 +15,9 @@ namespace WhipItUp.Weapons
     {
         public readonly string Family;
         public Mesh Mesh { get; private set; }
+        /// True when the model is a skinned mesh with bones (flogger, whip): the whole model is instanced and FallChains drives its bones.
+        public bool Skinned { get; private set; }
+        GameObject _model;
         readonly Dictionary<int, Texture2D> _albedo = new Dictionary<int, Texture2D>();
         Texture2D _normal, _metalGloss;
         /// The visual children made so far (all ranks): ApplyAlignment re-positions them when a Tunable changes.
@@ -28,8 +31,11 @@ namespace WhipItUp.Weapons
         {
             if (bundle == null) { ModLog.Error("WeaponArt: no asset bundle - " + Family + " cannot be added (rebuild the bundle in Unity: Valheim > Build AssetBundles)"); return Mesh != null; }
             var model = bundle.LoadAsset<GameObject>(Family);
+            _model = model;
             var filter = model != null ? model.GetComponentInChildren<MeshFilter>(true) : null;
-            Mesh = filter != null ? filter.sharedMesh : null;
+            var skin = model != null ? model.GetComponentInChildren<SkinnedMeshRenderer>(true) : null;
+            Skinned = skin != null;
+            Mesh = filter != null ? filter.sharedMesh : skin != null ? skin.sharedMesh : null;
             if (Mesh == null) ModLog.Error("WeaponArt: mesh '" + Family + "' is not in the bundle");
             else ModLog.Verbose("WeaponArt: mesh '" + Mesh.name + "' " + Mesh.vertexCount + " verts, bounds " + Mesh.bounds.size.ToString("F3"));
             string prefix = Family.ToLowerInvariant();
@@ -66,6 +72,7 @@ namespace WhipItUp.Weapons
             SetTexture(material, "_MetallicGlossMap", _metalGloss, "_METALLICGLOSSMAP");
 
             int made = 0;
+            if (Skinned) return ApplySkinned(prefab, filters, material, rotation, grip, scale);
             foreach (var f in filters)
             {
                 var old = f.GetComponent<MeshRenderer>();
@@ -84,6 +91,53 @@ namespace WhipItUp.Weapons
             }
             ModLog.Verbose("WeaponArt: " + prefab.name + ": " + made + " mesh(es) replaced, albedo " + albedo.name + ", shader " + material.shader.name);
             return made > 0;
+        }
+
+        /// Skinned model (flogger / whip): an instance of the whole bundle model (mesh + bones) under each vanilla mesh holder, with
+        /// FallChains on it. Expected outcome: at least one visual made (returns that check).
+        bool ApplySkinned(GameObject prefab, MeshFilter[] filters, Material material, Func<Vector3> rotation, Func<float> grip, Func<float> scale)
+        {
+            int made = 0;
+            foreach (var f in filters)
+            {
+                var old = f.GetComponent<MeshRenderer>();
+                var visual = UnityEngine.Object.Instantiate(_model, f.transform, false);
+                visual.name = VisualName;
+                foreach (var t in visual.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = f.gameObject.layer;
+                foreach (var smr in visual.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                {
+                    smr.sharedMaterials = new[] { material };
+                    smr.updateWhenOffscreen = true;           // falls swing outside the rest bounds
+                    if (old != null) { smr.shadowCastingMode = old.shadowCastingMode; smr.receiveShadows = old.receiveShadows; }
+                }
+                var anim = visual.GetComponent<Animator>();
+                if (anim != null) UnityEngine.Object.DestroyImmediate(anim);   // no animation: FallChains moves the bones
+                visual.AddComponent<FallChains>();
+                if (old != null) UnityEngine.Object.DestroyImmediate(old);
+                UnityEngine.Object.DestroyImmediate(f);
+                _visuals.Add(visual.transform);
+                Align(visual.transform, rotation(), grip(), scale());
+                made++;
+            }
+            ModLog.Verbose("WeaponArt: " + prefab.name + ": " + made + " skinned visual(s) with FallChains, material " + material.name + ", shader " + material.shader.name);
+            return made > 0;
+        }
+
+        /// A bare object with the family mesh (rest pose) + the item's material for the icon render. Null if the item has no visual.
+        public GameObject CreateIconSource(GameObject itemPrefab, string name)
+        {
+            Material mat = null;
+            foreach (var r in itemPrefab.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r.transform.name != VisualName && (r.transform.parent == null || r.transform.parent.name != VisualName) && !(r is SkinnedMeshRenderer)) continue;
+                mat = r.sharedMaterial;
+                break;
+            }
+            if (mat == null || Mesh == null) return null;
+            var go = new GameObject(name + "_IconSource");
+            go.AddComponent<MeshFilter>().sharedMesh = Mesh;
+            go.AddComponent<MeshRenderer>().sharedMaterial = mat;
+            return go;
         }
 
         /// Re-applies the hand alignment to every visual made so far (called when a Tunable changes in KydlTools).

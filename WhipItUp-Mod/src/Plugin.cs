@@ -48,7 +48,8 @@ namespace WhipItUp
             Bundle = LoadBundle();
             Weapons.WhipSkill.Register();          // before the game creates the player's Skills
             Sounds.WeaponSounds.Load(Bundle);
-            Weapons.PaddleItems.Register(Bundle);
+            new Weapons.PaddleItems().Register(Bundle, a => ModSettings.PaddleAlignmentChanged += a);
+            new Weapons.FloggerItems().Register(Bundle, a => ModSettings.FloggerAlignmentChanged += a);
             UiInputLock.Install(ModGuid);           // the character does not move while one of the mod's menus is open
             new Harmony(ModGuid).PatchAll(Assembly.GetExecutingAssembly());
             ModLog.Verbose("Plugin: Awake finished (Harmony patches applied, menu key " + ModSettings.MenuKey.Value + ")");
