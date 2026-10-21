@@ -78,7 +78,8 @@ namespace WhipItUp.Weapons
             if (back >= 1f && Time.time >= _nextDiag)
             {
                 _nextDiag = Time.time + 3f;     // coil health every 3 s while coiled (debug log only)
-                ModLog.Verbose("WhipMotion: coil - bone/node mismatch " + chains.LastMismatch.ToString("0.000") + " m, max bone turn " + chains.LastMaxTurn.ToString("0") + " deg");
+                ModLog.Verbose("WhipMotion: coil - bone/node mismatch " + chains.LastMismatch.ToString("0.000") + " m, max bone turn " + chains.LastMaxTurn.ToString("0")
+                    + " deg, radius " + ModSettings.WhipCoilRadius.Value + " m, bone " + chains.SegmentLength(0, 1).ToString("0.000") + " m, lossyScale " + transform.lossyScale.ToString("F2"));
             }
         }
 
@@ -94,16 +95,19 @@ namespace WhipItUp.Weapons
             int n = chains.NodeCount(0);
             if (_coil == null || _coil.Length != n) _coil = new Vector3[n];
             var start = chains.RootPosition(0);
-            var axis = transform.up;                                          // handle direction (model +Y)
+            // handle axis from the model origin (middle of the grip) to where the lash starts - no reliance on transform axes or
+            // lossyScale (the item's attach chain carries scales that made the coil metres wide: TEST-007 log, mismatch 150 m)
+            var axis = start - transform.position;
+            if (axis.sqrMagnitude < 1e-8f) axis = transform.up;
+            axis.Normalize();
             var down = Vector3.ProjectOnPlane(Vector3.down, axis);
             if (down.sqrMagnitude < 1e-4f) down = Vector3.ProjectOnPlane(transform.right, axis);
             down.Normalize();
             var normal = Vector3.Cross(axis, down).normalized;
-            float scale = transform.lossyScale.y;
-            float r = ModSettings.WhipCoilRadius.Value * scale;
+            float r = Mathf.Max(0.03f, ModSettings.WhipCoilRadius.Value);     // world metres
             // centre straight below the lash start: the lash leaves the handle going forward (tangent = handle axis), loops down,
             // back and up - no sharp turn at the collar. CoilDrop slides the whole coil along the handle afterwards.
-            var shift = axis * (ModSettings.WhipCoilDrop.Value * scale);
+            var shift = axis * ModSettings.WhipCoilDrop.Value;
             var centre = start + down * r;
             var d0 = start - centre;
             float r0 = d0.magnitude;
@@ -119,7 +123,7 @@ namespace WhipItUp.Weapons
                 float da = 2f * Mathf.Asin(Mathf.Clamp(len / (2f * rr), -1f, 1f));
                 a += da;
                 turned += da;
-                var p = centre + (axis * Mathf.Cos(a) + down * Mathf.Sin(a)) * rr + normal * (0.012f * scale * turned / (2f * Mathf.PI));
+                var p = centre + (axis * Mathf.Cos(a) + down * Mathf.Sin(a)) * rr + normal * (0.02f * turned / (2f * Mathf.PI));
                 // exact length from the previous point (the side shift and the radius change would stretch it a little)
                 var d = p - _coil[i - 1];
                 _coil[i] = d.sqrMagnitude > 1e-10f ? _coil[i - 1] + d.normalized * len : p;
