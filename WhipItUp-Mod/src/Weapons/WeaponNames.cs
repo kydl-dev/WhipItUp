@@ -18,7 +18,7 @@ namespace WhipItUp.Weapons
             { "whipitup_paddle_v6", "Ask Nicely" },
             { "whipitup_paddle_v7", "Seal of Approval" },
             { "whipitup_flogger_v1", "Neck & Tails" },
-            { "whipitup_flogger_v2", "Greydwarf Fringe" },
+            { "whipitup_flogger_v2", "Brutalizer" },
             { "whipitup_flogger_v3", "Bear Necessities" },
             { "whipitup_flogger_v4", "Fenring Fringe" },
             { "whipitup_flogger_v5", "Fuling Around" },
