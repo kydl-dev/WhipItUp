@@ -16,8 +16,24 @@ namespace WhipItUp.Weapons
         protected override float Grip { get { return ModSettings.FloggerGrip.Value; } }
         protected override float Scale { get { return ModSettings.FloggerScale.Value; } }
         protected override Sounds.HitSound HitSound { get { return Sounds.HitSound.FloggerSlap; } }
-        /// Icon (user 2026-10-21): the flogger hanging, pommel up and the falls straight down (their rest pose turned upside down).
+        /// Icon (user 2026-10-21): pommel up, the falls hanging down with the body at 30 degrees from the handle line.
         protected override Quaternion IconRotation { get { return Quaternion.Euler(0f, 0f, 180f); } }
+        const float IconBodyAngle = 30f;
+        protected override System.Action<Transform, Transform[]> PoseForIcon { get { return BendForIcon; } }
+
+        /// Turns the first bone of every fall chain by IconBodyAngle around the model's Z axis (the icon camera's view axis):
+        /// the whole body of falls swings 30 degrees away from the handle line, in the picture plane.
+        static void BendForIcon(Transform root, Transform[] bones)
+        {
+            int bent = 0;
+            foreach (var b in bones)
+            {
+                if (!b.name.EndsWith("_0")) continue;           // fall_KK_0 = first bone of chain KK; the rest follow it
+                b.RotateAround(b.position, root.forward, IconBodyAngle);
+                bent++;
+            }
+            ModLog.Verbose("FloggerItems: icon pose - " + bent + " fall chain(s) turned " + IconBodyAngle + " degrees from the handle");
+        }
         protected override float MainDamage(int rank) { return Ladder.CropBlunt(rank); }
 
         protected override bool ApplyDamage(ItemDrop.ItemData.SharedData shared, int rank, string name)
