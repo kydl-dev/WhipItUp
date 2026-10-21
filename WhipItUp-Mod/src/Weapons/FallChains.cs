@@ -139,13 +139,15 @@ namespace WhipItUp.Weapons
                 var target = new Vector3[n + 1];
                 for (int i = 0; i < n; i++) target[i] = c.Bones[i].position;
                 target[n] = c.Bones[n - 1].TransformPoint(c.TailLocal);
-                if (Override != null) for (int i = 1; i <= n; i++) target[i] = Override(ci, i);
+                // prime / teleport: start from the REST pose and measure the bone lengths there (before any driver override: the whip's
+                // coil is built from these lengths, so measuring the override made them 0 - lash stayed straight, TEST-007 log)
                 if (!_primed || (target[0] - c.Pos[0]).sqrMagnitude > TeleportDistance * TeleportDistance)
                 {
                     for (int i = 0; i <= n; i++) { c.Pos[i] = target[i]; c.Prev[i] = target[i]; }
                     for (int i = 1; i <= n; i++) c.Length[i - 1] = (target[i] - target[i - 1]).magnitude;
                     continue;
                 }
+                if (Override != null) for (int i = 1; i <= n; i++) target[i] = Override(ci, i);
                 // root follows the handle; inertia < 1 lets the falls partly move with it
                 var rootMove = target[0] - c.Pos[0];
                 c.Pos[0] = target[0];

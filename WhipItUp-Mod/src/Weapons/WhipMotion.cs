@@ -91,7 +91,7 @@ namespace WhipItUp.Weapons
         /// side by side (each loop shifted along the plane normal). Expected outcome: a coil with one point per node.
         bool BuildCoil(FallChains chains)
         {
-            if (chains.ChainCount == 0) return chains.ChainCount > 0;
+            if (chains.ChainCount == 0 || chains.SegmentLength(0, 1) <= 1e-5f) return chains.ChainCount > 0 && chains.SegmentLength(0, 1) > 1e-5f;   // not primed yet
             int n = chains.NodeCount(0);
             if (_coil == null || _coil.Length != n) _coil = new Vector3[n];
             var start = chains.RootPosition(0);
