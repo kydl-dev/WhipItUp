@@ -143,6 +143,7 @@ namespace WhipItUp.Weapons
                 });
                 if (icon == null) { ModLog.Warn("PaddleItems: icon render returned nothing - " + name + " keeps the Club's icon"); return; }
                 shared.m_icons = new[] { icon };
+                if (name == Ladder.PrefabName(Family, 1)) WhipSkill.SetIcon(icon, name, false);   // placeholder skill icon (T-007)
                 ModLog.Verbose("PaddleItems: " + name + " icon rendered");
             }
             catch (NullReferenceException ex) { ModLog.Warn("PaddleItems: icon render failed (missing render setup) - " + name + " keeps the Club's icon. " + ex.Message); }
