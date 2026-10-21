@@ -21,6 +21,21 @@ namespace WhipItUp.Weapons
         protected override float Grip { get { return ModSettings.WhipGrip.Value; } }
         protected override float Scale { get { return ModSettings.WhipScale.Value; } }
         protected override Sounds.HitSound HitSound { get { return Sounds.HitSound.WhipSlap; } }
+        /// Icon (user 2026-10-21): the whip with the lash coiled (also the Whips skill icon, from Whip_V1).
+        protected override float IconTiltDegrees { get { return 30f; } }
+        protected override System.Action<Transform, Transform[]> PoseForIcon { get { return CoilForIcon; } }
+
+        /// Bends every lash bone around the model's Z axis (the icon camera looks along Z) so the lash winds into an outward spiral.
+        static void CoilForIcon(Transform root, Transform[] bones)
+        {
+            int n = bones.Length;
+            for (int i = 0; i < n; i++)
+            {
+                float angle = 52f * (1f - 0.35f * i / Mathf.Max(1, n - 1));    // tighter first, wider later: loops beside each other
+                bones[i].rotation = Quaternion.AngleAxis(angle, root.forward) * bones[i].rotation;
+            }
+        }
+
         protected override float MainDamage(int rank) { return Ladder.CropBlunt(rank); }
         protected override void DecorateVisual(GameObject visual) { visual.AddComponent<WhipMotion>(); }
         protected override void OnFirstIcon(Sprite icon) { WhipSkill.SetIcon(icon, "Whip_V1", true); }

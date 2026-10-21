@@ -27,7 +27,34 @@ namespace WhipItUp.Weapons
         /// Extra components for each skinned visual (the whip adds WhipMotion). Set by the family before Apply.
         public Action<GameObject> DecorateVisual;
 
+        /// Poses the bones of a fresh model instance for the inventory icon (flogger: falls hanging; whip: lash coiled). Skinned models only.
+        public Action<Transform, Transform[]> PoseForIcon;
+
         public WeaponArt(string family) { Family = family; }
+
+        /// A static copy of the skinned mesh in the PoseForIcon pose (BakeMesh). Null on failure (the icon then uses the rest pose).
+        Mesh BakePosed(string name)
+        {
+            GameObject inst = null;
+            try
+            {
+                inst = UnityEngine.Object.Instantiate(_model);
+                var anim = inst.GetComponent<Animator>();
+                if (anim != null) UnityEngine.Object.DestroyImmediate(anim);
+                var smr = inst.GetComponentInChildren<SkinnedMeshRenderer>(true);
+                if (smr == null) return null;
+                var bones = new List<Transform>();
+                foreach (var t in inst.GetComponentsInChildren<Transform>(true)) if (t.name.StartsWith("fall_")) bones.Add(t);
+                bones.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+                PoseForIcon(inst.transform, bones.ToArray());
+                var baked = new Mesh { name = name + "_IconMesh" };
+                smr.BakeMesh(baked);
+                ModLog.Verbose("WeaponArt: " + name + " icon mesh baked in its icon pose (" + bones.Count + " bones posed, " + baked.vertexCount + " verts)");
+                return baked;
+            }
+            catch (Exception ex) { ModLog.Warn("WeaponArt: icon pose for " + name + " failed (" + ex.Message + ") - rest pose used"); return null; }
+            finally { if (inst != null) UnityEngine.Object.DestroyImmediate(inst); }
+        }
 
         /// Loads everything; logs what is missing. Expected outcome: a mesh and all 7 albedos (returns that check).
         public bool Load(AssetBundle bundle)
@@ -138,8 +165,9 @@ namespace WhipItUp.Weapons
                 break;
             }
             if (mat == null || Mesh == null) return null;
+            var mesh = Skinned && PoseForIcon != null ? BakePosed(name) : Mesh;
             var go = new GameObject(name + "_IconSource");
-            go.AddComponent<MeshFilter>().sharedMesh = Mesh;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh != null ? mesh : Mesh;
             go.AddComponent<MeshRenderer>().sharedMaterial = mat;
             return go;
         }

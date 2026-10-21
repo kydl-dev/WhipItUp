@@ -16,6 +16,8 @@ namespace WhipItUp.Weapons
         protected override float Grip { get { return ModSettings.FloggerGrip.Value; } }
         protected override float Scale { get { return ModSettings.FloggerScale.Value; } }
         protected override Sounds.HitSound HitSound { get { return Sounds.HitSound.FloggerSlap; } }
+        /// Icon (user 2026-10-21): the flogger hanging, pommel up and the falls straight down (their rest pose turned upside down).
+        protected override Quaternion IconRotation { get { return Quaternion.Euler(0f, 0f, 180f); } }
         protected override float MainDamage(int rank) { return Ladder.CropBlunt(rank); }
 
         protected override bool ApplyDamage(ItemDrop.ItemData.SharedData shared, int rank, string name)

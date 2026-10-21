@@ -26,6 +26,10 @@ namespace WhipItUp.Weapons
         protected abstract float Scale { get; }
         protected virtual Sounds.HitSound HitSound { get { return Sounds.HitSound.Slap; } }
         protected virtual float IconTiltDegrees { get { return 45f; } }
+        /// Rotation of the model in the icon render (Jotunn's camera looks along -Z, screen-right = world -X; the model's long axis is +Y).
+        protected virtual Quaternion IconRotation { get { return Quaternion.Euler(0f, 0f, IconTiltDegrees); } }
+        /// Bone pose for the icon (skinned families). Null = rest pose.
+        protected virtual Action<Transform, Transform[]> PoseForIcon { get { return null; } }
 
         protected WeaponArt Art;
         protected readonly List<CustomItem> Items = new List<CustomItem>();
@@ -49,7 +53,7 @@ namespace WhipItUp.Weapons
         /// Called from Plugin.Awake once the bundle is loaded. Expected outcome: the art is loaded and the item hook is set.
         public bool Register(AssetBundle bundle, Action<Action> subscribeAlignmentChanged)
         {
-            Art = new WeaponArt(Family) { DecorateVisual = DecorateVisual };
+            Art = new WeaponArt(Family) { DecorateVisual = DecorateVisual, PoseForIcon = PoseForIcon };
             bool loaded = Art.Load(bundle);
             if (Art.Mesh == null) { ModLog.Error(Family + "Items: no " + Family + " mesh - the " + Family + " items are NOT added"); return Art.Mesh != null; }
             PrefabManager.OnVanillaPrefabsAvailable += AddAll;
@@ -153,7 +157,7 @@ namespace WhipItUp.Weapons
                 if (source == null) { ModLog.Warn(Family + "Items: no visual on " + name + " - it keeps the " + VanillaBase + "'s icon"); return; }
                 var icon = RenderManager.Instance.Render(new RenderManager.RenderRequest(source)
                 {
-                    Width = 128, Height = 128, Rotation = Quaternion.Euler(0f, 0f, IconTiltDegrees), UseCache = false,
+                    Width = 128, Height = 128, Rotation = IconRotation, UseCache = false,
                 });
                 if (icon == null) { ModLog.Warn(Family + "Items: icon render returned nothing - " + name + " keeps the " + VanillaBase + "'s icon"); return; }
                 shared.m_icons = new[] { icon };
