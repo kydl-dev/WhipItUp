@@ -9,3 +9,6 @@
 - `exports/`: FBX for Unity (export contract in `exports/README.md` once the first export is done).
 - `scripts/medallion_knot.py`: the medallion knot (distance-field render; `python scripts/medallion_knot.py renders/knot.png` previews it). Used by paddle_textures.py.
 - `reference/TrophyWolf_icon_64.png`: the vanilla TrophyWolf icon, cropped from the rip's IconAtlas (x 2088, y 1800, 64x64, Unity y-up) for the pommel inlay.
+- Shared: `scripts/mesh_tools.py` (lathe, slab, primitive UV helpers), `scripts/rank_palette.py` (7 rank colours + 2nd colour).
+- Flogger: `scripts/flogger_layout.py`, `build_flogger.py` (objects `Flogger` skinned to armature `FloggerRig`: root + fall_KK_B bones), `flogger_textures.py`.
+  The preview pose (bent falls) is set only for renders; the rig stays in rest pose in the .blend.

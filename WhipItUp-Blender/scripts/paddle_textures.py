@@ -17,6 +17,7 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import paddle_layout as L  # noqa: E402
 import medallion_knot  # noqa: E402
+from rank_palette import PALETTE, INLAY_OVERRIDE, luminance, contrast_colour  # noqa: E402,F401
 
 N = L.TEXTURE_SIZE
 RNG = np.random.default_rng(1234)
@@ -25,21 +26,8 @@ ICON_RGB = np.zeros((N, N, 3), np.float32)
 ICON_A = np.zeros((N, N), np.float32)
 MED_BG = np.zeros((N, N), bool)                 # recessed background inside the medallion / valknut
 
-# Rank palette sampled from the RidingCropMod albedos (median of the shaft / fitting block / collar areas).
-# rank: (crop texture, main leather, fittings, accent)
-PALETTE = {
-    1: ("crop_Albedo",    (15, 15, 17),    (224, 182, 106), (16, 16, 18)),
-    2: ("crop_Albedo_V1", (195, 16, 23),   (14, 14, 16),    (222, 222, 222)),
-    3: ("crop_Albedo_V3", (15, 15, 17),    (185, 15, 22),   (199, 16, 24)),
-    4: ("crop_Albedo_V4", (219, 219, 219), (14, 14, 16),    (20, 20, 22)),
-    5: ("crop_Albedo_V6", (136, 56, 6),    (14, 14, 16),    (20, 20, 19)),
-    6: ("crop_Albedo_V2", (14, 68, 27),    (14, 14, 16),    (17, 20, 22)),
-    7: ("crop_Albedo_V5", (141, 136, 127), (110, 66, 35),   (108, 65, 34)),
-}
 WOOD = (112, 74, 42)
 WOOD_DARK = (70, 44, 24)
-# Per-rank medallion strand colour override (user: V6 gets a muddy, Asksvin-like yellow instead of black on green)
-INLAY_OVERRIDE = {6: (170, 150, 70)}
 TOOL_BG = 0.45      # recessed background inside the medallion = main x this
 TOOL_GROOVE = 0.30  # cut lines = main x this
 BURNISH = 0.60      # edge burnish = main x this
@@ -173,20 +161,6 @@ def stitches(X, Z, de):
     ang = np.arctan2(Z - (L.BLADE_BOTTOM + L.BLADE_TOP) / 2, X)
     dash = (np.sin(ang * 110) > -0.2)
     return near & dash & (Z > L.GUARD[1] + 0.002)
-
-
-def luminance(c):
-    r, g, b = [(v / 255.0) ** 2.2 for v in c]
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b
-
-
-def contrast_colour(main, fit, acc):
-    """Medallion strand colour (user 2026-10-21, 'auto: highest contrast'): the fitting or accent colour whose
-    WCAG contrast ratio against the rank's main leather is the highest."""
-    def ratio(a, b):
-        la, lb = luminance(a) + 0.05, luminance(b) + 0.05
-        return max(la, lb) / min(la, lb)
-    return fit if ratio(fit, main) >= ratio(acc, main) else acc
 
 
 # ------------------------------------------------------------------------------------------------ build
