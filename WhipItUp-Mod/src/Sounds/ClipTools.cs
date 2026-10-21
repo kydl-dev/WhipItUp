@@ -52,6 +52,25 @@ namespace WhipItUp.Sounds
             return clip;
         }
 
+        /// Where the impact starts (seconds): first sample at OnsetFraction of the peak, minus KeepBeforeSeconds. Reads the data, changes nothing.
+        public static float OnsetSeconds(AudioClip clip, string label)
+        {
+            try
+            {
+                float[] data;
+                if (!Read(clip, out data, label)) return 0f;
+                float peak = 0f;
+                for (int i = 0; i < data.Length; i++) peak = Mathf.Max(peak, Mathf.Abs(data[i]));
+                int first = 0;
+                for (int i = 0; i < data.Length; i++) if (Mathf.Abs(data[i]) >= OnsetFraction * peak) { first = i / clip.channels; break; }
+                float t = Mathf.Max(0f, (float)first / clip.frequency - KeepBeforeSeconds);
+                ModLog.Verbose("ClipTools: " + label + ": impact of '" + clip.name + "' at " + t.ToString("0.000") + " s (peak " + peak.ToString("0.000") + ")");
+                return t;
+            }
+            catch (TargetInvocationException ex) { ModLog.Warn("ClipTools: " + label + ": Get/SetData failed (" + (ex.InnerException ?? ex).Message + ") - plays from 0"); return 0f; }
+            catch (Exception ex) { ModLog.Warn("ClipTools: " + label + ": onset search failed (" + ex.Message + ") - plays from 0"); return 0f; }
+        }
+
         public static AudioClip TrimLeadIn(AudioClip source, string label)
         {
             try

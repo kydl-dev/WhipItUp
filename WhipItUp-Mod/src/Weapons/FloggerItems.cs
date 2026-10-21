@@ -15,6 +15,7 @@ namespace WhipItUp.Weapons
         protected override Vector3 Rotation { get { return ModSettings.FloggerRotation; } }
         protected override float Grip { get { return ModSettings.FloggerGrip.Value; } }
         protected override float Scale { get { return ModSettings.FloggerScale.Value; } }
+        protected override Sounds.HitSound HitSound { get { return Sounds.HitSound.FloggerSlap; } }
         protected override float MainDamage(int rank) { return Ladder.CropBlunt(rank); }
 
         protected override bool ApplyDamage(ItemDrop.ItemData.SharedData shared, int rank, string name)

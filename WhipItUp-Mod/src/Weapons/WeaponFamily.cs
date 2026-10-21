@@ -24,6 +24,7 @@ namespace WhipItUp.Weapons
         protected abstract Vector3 Rotation { get; }
         protected abstract float Grip { get; }
         protected abstract float Scale { get; }
+        protected virtual Sounds.HitSound HitSound { get { return Sounds.HitSound.Slap; } }
         protected virtual float IconTiltDegrees { get { return 45f; } }
 
         protected WeaponArt Art;
@@ -83,7 +84,7 @@ namespace WhipItUp.Weapons
             var shared = item.ItemDrop.m_itemData.m_shared;
             ApplyStats(shared, rank, name);
             ApplyExtras(shared, rank, name);
-            Sounds.WeaponSounds.Apply(shared, name);
+            Sounds.WeaponSounds.Apply(shared, name, HitSound);
             ItemManager.Instance.AddItem(item);
             Items.Add(item);
             RenderIcon(item, shared, name, rank);

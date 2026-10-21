@@ -85,13 +85,15 @@ namespace WhipItUp.EditorTools
         {
             var settings = ai.defaultSampleSettings;
             settings.loadType = AudioClipLoadType.DecompressOnLoad;
-            settings.compressionFormat = AudioCompressionFormat.Vorbis;
-            settings.quality = 0.7f;
+            // the flogger slap is used exactly as the user's file (user: "don't cut or anything"): PCM, no re-compression
+            bool asIs = Path.GetFileNameWithoutExtension(path) == "sfx_flogger_slap";
+            settings.compressionFormat = asIs ? AudioCompressionFormat.PCM : AudioCompressionFormat.Vorbis;
+            settings.quality = asIs ? 1f : 0.7f;
             settings.preloadAudioData = true;
             ai.defaultSampleSettings = settings;
             ai.forceToMono = false;
             ai.loadInBackground = false;
-            Debug.Log("[WhipItUpAssetSetup] sound " + path + ": Decompress On Load, Vorbis 70%, preload");
+            Debug.Log("[WhipItUpAssetSetup] sound " + path + ": Decompress On Load, " + (asIs ? "PCM (as the file is)" : "Vorbis 70%") + ", preload");
         }
 
         private static void SetUpModel(string path, ModelImporter mi)

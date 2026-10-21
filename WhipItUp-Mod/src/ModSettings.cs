@@ -32,6 +32,8 @@ namespace WhipItUp
         public static readonly Tunable<float> SlapVolume = new Tunable<float>("Sound", "SlapVolume", 2.2f, "Hit (slap) volume (user setting 2.2; the game plays anything above 1 at full volume - SlapGain makes it louder still).");
         public static readonly Tunable<float> WhooshGain = new Tunable<float>("Sound", "WhooshGain", 1.5f, "Loudness multiplier on the whoosh data (above ~0.7 peaks are soft-limited).");
         public static readonly Tunable<float> SlapGain = new Tunable<float>("Sound", "SlapGain", 1f, "Loudness multiplier on the slap data (1 = the file as it is; more squashes the peaks).");
+        public static readonly Tunable<float> FloggerSlapVolume = new Tunable<float>("Sound", "FloggerSlapVolume", 1f, "Flogger hit volume (the file is played as it is).");
+        public static readonly Tunable<bool> FloggerSlapSync = new Tunable<bool>("Sound", "FloggerSlapSync", true, "Start the flogger hit sound at its impact (skips the lead-in at playback, the file is not changed).");
         public static readonly Tunable<bool> SlapTrim = new Tunable<bool>("Sound", "SlapTrim", true, "Cut the quiet 50 ms lead-in of the slap so it lands on the hit (also normalises it).");
 
         // Paddle in the hand (degrees around the model's own axes; grip in metres along the handle, + = hand toward the blade; scale 1 = as modelled, 0.56 m)

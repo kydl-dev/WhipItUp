@@ -19,14 +19,13 @@ namespace WhipItUp.Sounds
         static void Prefix(EffectList __instance)
         {
             var entries = __instance != null ? __instance.m_effectPrefabs : null;
-            var slap = WeaponSounds.SlapPrefab;
             var whoosh = WeaponSounds.WhooshPrefab;
-            if (entries == null || (slap == null && whoosh == null)) return;
+            if (entries == null) return;
             foreach (var e in entries)
             {
                 if (e == null || e.m_prefab == null) continue;
                 if (e.m_prefab == whoosh) { ModLog.Verbose("Sound: frame " + Time.frameCount + " whoosh requested"); continue; }
-                if (e.m_prefab != slap) continue;
+                if (!WeaponSounds.IsHitPrefab(e.m_prefab)) continue;
                 float now = Time.time;
                 bool duplicate = now >= _lastSlap && now - _lastSlap < SameSwingSeconds;
                 e.m_enabled = !duplicate;                    // EffectList.Create skips disabled entries
