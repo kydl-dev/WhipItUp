@@ -43,6 +43,8 @@ namespace WhipItUp.Weapons
 
         public void Drive(FallChains chains, float dt)
         {
+            // the game instantiates the equipped visual first and parents it to the hand afterwards: look the holder up until found
+            if (_holder == null) _holder = GetComponentInParent<Character>();
             if (_holder == null) { SetMode("free (dropped)"); return; }
             bool attacking = IsAttacking();
             _sinceAttack = attacking ? 0f : _sinceAttack + dt;

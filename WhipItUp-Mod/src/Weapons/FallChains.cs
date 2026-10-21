@@ -88,7 +88,8 @@ namespace WhipItUp.Weapons
         {
             if (_chains.Count == 0) return;
             float dt = Mathf.Clamp(Time.deltaTime, 0.0001f, 1f / 30f);
-            Override = null; Pull = -1f; GravityScale = 1f; Grounded = !_held;
+            Override = null; Pull = -1f; GravityScale = 1f; if (!_held) _held = GetComponentInParent<Character>() != null;   // parented to the hand after OnEnable
+            Grounded = !_held;
             if (_driver != null) _driver.Drive(this, dt);
             var g = Vector3.down * ModSettings.FallGravity.Value * GravityScale * dt * dt;
             // shape keeping: a weak pull toward the rest shape per second (linear; at the user's 0.03 gravity wins and the falls hang limp);
