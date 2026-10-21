@@ -91,6 +91,28 @@ namespace WhipItUp.Weapons
 
         bool _held;
 
+        int _primes;
+
+        /// Debug log of a (re)prime: why, held or not, and every bone's name, measured length, parent and world position.
+        void LogPrime(int ci, Chain c, Vector3[] target, string why)
+        {
+            _primes++;
+            if (!ModLog.DebugOn) return;
+            var holder = GetComponentInParent<Character>();
+            float total = 0f;
+            foreach (var l in c.Length) total += l;
+            ModLog.Verbose("FallChains: " + name + " chain " + ci + " " + why + " #" + _primes + " - held " + _held + " (holder " + (holder != null ? holder.name : "none")
+                + "), parent " + (transform.parent != null ? transform.parent.name : "none") + ", lossyScale " + transform.lossyScale.ToString("F2") + ", "
+                + c.Bones.Length + " bones, total length " + total.ToString("0.000") + " m");
+            for (int i = 0; i < c.Bones.Length; i++)
+            {
+                var b = c.Bones[i];
+                ModLog.Verbose("FallChains:   " + b.name + " length " + c.Length[i].ToString("0.0000") + " m, parent " + (b.parent != null ? b.parent.name : "none")
+                    + ", world " + target[i].ToString("F3") + ", local " + b.localPosition.ToString("F4") + ", localScale " + b.localScale.ToString("F2"));
+            }
+            ModLog.Verbose("FallChains:   tip world " + target[c.Bones.Length].ToString("F3"));
+        }
+
         /// Rotation turning 'from' onto 'to' around a stable axis. Quaternion.FromToRotation picks an arbitrary axis when the two are
         /// (nearly) opposite - in a coil that happens every frame and made the lash twist / spin; then the bone's last axis is reused.
         static Quaternion Turn(Chain c, int i, Vector3 from, Vector3 to)
@@ -141,10 +163,13 @@ namespace WhipItUp.Weapons
                 target[n] = c.Bones[n - 1].TransformPoint(c.TailLocal);
                 // prime / teleport: start from the REST pose and measure the bone lengths there (before any driver override: the whip's
                 // coil is built from these lengths, so measuring the override made them 0 - lash stayed straight, TEST-007 log)
-                if (!_primed || (target[0] - c.Pos[0]).sqrMagnitude > TeleportDistance * TeleportDistance)
+                bool teleport = _primed && (target[0] - c.Pos[0]).sqrMagnitude > TeleportDistance * TeleportDistance;
+                if (!_primed || teleport)
                 {
+                    float jump = _primed ? (target[0] - c.Pos[0]).magnitude : 0f;
                     for (int i = 0; i <= n; i++) { c.Pos[i] = target[i]; c.Prev[i] = target[i]; }
                     for (int i = 1; i <= n; i++) c.Length[i - 1] = (target[i] - target[i - 1]).magnitude;
+                    LogPrime(ci, c, target, teleport ? "re-prime (handle jumped " + jump.ToString("0.00") + " m)" : "first prime");
                     continue;
                 }
                 if (Override != null) for (int i = 1; i <= n; i++) target[i] = Override(ci, i);

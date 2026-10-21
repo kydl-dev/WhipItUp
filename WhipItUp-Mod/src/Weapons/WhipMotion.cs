@@ -75,6 +75,14 @@ namespace WhipItUp.Weapons
             chains.GravityScale = 1f - back;
             chains.Snap = back * back;                 // ends fully kinematic: the settled coil does not wobble or spin
             SetMode(back < 1f ? "coiling" : "coiled");
+            if (back >= 1f && _coil != null && !_coilLogged)
+            {
+                _coilLogged = true;
+                var sb = new System.Text.StringBuilder("WhipMotion: coil points (world): ");
+                for (int i = 0; i < _coil.Length; i += 4) sb.Append(i).Append('=').Append(_coil[i].ToString("F2")).Append(' ');
+                ModLog.Verbose(sb.ToString());
+            }
+            if (back < 1f) _coilLogged = false;
             if (back >= 1f && Time.time >= _nextDiag)
             {
                 _nextDiag = Time.time + 3f;     // coil health every 3 s while coiled (debug log only)
@@ -85,6 +93,8 @@ namespace WhipItUp.Weapons
 
         Vector3[] _coil;
         float _nextDiag;
+        bool _radiusWarned;
+        bool _coilLogged;
 
         /// The idle coil in world space, rebuilt every frame from the real chain (node spacing = the simulated bone lengths, so the
         /// length constraint never fights the targets): loops hanging under the hand in the vertical plane through the handle axis,
@@ -115,12 +125,26 @@ namespace WhipItUp.Weapons
             _coil[0] = start;
             // points on the circle spaced by the CHORD of each bone (2 R sin(da/2) = bone length), so the targets keep the bone
             // lengths exactly; the first point sits on a circle of radius r0 through the lash start and the radius eases to r
+            // a bone longer than the circle's diameter cannot be a chord of it: grow the radius instead of clamping the angle
+            float longest = 0f;
+            for (int i = 1; i < n; i++) longest = Mathf.Max(longest, chains.SegmentLength(0, i));
+            float minR = longest * 0.5f * 1.05f;
+            if (r < minR)
+            {
+                if (!_radiusWarned) ModLog.Warn("WhipMotion: CoilRadius " + r.ToString("0.000") + " m is smaller than half the longest bone (" + longest.ToString("0.000") + " m) - using " + minR.ToString("0.000") + " m");
+                _radiusWarned = true;
+                r = minR;
+                centre = start + down * r;
+                d0 = start - centre;
+                r0 = d0.magnitude;
+                a0 = Mathf.Atan2(Vector3.Dot(d0, down), Vector3.Dot(d0, axis));
+            }
             float a = a0, turned = 0f;
             for (int i = 1; i < n; i++)
             {
                 float len = chains.SegmentLength(0, i);
                 float rr = Mathf.Lerp(r0, r, Mathf.Clamp01(i / 3f));
-                float da = 2f * Mathf.Asin(Mathf.Clamp(len / (2f * rr), -1f, 1f));
+                float da = 2f * Mathf.Asin(len / (2f * rr));     // len <= 2 rr guaranteed above (r0 = r here)
                 a += da;
                 turned += da;
                 var p = centre + (axis * Mathf.Cos(a) + down * Mathf.Sin(a)) * rr + normal * (0.02f * turned / (2f * Mathf.PI));
