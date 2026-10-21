@@ -61,7 +61,8 @@ namespace WhipItUp.Weapons
             if (_chains.Count == 0) return;
             float dt = Mathf.Clamp(Time.deltaTime, 0.0001f, 1f / 30f);
             var g = Vector3.down * ModSettings.FallGravity.Value * dt * dt;
-            float pull = 1f - Mathf.Exp(-ModSettings.FallStiffness.Value * dt);
+            // shape keeping: a weak pull toward the rest shape per second (linear; at 0.15 gravity wins and the falls hang limp)
+            float pull = Mathf.Clamp01(ModSettings.FallStiffness.Value * dt);
             float keep = Mathf.Clamp01(1f - ModSettings.FallDamping.Value);
             float inertia = Mathf.Clamp01(ModSettings.FallInertia.Value);
             foreach (var c in _chains)

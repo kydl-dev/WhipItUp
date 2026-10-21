@@ -68,9 +68,9 @@ namespace WhipItUp
         public static event System.Action FloggerAlignmentChanged;
 
         // Fall physics (FallChains: springs + gravity on the fall bones). Live.
-        public static readonly Tunable<float> FallGravity = new Tunable<float>("Falls", "Gravity", 6f, "Downward pull on the falls (m/s2; the world's is 9.81).");
-        public static readonly Tunable<float> FallStiffness = new Tunable<float>("Falls", "Stiffness", 1.5f, "How fast the falls return to their rest shape (1/s; 0 = limp).");
-        public static readonly Tunable<float> FallDamping = new Tunable<float>("Falls", "Damping", 0.12f, "Velocity lost per frame (0..1; higher = calmer falls).");
+        public static readonly Tunable<float> FallGravity = new Tunable<float>("Falls", "Gravity", 9.81f, "Downward pull on the falls (m/s2; the world's is 9.81).");
+        public static readonly Tunable<float> FallStiffness = new Tunable<float>("Falls", "Stiffness", 0.15f, "Pull back toward the straight rest shape per second (0 = fully limp; above ~1 the falls stop hanging).");
+        public static readonly Tunable<float> FallDamping = new Tunable<float>("Falls", "Damping", 0.08f, "Velocity lost per frame (0..1; higher = calmer falls).");
         public static readonly Tunable<float> FallInertia = new Tunable<float>("Falls", "Inertia", 0.8f, "How much of the hand's motion the falls lag behind (0 = rigid, 1 = full).");
 
         static ModSettings()
