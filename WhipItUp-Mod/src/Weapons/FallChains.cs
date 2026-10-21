@@ -39,6 +39,15 @@ namespace WhipItUp.Weapons
         }
 
         readonly List<Chain> _chains = new List<Chain>();
+
+        /// Chain count / node count of a chain (nodes = bones + 1) / world position of a node in the last simulated frame.
+        public int ChainCount { get { return _chains.Count; } }
+        public int NodeCount(int chain) { return chain < _chains.Count ? _chains[chain].Bones.Length + 1 : 0; }
+        public Vector3 NodePosition(int chain, int node) { return _chains[chain].Pos[node]; }
+        /// World length of the segment that ends at node (node >= 1), measured from the rest pose (includes the visual's scale).
+        public float SegmentLength(int chain, int node) { var c = _chains[chain]; return node >= 1 && node <= c.Length.Length ? c.Length[node - 1] : 0f; }
+        /// World position of the first lash node (where the lash leaves the handle).
+        public Vector3 RootPosition(int chain) { return _chains[chain].Bones[0].position; }
         bool _primed;
         const float TeleportDistance = 2f;
 

@@ -86,16 +86,10 @@ namespace WhipItUp
         public static readonly Tunable<float> WhipGrabRadius = new Tunable<float>("Whip", "GrabRadius", 0.14f, "Radius of the wrap around the neck (m).");
         public static readonly Tunable<float> WhipLashStiffness = new Tunable<float>("Whip", "LashStiffness", 6f, "While attacking: pull toward the straight lash (1/s; higher = snappier).");
         public static readonly Tunable<float> WhipLashGravity = new Tunable<float>("Whip", "LashGravity", 2f, "While attacking: gravity on the lash (x Falls Gravity).");
-        public static readonly Tunable<float> WhipCoilPull = new Tunable<float>("Whip", "CoilPull", 30f, "While idle: pull into the coil (1/s).");
+        public static readonly Tunable<float> WhipCoilPull = new Tunable<float>("Whip", "CoilPull", 40f, "While idle: pull into the coil (1/s; 40+ = it snaps into the coil).");
         public static readonly Tunable<float> WhipCoilReturnSeconds = new Tunable<float>("Whip", "CoilReturnSeconds", 0.3f, "Time after an attack until the lash is fully coiled again.");
-        public static readonly Tunable<float> WhipCoilRadius = new Tunable<float>("Whip", "CoilRadius", 0.12f, "Coil loop radius (m).");
-        public static readonly Tunable<float> WhipCoilDrop = new Tunable<float>("Whip", "CoilDrop", -2f, "Coil centre height relative to the collar along the handle (m; negative = toward the pommel).");
-        public static readonly Tunable<float> WhipCollarY = new Tunable<float>("Whip", "CollarY", 0.45f, "Start of the idle lash curve (m, model space; user value - the model's collar is at 0.15).");
-        public static readonly Tunable<float> WhipLashLength = new Tunable<float>("Whip", "LashLength", 3.8f, "Length used for the idle curve (m, model space; user value - the modelled lash is 1.8).");
-        /// The modelled lash (whip_layout.py TOTAL_LASH / BONES): fixed facts of the model, used for the neck wrap.
-        public const float WhipModelLashLength = 1.8f;
-        public const int WhipModelBones = 16;
-        public static readonly Tunable<int> WhipBones = new Tunable<int>("Whip", "Bones", 36, "Point count of the idle curve (user value; the model has 16 lash bones).");
+        public static readonly Tunable<float> WhipCoilRadius = new Tunable<float>("Whip", "CoilRadius", 0.12f, "Coil loop radius (m, x Scale).");
+        public static readonly Tunable<float> WhipCoilDrop = new Tunable<float>("Whip", "CoilDrop", -0.10f, "Coil centre along the handle from where the lash starts (m, x Scale; negative = back toward the hand).");
 
         // Fall physics (FallChains: springs + gravity on the fall bones). Live.
         public static readonly Tunable<float> FallGravity = new Tunable<float>("Falls", "Gravity", 9.8f, "Downward pull on the falls (m/s2; the world's is 9.81).");

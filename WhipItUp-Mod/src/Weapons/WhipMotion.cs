@@ -30,7 +30,6 @@ namespace WhipItUp.Weapons
         Character _grabTarget;
         float _grabTime = -99f;
         string _mode = "";
-        Vector3[] _coilLocal;
 
         void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; }
 
@@ -51,7 +50,7 @@ namespace WhipItUp.Weapons
             {
                 var head = _grabTarget.GetHeadPoint();
                 var start = transform.position;
-                float seg = ModSettings.WhipModelLashLength * transform.lossyScale.y / ModSettings.WhipModelBones;
+                float seg = chains.ChainCount > 0 ? chains.SegmentLength(0, 1) : 0.1f;
                 chains.Override = (c, i) => GrabTarget(start, head, i * seg);
                 chains.Pull = ModSettings.WhipGrabPull.Value;
                 chains.GravityScale = 0f;
@@ -66,12 +65,49 @@ namespace WhipItUp.Weapons
                 SetMode("lash");
                 return;
             }
+            // idle: wind into the coil quickly (linear blend over CoilReturnSeconds), no gravity once coiled
             float back = Mathf.Clamp01(_sinceAttack / Mathf.Max(0.01f, ModSettings.WhipCoilReturnSeconds.Value));
-            EnsureCoil(chains);
-            chains.Override = (c, i) => transform.TransformPoint(_coilLocal[Mathf.Min(i, _coilLocal.Length - 1)]);
-            chains.Pull = ModSettings.WhipCoilPull.Value * back * back;
+            if (!BuildCoil(chains)) { SetMode("free (no chain)"); return; }
+            chains.Override = (c, i) => _coil[Mathf.Clamp(i, 0, _coil.Length - 1)];
+            chains.Pull = Mathf.Lerp(ModSettings.WhipLashStiffness.Value, ModSettings.WhipCoilPull.Value, back);
             chains.GravityScale = 1f - back;
             SetMode(back < 1f ? "coiling" : "coiled");
+        }
+
+        Vector3[] _coil;
+
+        /// The idle coil in world space, rebuilt every frame from the real chain (node spacing = the simulated bone lengths, so the
+        /// length constraint never fights the targets): loops hanging under the hand in the vertical plane through the handle axis,
+        /// side by side (each loop shifted along the plane normal). Expected outcome: a coil with one point per node.
+        bool BuildCoil(FallChains chains)
+        {
+            if (chains.ChainCount == 0) return chains.ChainCount > 0;
+            int n = chains.NodeCount(0);
+            if (_coil == null || _coil.Length != n) _coil = new Vector3[n];
+            var start = chains.RootPosition(0);
+            var axis = transform.up;                                          // handle direction (model +Y)
+            var down = Vector3.ProjectOnPlane(Vector3.down, axis);
+            if (down.sqrMagnitude < 1e-4f) down = Vector3.ProjectOnPlane(transform.right, axis);
+            down.Normalize();
+            var normal = Vector3.Cross(axis, down).normalized;
+            float scale = transform.lossyScale.y;
+            float r = ModSettings.WhipCoilRadius.Value * scale;
+            // centre: below the lash start (CoilDrop = along the handle, negative = back toward the hand)
+            var centre = start + down * r + axis * (ModSettings.WhipCoilDrop.Value * scale);
+            var d0 = start - centre;
+            float r0 = d0.magnitude;
+            float a0 = Mathf.Atan2(Vector3.Dot(d0, down), Vector3.Dot(d0, axis));
+            _coil[0] = start;
+            float s = 0f;
+            for (int i = 1; i < n; i++)
+            {
+                s += chains.SegmentLength(0, i);
+                float rr = Mathf.Lerp(r0, r, Mathf.Clamp01(s / (r * 1.5f)));
+                float a = a0 + s / r;
+                float loop = s / (2f * Mathf.PI * r);
+                _coil[i] = centre + (axis * Mathf.Cos(a) + down * Mathf.Sin(a)) * rr + normal * (0.012f * scale * loop);
+            }
+            return _coil.Length == n;
         }
 
         /// Distance s (m) along the lash: first straight to the target's head, then a helix around the neck.
@@ -85,29 +121,6 @@ namespace WhipItUp.Weapons
             var side = Vector3.Cross(Vector3.up, toHead.normalized).normalized;
             var back = Vector3.Cross(side, Vector3.up);
             return head + Vector3.down * 0.12f + (side * Mathf.Cos(a) - back * Mathf.Sin(a)) * r + Vector3.up * (0.015f * a);
-        }
-
-        /// Coil points in the whip's own space (long axis +Y, collar at CollarY): loops in the X-Y plane next to the hand.
-        void EnsureCoil(FallChains chains)
-        {
-            int n = ModSettings.WhipBones.Value + 1;
-            if (_coilLocal != null && _coilLocal.Length == n) return;
-            _coilLocal = new Vector3[n];
-            float seg = ModSettings.WhipLashLength.Value / Mathf.Max(1, ModSettings.WhipBones.Value);
-            float r = ModSettings.WhipCoilRadius.Value;
-            var start = new Vector3(0f, ModSettings.WhipCollarY.Value, 0f);
-            var centre = start + new Vector3(-r, ModSettings.WhipCoilDrop.Value, 0f);
-            var d0 = start - centre;
-            float a0 = Mathf.Atan2(d0.y, d0.x);
-            float r0 = d0.magnitude;
-            for (int i = 0; i < n; i++)
-            {
-                float s = i * seg;
-                float a = a0 - s / r;                                   // clockwise, down the outside first
-                float rr = Mathf.Lerp(r0, r, Mathf.Clamp01(s / (r * 1.5f)));
-                _coilLocal[i] = centre + new Vector3(Mathf.Cos(a) * rr, Mathf.Sin(a) * rr, 0.012f * (s / (2f * Mathf.PI * r)));
-            }
-            ModLog.Verbose("WhipMotion: coil of " + n + " points, radius " + r + ", " + (ModSettings.WhipLashLength.Value / (2f * Mathf.PI * r)).ToString("0.0") + " loops");
         }
 
         bool IsAttacking()
