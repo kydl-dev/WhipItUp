@@ -29,7 +29,7 @@ namespace WhipItUp
 
         // Weapon sounds (whoosh = swing, slap = hit). Live: a change applies to the next sound played.
         public static readonly Tunable<float> WhooshVolume = new Tunable<float>("Sound", "WhooshVolume", 1f, "Swing (whoosh) volume 0..1.");
-        public static readonly Tunable<float> SlapVolume = new Tunable<float>("Sound", "SlapVolume", 1f, "Hit (slap) volume 0..1.");
+        public static readonly Tunable<float> SlapVolume = new Tunable<float>("Sound", "SlapVolume", 2.2f, "Hit (slap) volume (user setting 2.2; the game plays anything above 1 at full volume - SlapGain makes it louder still).");
         public static readonly Tunable<float> WhooshGain = new Tunable<float>("Sound", "WhooshGain", 1.5f, "Loudness multiplier on the whoosh data (above ~0.7 peaks are soft-limited).");
         public static readonly Tunable<float> SlapGain = new Tunable<float>("Sound", "SlapGain", 1f, "Loudness multiplier on the slap data (1 = the file as it is; more squashes the peaks).");
         public static readonly Tunable<bool> SlapTrim = new Tunable<bool>("Sound", "SlapTrim", true, "Cut the quiet 50 ms lead-in of the slap so it lands on the hit (also normalises it).");
