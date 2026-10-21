@@ -27,6 +27,22 @@ namespace WhipItUp
         public static readonly Tunable<float> ExampleSpeed = new Tunable<float>("Example", "ExampleSpeed", 1f,
             "Example dev-only value: replace or remove. Read it with ModSettings.ExampleSpeed.Value.");
 
+        // Paddle in the hand (degrees around the model's own axes; grip in metres along the handle, + = hand toward the blade; scale 1 = as modelled, 0.56 m)
+        public static readonly Tunable<float> PaddleRotX = new Tunable<float>("Paddle", "RotationX", 270f, "Paddle model rotation X (degrees) in the hand.");
+        public static readonly Tunable<float> PaddleRotY = new Tunable<float>("Paddle", "RotationY", 180f, "Paddle model rotation Y (degrees) in the hand.");
+        public static readonly Tunable<float> PaddleRotZ = new Tunable<float>("Paddle", "RotationZ", 0f, "Paddle model rotation Z (degrees) in the hand.");
+        public static readonly Tunable<float> PaddleGrip = new Tunable<float>("Paddle", "GripOffset", 0f, "Metres the hand sits from the middle of the grip (+ = toward the blade).");
+        public static readonly Tunable<float> PaddleScale = new Tunable<float>("Paddle", "Scale", 1f, "Paddle model scale (1 = 0.56 m as modelled).");
+        public static Vector3 PaddleRotation { get { return new Vector3(PaddleRotX.Value, PaddleRotY.Value, PaddleRotZ.Value); } }
+        /// Raised when any paddle alignment Tunable changes (KydlTools): the visuals are re-aligned live.
+        public static event System.Action PaddleAlignmentChanged;
+
+        static ModSettings()
+        {
+            foreach (var t in new[] { PaddleRotX, PaddleRotY, PaddleRotZ, PaddleGrip, PaddleScale })
+                t.SettingChanged += (s, e) => { ModLog.Verbose("Config: paddle alignment " + ((Tunable<float>)s)); PaddleAlignmentChanged?.Invoke(); };
+        }
+
         /// Expected outcome: every player entry is bound (returns that check).
         public static bool Bind(ConfigFile c)
         {

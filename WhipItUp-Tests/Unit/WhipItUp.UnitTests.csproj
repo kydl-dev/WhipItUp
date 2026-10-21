@@ -5,4 +5,8 @@
     <AssemblyName>WhipItUp.UnitTests</AssemblyName>
     <RootNamespace>WhipItUp.Tests.Unit</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\WhipItUp-Mod\src\Weapons\Ladder.cs" Link="Mod\Ladder.cs" />
+  </ItemGroup>
 </Project>
