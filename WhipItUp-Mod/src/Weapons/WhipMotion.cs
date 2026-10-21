@@ -74,10 +74,16 @@ namespace WhipItUp.Weapons
             chains.Pull = Mathf.Lerp(ModSettings.WhipLashStiffness.Value, ModSettings.WhipCoilPull.Value, back);
             chains.GravityScale = 1f - back;
             chains.Snap = back * back;                 // ends fully kinematic: the settled coil does not wobble or spin
-            SetMode(back < 1f ? "coiling" : "coiled (bone/node mismatch " + chains.LastMismatch.ToString("0.000") + " m, max bone turn " + chains.LastMaxTurn.ToString("0") + " deg)");
+            SetMode(back < 1f ? "coiling" : "coiled");
+            if (back >= 1f && Time.time >= _nextDiag)
+            {
+                _nextDiag = Time.time + 3f;     // coil health every 3 s while coiled (debug log only)
+                ModLog.Verbose("WhipMotion: coil - bone/node mismatch " + chains.LastMismatch.ToString("0.000") + " m, max bone turn " + chains.LastMaxTurn.ToString("0") + " deg");
+            }
         }
 
         Vector3[] _coil;
+        float _nextDiag;
 
         /// The idle coil in world space, rebuilt every frame from the real chain (node spacing = the simulated bone lengths, so the
         /// length constraint never fights the targets): loops hanging under the hand in the vertical plane through the handle axis,
