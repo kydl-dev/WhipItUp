@@ -19,17 +19,35 @@ namespace WhipItUp.Ui
         [Tooltip("Tab shown when Play starts: 0 = Viewer, 1 = Details (the preview has no click tool for the tab bar, so this checks the other tab without clicking).")]
         [SerializeField] int startTab;
 
+        [Tooltip("Family the menu starts on: Paddle, Flogger or Whip; empty = Paddle (preview only).")]
+        [SerializeField] string startFamily = "";
+
+        [Tooltip("UI pixels the body is scrolled once the layout exists (preview only: the Unity MCP has no scroll tool). 0 = top.")]
+        [SerializeField] float startScroll;
+
         void OnEnable()
         {
             LoadGameFonts();
             UiKit.Reset();
             var root = UiKit.Root;
             if (root == null) { Debug.LogError("[MenuPreview] UI Toolkit panel could not be made"); return; }
-            root.Add(MainMenuView.Build(UiText.English, SampleWeapons(), () => Debug.Log("[MenuPreview] close pressed"), startTab));
+            root.Add(MainMenuView.Build(UiText.English, StartWith(SampleWeapons(), startFamily), () => Debug.Log("[MenuPreview] close pressed"), startTab, startScroll));
             Debug.Log("[MenuPreview] WhipItUp menu shown, start tab " + startTab);
         }
 
         void OnDisable() { UiKit.Reset(); }
+
+        // The list with the weapons of `family` first (the menu starts on the first weapon of the list); empty or unknown family = unchanged.
+        static List<WeaponInfo> StartWith(List<WeaponInfo> all, string family)
+        {
+            if (string.IsNullOrEmpty(family)) return all;
+            var first = all.FindAll(w => w.Family == family);
+            if (first.Count == 0) { Debug.LogWarning("[MenuPreview] startFamily '" + family + "' has no sample weapons, keeping the list order"); return all; }
+            var list = new List<WeaponInfo>(first);
+            list.AddRange(all.FindAll(w => w.Family != family));
+            Debug.Log("[MenuPreview] the list starts with " + family + " (" + first.Count + " weapon(s) first)");
+            return list;
+        }
 
         // Preview-only data (the game builds the real list in src/Ui/WeaponCatalog.cs from the item names): 3 families x 7 ranks of sample text; one
         // entry carries the longest real name and description so wrapping shows.

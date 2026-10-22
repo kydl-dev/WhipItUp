@@ -64,15 +64,15 @@ namespace WhipItUp.Ui
             return r;
         }
 
-        /// A row: label | value | (max-quality value). In a block with a max column the value has a fixed width so the columns line up; elsewhere it
+        /// A row: label | value | (max-quality value). Only a row with a max value gets a fixed-width value cell (columns line up); any other row's value
         /// takes the rest of the line, so a longer text (bleed, an ingredient, the attack 2 effect) wraps instead of being cut.
         static VisualElement StatRow(DetailRow row, bool blockHasMax)
         {
             var r = RowBox();
             r.Add(Cell(row.Label, LabelWidth, UiKit.TextDim, UiKit.FontSize));
-            var value = Cell(row.Value, blockHasMax ? ValueWidth : -1f, UiKit.Text, UiKit.FontSize);
+            var value = Cell(row.Value, blockHasMax && row.HasMax ? ValueWidth : -1f, UiKit.Text, UiKit.FontSize);
             r.Add(value);
-            if (blockHasMax) r.Add(Cell(row.MaxValue, ValueWidth, UiKit.Gold, UiKit.FontSize));
+            if (blockHasMax && row.HasMax) r.Add(Cell(row.MaxValue, ValueWidth, UiKit.Gold, UiKit.FontSize));
             return r;
         }
 

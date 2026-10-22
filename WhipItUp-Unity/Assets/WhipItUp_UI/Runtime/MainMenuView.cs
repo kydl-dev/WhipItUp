@@ -15,8 +15,8 @@ namespace WhipItUp.Ui
     {
         /// Builds the window. `text` turns a text key into the shown text (game: the mod's localization, Unity: English); `weapons` is the list
         /// of all weapons (game: WeaponCatalog.Build, Unity: the preview's sample list); `startTab` is the tab shown first (0 Viewer, 1 Details;
-        /// the game always opens on 0, the Unity preview can start on the other tab to check it without clicking).
-        internal static VisualElement Build(Func<string, string> text, IList<WeaponInfo> weapons, Action onClose, int startTab = 0)
+        /// the game always opens on 0, the Unity preview can start on the other tab to check it without clicking; startScroll = the body is scrolled that many UI px once laid out, preview only).
+        internal static VisualElement Build(Func<string, string> text, IList<WeaponInfo> weapons, Action onClose, int startTab = 0, float startScroll = 0f)
         {
             var w = UiKit.Window(text("whipitup_menu_title"), text("whipitup_menu_footer"), onClose, out UiScroll body);
             var selection = new WeaponSelection(weapons, UiLog.Verbose);
@@ -27,6 +27,10 @@ namespace WhipItUp.Ui
             var bar = new TabBar(new[] { text("whipitup_tab_viewer"), text("whipitup_tab_details") }, startTab, index => ShowTab(tabs, index));
             ShowTab(tabs, bar.Selected);
             w.Insert(1, bar.Root);               // between the title bar and the scrolling body: the tabs stay put while the content scrolls
+            if (startScroll > 0f)
+            {
+                w.schedule.Execute(() => { body.ScrollTo(startScroll); UiLog.Verbose("MainMenuView: body scrolled to " + startScroll + " UI px (preview start option)"); }).StartingIn(400).Every(600).ForDuration(3000);   // repeated: the layout is not final at the first try
+            }
             UiLog.Verbose("MainMenuView: built (" + (weapons != null ? weapons.Count : 0) + " weapon(s), " + tabs.Length + " tabs, start tab " + bar.Selected + " (asked " + startTab + "), weapon " + selection.Family + " V" + selection.Rank + ")");
             return w;
         }
