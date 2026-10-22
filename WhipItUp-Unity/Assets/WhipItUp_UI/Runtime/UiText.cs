@@ -12,11 +12,13 @@ namespace WhipItUp.Ui
         {
             { "whipitup_menu_title", "WhipItUp" },
             { "whipitup_menu_footer", "Esc to close" },
-            { "whipitup_menu_section", "Example" },
-            { "whipitup_menu_note", "This is the starting menu of the mod. Replace its content in MainMenuView." },
-            { "whipitup_menu_example_switch", "Example switch" },
-            { "whipitup_menu_example_slider", "Example value" },
-            { "whipitup_menu_close", "Close" },
+            { "whipitup_tab_viewer", "Viewer" },
+            { "whipitup_tab_details", "Details" },
+            { "whipitup_menu_family", "Family" },
+            { "whipitup_menu_weapon", "Weapon" },
+            { "whipitup_family_paddle", "Paddle" },
+            { "whipitup_family_flogger", "Flogger" },
+            { "whipitup_family_whip", "Whip" },
         };
 
 

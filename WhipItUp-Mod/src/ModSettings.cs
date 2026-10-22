@@ -24,9 +24,6 @@ namespace WhipItUp
         public static bool On { get { return EnableAll == null || EnableAll.Value; } }
 
         // --- dev-only fixed values (Tunables): not in the config file, KydlTools changes them for testing -----------------------------------
-        public static readonly Tunable<float> ExampleSpeed = new Tunable<float>("Example", "ExampleSpeed", 1f,
-            "Example dev-only value: replace or remove. Read it with ModSettings.ExampleSpeed.Value.");
-
         // Weapon sounds (whoosh = swing, slap = hit). Live: a change applies to the next sound played.
         public static readonly Tunable<float> WhooshVolume = new Tunable<float>("Sound", "WhooshVolume", 1f, 0f, 3f, "Swing (whoosh) volume 0..1.");
         public static readonly Tunable<float> SlapVolume = new Tunable<float>("Sound", "SlapVolume", 2.2f, 0f, 3f, "Hit (slap) volume (user setting 2.2; the game plays anything above 1 at full volume - SlapGain makes it louder still).");

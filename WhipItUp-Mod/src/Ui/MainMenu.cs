@@ -40,10 +40,11 @@ namespace WhipItUp.Ui
         {
             var root = UiKit.Root;
             if (root == null) { ModLog.Warn("MainMenu: UI Toolkit is not available, the menu cannot open"); return; }
-            _window = MainMenuView.Build(k => Loc.T(k), () => Close("X"));
+            var weapons = WeaponCatalog.Build(k => Loc.T(k), s => ModLog.Verbose(s));
+            _window = MainMenuView.Build(k => Loc.T(k), weapons, () => Close("X"));
             root.Add(_window);
             UiInputLock.Hold(LockName);
-            ModLog.Verbose("MainMenu: opened");
+            ModLog.Verbose("MainMenu: opened with " + weapons.Count + " weapon(s)");
         }
 
         static void Close(string why)
