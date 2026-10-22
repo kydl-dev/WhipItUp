@@ -94,6 +94,36 @@ namespace WhipItUp
         public static readonly Tunable<float> FallDamping = new Tunable<float>("Falls", "Damping", 0.08f, 0f, 0.5f, "Velocity lost per frame (0..1; higher = calmer falls).");
         public static readonly Tunable<float> FallInertia = new Tunable<float>("Falls", "Inertia", 0.6f, 0f, 1f, "How much of the hand's motion the falls lag behind (0 = rigid, 1 = full).");
 
+        // Viewer tab of the F6 menu (T-015 S5): ranges = ViewerSettings (shared with the Unity preview). Read when the menu opens.
+        public static readonly Tunable<float> ViewerRotateSpeed = new Tunable<float>("Viewer", "RotateSpeed", Ui.ViewerSettings.RotateSpeedDefault, Ui.ViewerSettings.RotateSpeedMin, Ui.ViewerSettings.RotateSpeedMax, "Degrees the weapon turns per UI pixel you drag.");
+        public static readonly Tunable<float> ViewerZoomStep = new Tunable<float>("Viewer", "ZoomStep", Ui.ViewerSettings.ZoomStepDefault, Ui.ViewerSettings.ZoomStepMin, Ui.ViewerSettings.ZoomStepMax, "Magnification factor per mouse-wheel notch or +/- press (1.2 = 20 % closer).");
+        public static readonly Tunable<float> ViewerZoomMax = new Tunable<float>("Viewer", "ZoomMax", Ui.ViewerSettings.ZoomMaxDefault, Ui.ViewerSettings.ZoomMaxMin, Ui.ViewerSettings.ZoomMaxMax, "Most magnification (x times; 1 = the whole weapon fits the frame).");
+        public static readonly Tunable<float> ViewerZoomMin = new Tunable<float>("Viewer", "ZoomMin", Ui.ViewerSettings.ZoomMinDefault, Ui.ViewerSettings.ZoomMinMin, Ui.ViewerSettings.ZoomMinMax, "Least magnification (x times; below 1 the weapon is smaller than the frame).");
+        public static readonly Tunable<float> ViewerPitchLimit = new Tunable<float>("Viewer", "PitchLimit", Ui.ViewerSettings.PitchLimitDefault, Ui.ViewerSettings.PitchLimitMin, Ui.ViewerSettings.PitchLimitMax, "Degrees the view may tilt up or down.");
+        public static readonly Tunable<float> ViewerFrameHeight = new Tunable<float>("Viewer", "FrameHeight", Ui.ViewerSettings.FrameHeightDefault, Ui.ViewerSettings.FrameHeightMin, Ui.ViewerSettings.FrameHeightMax, "Height of the 3D view in UI pixels (1080p reference; reopen the menu to apply).");
+        public static readonly Tunable<float> ViewerMargin = new Tunable<float>("Viewer", "Margin", Ui.ViewerSettings.MarginDefault, Ui.ViewerSettings.MarginMin, Ui.ViewerSettings.MarginMax, "Room around the weapon at zoom 1 (0.08 = 8 %).");
+        public static readonly Tunable<float> ViewerStartYaw = new Tunable<float>("Viewer", "StartYaw", Ui.ViewerSettings.StartYawDefault, Ui.ViewerSettings.StartYawMin, Ui.ViewerSettings.StartYawMax, "Degrees the default view (and Reset) is turned.");
+        public static readonly Tunable<float> ViewerStartPitch = new Tunable<float>("Viewer", "StartPitch", Ui.ViewerSettings.StartPitchDefault, Ui.ViewerSettings.StartPitchMin, Ui.ViewerSettings.StartPitchMax, "Degrees the default view (and Reset) looks down on the weapon.");
+
+        /// The viewer values as the menu uses them (read fresh at every menu open, so KydlTools changes apply on the next open).
+        internal static Ui.ViewerSettings Viewer()
+        {
+            var v = new Ui.ViewerSettings
+            {
+                RotateSpeed = ViewerRotateSpeed.Value,
+                ZoomStep = ViewerZoomStep.Value,
+                ZoomMax = ViewerZoomMax.Value,
+                ZoomMin = ViewerZoomMin.Value,
+                PitchLimit = ViewerPitchLimit.Value,
+                FrameHeight = ViewerFrameHeight.Value,
+                Margin = ViewerMargin.Value,
+                StartYaw = ViewerStartYaw.Value,
+                StartPitch = ViewerStartPitch.Value,
+            };
+            v.Clamp(ModLog.Verbose);
+            return v;
+        }
+
         static ModSettings()
         {
             foreach (var t in new[] { PaddleRotX, PaddleRotY, PaddleRotZ, PaddleGrip, PaddleScale })

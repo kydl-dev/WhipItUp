@@ -31,6 +31,8 @@ namespace WhipItUp.Weapons
         protected virtual Action<Transform, Transform[]> PoseForIcon { get { return null; } }
 
         protected WeaponArt Art;
+        /// Every registered family by name ("Paddle", "Flogger", "Whip"): the F6 viewer asks it for models.
+        static readonly Dictionary<string, WeaponFamily> Registered = new Dictionary<string, WeaponFamily>();
         protected readonly List<CustomItem> Items = new List<CustomItem>();
 
         /// The family's damage for a rank (blunt / slash / bleed...). Expected outcome: shared damage set (returns that check).
@@ -55,6 +57,7 @@ namespace WhipItUp.Weapons
             Art = new WeaponArt(Family) { DecorateVisual = DecorateVisual, PoseForIcon = PoseForIcon };
             bool loaded = Art.Load(bundle);
             if (Art.Mesh == null) { ModLog.Error(Family + "Items: no " + Family + " mesh - the " + Family + " items are NOT added"); return Art.Mesh != null; }
+            Registered[Family] = this;
             PrefabManager.OnVanillaPrefabsAvailable += AddAll;
             subscribeAlignmentChanged(() => Art.ApplyAlignment(Rotation, Grip, Scale));
             ModLog.Verbose(Family + "Items: registered (art complete " + loaded + ", skinned " + Art.Skinned + "), waiting for the vanilla prefabs");
@@ -145,6 +148,25 @@ namespace WhipItUp.Weapons
             ModLog.Verbose(Family + "Items: " + name + " attack 2 = " + SecondarySource + " '" + a.m_attackAnimation + "' (type " + a.m_attackType + ", damage x" + a.m_damageMultiplier
                 + ", force x" + a.m_forceMultiplier + ", stagger x" + maceStagger + ", stamina " + a.m_attackStamina.ToString("0.#") + ")");
             return shared.m_secondaryAttack.m_attackAnimation == BackhandRoll.SecondaryState;
+        }
+
+        /// A new model of that weapon for the F6 viewer: the family mesh in its rest pose (falls / lash straight, D-048 Q3) with the rank's
+        /// material, taken from the registered item prefab. The caller owns (and destroys) it. Null when the family or item is missing (logged).
+        internal static GameObject CreateViewerModel(string family, int rank)
+        {
+            WeaponFamily f;
+            if (family == null || !Registered.TryGetValue(family, out f) || f.Art == null)
+            {
+                ModLog.Verbose("WeaponFamily: viewer model asked for unknown family '" + family + "' (registered: " + string.Join(", ", Registered.Keys.ToArray()) + ")");
+                return null;
+            }
+            string name = Ladder.PrefabName(family, rank);
+            var db = ObjectDB.instance;
+            var prefab = db != null ? db.GetItemPrefab(name) : null;
+            if (prefab == null) { ModLog.Verbose("WeaponFamily: viewer model of " + name + ": no item prefab (ObjectDB " + (db != null ? "has no such item" : "not ready") + ")"); return null; }
+            var model = f.Art.CreateIconSource(prefab, name, false);
+            ModLog.Verbose("WeaponFamily: viewer model of " + name + (model != null ? " made from the item prefab (rest pose, skinned family " + f.Art.Skinned + ")" : " NOT made (no visual / material on the item prefab)"));
+            return model;
         }
 
         void RenderIcon(CustomItem item, ItemDrop.ItemData.SharedData shared, string name, int rank)

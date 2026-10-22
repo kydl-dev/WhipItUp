@@ -18,6 +18,7 @@ namespace WhipItUp.Ui
         internal static readonly Vector3 Park = new Vector3(-15000f, 300f, -15000f);
         internal const float FieldOfView = 30f;
         const float LogEverySeconds = 0.5f;
+        static readonly Color Ambient = new Color(0.38f, 0.36f, 0.34f);
 
         readonly Func<WeaponInfo, GameObject> _makeModel;
         readonly ViewerSettings _settings;
@@ -59,6 +60,7 @@ namespace WhipItUp.Ui
             _camera.farClipPlane = 200f;
             _camera.allowHDR = false;
             _camera.useOcclusionCulling = false;
+            _camera.renderingPath = RenderingPath.Forward;              // light culling masks + MSAA only work in forward (the game may run deferred)
 
             AddLight(camGo.transform, "KeyLight", new Vector3(25f, 30f, 0f), 1.1f);     // from up-left behind the camera
             AddLight(camGo.transform, "FillLight", new Vector3(-10f, -45f, 0f), 0.45f); // softer from the right
@@ -171,7 +173,7 @@ namespace WhipItUp.Ui
             _camera.transform.position = centre + new Vector3(x, y, z);
             _camera.transform.LookAt(centre, Vector3.up);
             _camera.nearClipPlane = Mathf.Clamp(distance - _radius * 1.2f, 0.01f, 0.5f);
-            _camera.Render();
+            RenderLit();
             _renders++;
             float now = Time.realtimeSinceStartup;
             if (now - _lastLog >= LogEverySeconds)
@@ -181,6 +183,31 @@ namespace WhipItUp.Ui
                     + " deg, zoom x" + F(zoom) + ", fit " + F(fit) + " m, distance " + F(distance) + " m, aspect " + F(aspect) + ", model " + (_model != null ? "shown" : "none"));
             }
             return true;
+        }
+
+        // The scene's ambient light and fog belong to the world (night = dark, mist = grey): for this one render they are set to a fixed
+        // studio look and put back right after, so the weapon looks the same at any time of day.
+        void RenderLit()
+        {
+            var mode = RenderSettings.ambientMode;
+            var ambient = RenderSettings.ambientLight;
+            float intensity = RenderSettings.ambientIntensity;
+            bool fog = RenderSettings.fog;
+            try
+            {
+                RenderSettings.ambientMode = AmbientMode.Flat;
+                RenderSettings.ambientLight = Ambient;
+                RenderSettings.ambientIntensity = 1f;
+                RenderSettings.fog = false;
+                _camera.Render();
+            }
+            finally
+            {
+                RenderSettings.ambientMode = mode;
+                RenderSettings.ambientLight = ambient;
+                RenderSettings.ambientIntensity = intensity;
+                RenderSettings.fog = fog;
+            }
         }
 
         public void Dispose()

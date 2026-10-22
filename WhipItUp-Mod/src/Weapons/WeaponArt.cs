@@ -161,8 +161,9 @@ namespace WhipItUp.Weapons
             return made > 0;
         }
 
-        /// A bare object with the family mesh (rest pose) + the item's material for the icon render. Null if the item has no visual.
-        public GameObject CreateIconSource(GameObject itemPrefab, string name)
+        /// A bare object with the family mesh + the item's material for the icon render (iconPose: the PoseForIcon pose when the family has one;
+        /// false = the rest pose, which the F6 viewer shows, D-048 Q3). Null if the item has no visual.
+        public GameObject CreateIconSource(GameObject itemPrefab, string name, bool iconPose = true)
         {
             Material mat = null;
             foreach (var r in itemPrefab.GetComponentsInChildren<Renderer>(true))
@@ -172,7 +173,7 @@ namespace WhipItUp.Weapons
                 break;
             }
             if (mat == null || Mesh == null) return null;
-            var mesh = Skinned && PoseForIcon != null ? BakePosed(name) : Mesh;
+            var mesh = iconPose && Skinned && PoseForIcon != null ? BakePosed(name) : Mesh;
             var go = new GameObject(name + "_IconSource");
             go.AddComponent<MeshFilter>().sharedMesh = mesh != null ? mesh : Mesh;
             go.AddComponent<MeshRenderer>().sharedMaterial = mat;
