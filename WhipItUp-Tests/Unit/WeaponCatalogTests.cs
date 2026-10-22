@@ -61,5 +61,41 @@ namespace WhipItUp.Tests.Unit
             s.SetRank(7);
             Assert.That(s.Current.Name, Is.EqualTo(WeaponNames.En["whipitup_whip_v7"]));
         }
+
+        static WeaponStats Stats(string family, int rank)
+        {
+            var s = new WeaponStats { Family = family, Rank = rank, Skill = "Clubs", MaxQuality = Ladder.MaxQuality, Durability = 200f, Station = "Workbench", StationLevel = 1 };
+            s.Damage.Add(new WeaponStats.DamageLine("blunt", 30f, 6f));
+            s.Attack1.Stamina = 6f;
+            return s;
+        }
+
+        [Test]
+        public void WithStats_EveryWeaponHasTheFiveDetailGroups()
+        {
+            var log = new List<string>();
+            var list = WeaponCatalog.Build(Text, log.Add, Stats);
+            Assert.That(list.All(w => w.Groups.Count == 5), Is.True, string.Join(", ", list.Where(w => w.Groups.Count != 5).Select(w => w.ToString()).ToArray()));
+            Assert.That(log.Any(l => l.Contains(list.Count + " with details")), Is.True, string.Join(" | ", log.ToArray()));
+        }
+
+        [Test]
+        public void WithoutAStatsProvider_NoWeaponHasDetails()
+        {
+            Assert.That(WeaponCatalog.Build(Text).All(w => w.Groups.Count == 0), Is.True);
+        }
+
+        [Test]
+        public void AWeaponWithoutStats_IsLogged_AndKeepsItsNameAndDescription()
+        {
+            var log = new List<string>();
+            var list = WeaponCatalog.Build(Text, log.Add, (f, r) => f == "Whip" && r == 3 ? null : Stats(f, r));
+            var whip3 = list.Single(w => w.Family == "Whip" && w.Rank == 3);
+            Assert.That(whip3.Groups, Is.Empty);
+            Assert.That(whip3.Name, Is.EqualTo(WeaponNames.En["whipitup_whip_v3"]));
+            Assert.That(whip3.Description, Is.EqualTo(WeaponNames.Desc["whipitup_whip_v3_desc"]));
+            Assert.That(list.Count(w => w.Groups.Count == 5), Is.EqualTo(list.Count - 1));
+            Assert.That(log.Any(l => l.Contains("no stats for") && l.Contains("Whip V3")), Is.True, string.Join(" | ", log.ToArray()));
+        }
     }
 }

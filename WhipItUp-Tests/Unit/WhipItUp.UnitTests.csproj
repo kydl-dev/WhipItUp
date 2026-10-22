@@ -12,6 +12,11 @@
     <!-- the menu's pure logic: no Unity / Valheim types (the Runtime folder of the Unity project is also compiled into the mod) -->
     <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponInfo.cs" Link="Mod\WeaponInfo.cs" />
     <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponSelection.cs" Link="Mod\WeaponSelection.cs" />
+    <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\DetailRow.cs" Link="Mod\DetailRow.cs" />
+    <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\DetailGroup.cs" Link="Mod\DetailGroup.cs" />
+    <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponStats.cs" Link="Mod\WeaponStats.cs" />
+    <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponDetailsBuilder.cs" Link="Mod\WeaponDetailsBuilder.cs" />
+    <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\UiText.cs" Link="Mod\UiText.cs" />
     <Compile Include="..\..\WhipItUp-Mod\src\Ui\WeaponCatalog.cs" Link="Mod\WeaponCatalog.cs" />
   </ItemGroup>
 </Project>
