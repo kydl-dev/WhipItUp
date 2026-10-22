@@ -14,8 +14,9 @@ namespace WhipItUp.Ui
     internal static class MainMenuView
     {
         /// Builds the window. `text` turns a text key into the shown text (game: the mod's localization, Unity: English); `weapons` is the list
-        /// of all weapons (game: WeaponCatalog.Build, Unity: the preview's sample list).
-        internal static VisualElement Build(Func<string, string> text, IList<WeaponInfo> weapons, Action onClose)
+        /// of all weapons (game: WeaponCatalog.Build, Unity: the preview's sample list); `startTab` is the tab shown first (0 Viewer, 1 Details;
+        /// the game always opens on 0, the Unity preview can start on the other tab to check it without clicking).
+        internal static VisualElement Build(Func<string, string> text, IList<WeaponInfo> weapons, Action onClose, int startTab = 0)
         {
             var w = UiKit.Window(text("whipitup_menu_title"), text("whipitup_menu_footer"), onClose, out UiScroll body);
             var selection = new WeaponSelection(weapons, UiLog.Verbose);
@@ -23,10 +24,10 @@ namespace WhipItUp.Ui
             var tabs = new[] { WeaponViewportView.Build(text, selection), WeaponDetailsView.Build(text, selection) };
             foreach (var t in tabs) body.Content.Add(t);
 
-            var bar = new TabBar(new[] { text("whipitup_tab_viewer"), text("whipitup_tab_details") }, 0, index => ShowTab(tabs, index));
+            var bar = new TabBar(new[] { text("whipitup_tab_viewer"), text("whipitup_tab_details") }, startTab, index => ShowTab(tabs, index));
             ShowTab(tabs, bar.Selected);
             w.Insert(1, bar.Root);               // between the title bar and the scrolling body: the tabs stay put while the content scrolls
-            UiLog.Verbose("MainMenuView: built (" + (weapons != null ? weapons.Count : 0) + " weapon(s), " + tabs.Length + " tabs, start " + selection.Family + " V" + selection.Rank + ")");
+            UiLog.Verbose("MainMenuView: built (" + (weapons != null ? weapons.Count : 0) + " weapon(s), " + tabs.Length + " tabs, start tab " + bar.Selected + " (asked " + startTab + "), weapon " + selection.Family + " V" + selection.Rank + ")");
             return w;
         }
 

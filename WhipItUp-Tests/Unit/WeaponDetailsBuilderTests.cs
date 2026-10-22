@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -132,6 +131,21 @@ namespace WhipItUp.Tests.Unit
             Assert.That(Row(info, "Defence", "Block power").HasMax, Is.False, "no block power per level");
             Assert.That(Row(info, "Attack 1", "Knockback").HasMax, Is.False);
             Assert.That(Row(info, "Defence", "Parry bonus").Value, Is.EqualTo("x2"));
+        }
+
+        [Test]
+        public void BlockPowerAndDeflection_ShowTheMaxQualityValue_WhenTheyGrowPerLevel()
+        {
+            var s = PaddleStats(1);
+            s.BlockPower = 20f;
+            s.BlockPowerPerLevel = 2f;
+            s.DeflectionForce = 10f;
+            s.DeflectionForcePerLevel = 1.5f;
+            var info = Filled(s);
+            Assert.That(Row(info, "Defence", "Block power").Value, Is.EqualTo("20"));
+            Assert.That(Row(info, "Defence", "Block power").MaxValue, Is.EqualTo("26"), "20 + 3 x 2");
+            Assert.That(Row(info, "Defence", "Deflection force").Value, Is.EqualTo("10"));
+            Assert.That(Row(info, "Defence", "Deflection force").MaxValue, Is.EqualTo("14.5"), "10 + 3 x 1.5");
         }
 
         [Test]

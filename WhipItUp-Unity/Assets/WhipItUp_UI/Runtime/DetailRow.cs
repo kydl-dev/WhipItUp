@@ -1,4 +1,3 @@
-
 namespace WhipItUp.Ui
 {
     /// <summary>
