@@ -72,10 +72,14 @@ namespace WhipItUp.Ui
             int _dragButton = -1;
             Vector2 _last;
             int _pointer = -1;
+            readonly ViewerPose _pose = new ViewerPose(UiLog.Verbose);   // coiled by default, only the whip has the switch (D-057)
+            readonly Func<string, string> _text;
+            Button _poseButton;
 
             internal Viewport(Func<string, string> text, WeaponSelection selection, IWeaponScene scene, ViewerSettings settings, VisualElement frame)
             {
                 _selection = selection;
+                _text = text;
                 _scene = scene;
                 _frame = frame;
                 _orbit = new ViewerOrbit(settings, UiLog.Verbose);
@@ -98,6 +102,8 @@ namespace WhipItUp.Ui
                 var buttons = new VisualElement { name = "whipitup-viewport-buttons" };
                 buttons.style.position = Position.Absolute; buttons.style.right = 6; buttons.style.bottom = 4;
                 buttons.style.flexDirection = FlexDirection.Row;
+                _poseButton = UiControls.Button(text(_pose.ButtonKey), TogglePose);
+                buttons.Add(_poseButton);
                 buttons.Add(UiControls.Button("+", () => Changed(_orbit.StepZoom(1f), "zoom in button")));
                 buttons.Add(UiControls.Button("-", () => Changed(_orbit.StepZoom(-1f), "zoom out button")));
                 buttons.Add(UiControls.Button(text("whipitup_viewer_reset"), () => Changed(_orbit.Reset(), "reset button")));
@@ -120,10 +126,29 @@ namespace WhipItUp.Ui
             {
                 var w = _selection.Current;
                 _name.text = w != null ? w.Name : "";
-                bool shown = _scene.Show(w);
+                string family = w != null ? w.Family : null;
+                bool coiled = _pose.ShowsCoiled(family);
+                bool shown = _scene.Show(w, coiled);
                 _orbit.Reset();
-                UiLog.Verbose("WeaponViewportView: selected " + (w != null ? w.ToString() : "no weapon") + ", model " + (shown ? "shown" : "NOT shown (see the WeaponViewerRig lines above)"));
+                bool hasSwitch = ViewerPose.HasSwitch(family);
+                _poseButton.style.display = hasSwitch ? DisplayStyle.Flex : DisplayStyle.None;
+                UiLog.Verbose("WeaponViewportView: selected " + (w != null ? w.ToString() : "no weapon") + ", pose " + (coiled ? "coiled" : "rest") + " (switch " + (hasSwitch ? "shown, set to " + _pose : "hidden: " + family + " has none") + "), model "
+                    + (shown ? "shown" : "NOT shown (see the WeaponViewerRig lines above)"));
                 Draw("weapon changed");
+            }
+
+            // The Straight / Coiled button: only the model is made again - the view (rotation, zoom, pan) stays as it is (D-057).
+            void TogglePose()
+            {
+                var w = _selection.Current;
+                string family = w != null ? w.Family : null;
+                if (!ViewerPose.HasSwitch(family)) { UiLog.Verbose("WeaponViewportView: pose button pressed on " + (w != null ? w.ToString() : "no weapon") + ", which has no switch - ignored"); return; }
+                bool flipped = _pose.Toggle();
+                _poseButton.text = _text(_pose.ButtonKey);
+                bool shown = _scene.Show(w, _pose.ShowsCoiled(family));
+                UiLog.Verbose("WeaponViewportView: pose switch of " + w + " -> " + _pose + " (flipped " + flipped + "), model " + (shown ? "shown" : "NOT shown (see the WeaponViewerRig lines above)")
+                    + ", view kept: yaw " + _orbit.Yaw.ToString("0.#", CultureInfo.InvariantCulture) + ", pitch " + _orbit.Pitch.ToString("0.#", CultureInfo.InvariantCulture) + ", zoom " + _orbit.Zoom.ToString("0.##", CultureInfo.InvariantCulture));
+                Draw("pose changed");
             }
 
             void OnDown(PointerDownEvent e)

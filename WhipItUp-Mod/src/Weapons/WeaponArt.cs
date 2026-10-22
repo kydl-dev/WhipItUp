@@ -39,6 +39,24 @@ namespace WhipItUp.Weapons
             return p.Length == 3 && int.TryParse(p[1], out c) && int.TryParse(p[2], out b) ? c * 1000L + b : long.MaxValue;
         }
 
+        // Baked icon-pose meshes by item name: the F6 viewer asks for the coiled whip at every switch click, and a baked mesh is not freed with the
+        // GameObject that shows it, so each is baked once and shared (7 per family at most) instead of leaking a new one per click.
+        readonly Dictionary<string, Mesh> _baked = new Dictionary<string, Mesh>();
+
+        /// The icon-pose mesh of that item, baked on the first ask. Expected outcome: a mesh, or null when the bake failed (the caller then uses the rest pose).
+        Mesh BakedFor(string name)
+        {
+            Mesh mesh;
+            if (_baked.TryGetValue(name, out mesh) && mesh != null)
+            {
+                ModLog.Verbose("WeaponArt: " + name + " icon-pose mesh reused (" + mesh.vertexCount + " verts, " + _baked.Count + " cached)");
+                return mesh;
+            }
+            mesh = BakePosed(name);
+            if (mesh != null) _baked[name] = mesh;
+            return mesh;
+        }
+
         /// A static copy of the skinned mesh in the PoseForIcon pose (BakeMesh). Null on failure (the icon then uses the rest pose).
         Mesh BakePosed(string name)
         {
@@ -173,7 +191,7 @@ namespace WhipItUp.Weapons
                 break;
             }
             if (mat == null || Mesh == null) return null;
-            var mesh = iconPose && Skinned && PoseForIcon != null ? BakePosed(name) : Mesh;
+            var mesh = iconPose && Skinned && PoseForIcon != null ? BakedFor(name) : Mesh;
             var go = new GameObject(name + "_IconSource");
             go.AddComponent<MeshFilter>().sharedMesh = mesh != null ? mesh : Mesh;
             go.AddComponent<MeshRenderer>().sharedMaterial = mat;

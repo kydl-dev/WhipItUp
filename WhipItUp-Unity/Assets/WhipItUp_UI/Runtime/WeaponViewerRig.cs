@@ -20,7 +20,7 @@ namespace WhipItUp.Ui
         const float LogEverySeconds = 0.5f;
         static readonly Color Ambient = new Color(0.38f, 0.36f, 0.34f);
 
-        readonly Func<WeaponInfo, GameObject> _makeModel;
+        readonly Func<WeaponInfo, bool, GameObject> _makeModel;
         readonly ViewerSettings _settings;
         readonly Action<string> _log;
         readonly int _layer;
@@ -35,7 +35,7 @@ namespace WhipItUp.Ui
         public Texture Texture { get { return _texture; } }
 
         /// `layer` 0..31: the layer only this rig uses (the game's cameras must not draw it, S5). `background` = the clear colour of the view.
-        internal WeaponViewerRig(Func<WeaponInfo, GameObject> makeModel, int layer, ViewerSettings settings, Color background, Action<string> log)
+        internal WeaponViewerRig(Func<WeaponInfo, bool, GameObject> makeModel, int layer, ViewerSettings settings, Color background, Action<string> log)
         {
             _makeModel = makeModel;
             _settings = settings ?? new ViewerSettings();
@@ -81,15 +81,16 @@ namespace WhipItUp.Ui
             light.renderMode = LightRenderMode.ForcePixel;
         }
 
-        public bool Show(WeaponInfo weapon)
+        public bool Show(WeaponInfo weapon, bool coiled)
         {
-            if (_root == null) { Log("WeaponViewerRig: Show(" + weapon + ") after Dispose - ignored"); return false; }
+            if (_root == null) { Log("WeaponViewerRig: Show(" + weapon + ", " + (coiled ? "coiled" : "rest pose") + ") after Dispose - ignored"); return false; }
             if (_model != null) { _model.SetActive(false); UnityEngine.Object.Destroy(_model); _model = null; }   // inactive now: Destroy only happens at the frame's end
             _weapon = weapon;
             if (weapon == null) { Log("WeaponViewerRig: no weapon to show"); return false; }
 
             GameObject model = null;
-            try { model = _makeModel != null ? _makeModel(weapon) : null; }
+            Log("WeaponViewerRig: making the model of " + weapon + " in the " + (coiled ? "coiled" : "rest") + " pose");
+            try { model = _makeModel != null ? _makeModel(weapon, coiled) : null; }
             catch (Exception e) { Log("WeaponViewerRig: making the model of " + weapon + " failed: " + e.GetType().Name + ": " + e.Message); }
             if (model == null) { Log("WeaponViewerRig: no model for " + weapon + " (model maker gave null)"); return false; }
 
@@ -115,7 +116,7 @@ namespace WhipItUp.Ui
             _halfWidth = placed.extents.x;
             _halfHeight = Mathf.Max(placed.extents.y, placed.extents.z);    // y or z can face the camera after turning: keep the bigger
             _radius = placed.extents.magnitude;
-            Log("WeaponViewerRig: showing " + weapon + ": " + renderers + " renderer(s), size " + V(raw.size) + " m, longest axis " + axis
+            Log("WeaponViewerRig: showing " + weapon + " (" + (coiled ? "coiled" : "rest pose") + "): " + renderers + " renderer(s), size " + V(raw.size) + " m, longest axis " + axis
                 + " laid across, centre offset " + V(placed.center - _pivot.transform.position) + " m, half width " + F(_halfWidth) + " / height " + F(_halfHeight)
                 + " / radius " + F(_radius) + " m");
             return true;

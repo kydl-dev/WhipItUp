@@ -23,6 +23,8 @@ namespace WhipItUp.Ui
             // Viewer tab (the 3D view)
             { "whipitup_viewer_hint", "Left-drag: turn   Right-drag: move   Wheel: zoom" },
             { "whipitup_viewer_reset", "Reset" },
+            { "whipitup_viewer_straight", "Straight" },
+            { "whipitup_viewer_coiled", "Coiled" },
             { "whipitup_viewer_unavailable", "No 3D view here." },
 
             // Details tab: blocks, row labels, damage types, templates ({0} / {1} are filled in by WeaponDetailsBuilder)

@@ -150,9 +150,11 @@ namespace WhipItUp.Weapons
             return shared.m_secondaryAttack.m_attackAnimation == BackhandRoll.SecondaryState;
         }
 
-        /// A new model of that weapon for the F6 viewer: the family mesh in its rest pose (falls / lash straight, D-048 Q3) with the rank's
-        /// material, taken from the registered item prefab. The caller owns (and destroys) it. Null when the family or item is missing (logged).
-        internal static GameObject CreateViewerModel(string family, int rank)
+        /// A new model of that weapon for the F6 viewer: the family mesh with the rank's material, taken from the registered item prefab. The pose
+        /// is the rest pose (falls / lash straight) unless `coiled` is asked AND the family has the switch (the whip, ViewerPose, D-057): then the
+        /// same baked coil as its icon. The flogger's icon pose (falls hanging) is never used here. The caller owns (and destroys) it.
+        /// Null when the family or item is missing (logged).
+        internal static GameObject CreateViewerModel(string family, int rank, bool coiled)
         {
             WeaponFamily f;
             if (family == null || !Registered.TryGetValue(family, out f) || f.Art == null)
@@ -164,8 +166,10 @@ namespace WhipItUp.Weapons
             var db = ObjectDB.instance;
             var prefab = db != null ? db.GetItemPrefab(name) : null;
             if (prefab == null) { ModLog.Verbose("WeaponFamily: viewer model of " + name + ": no item prefab (ObjectDB " + (db != null ? "has no such item" : "not ready") + ")"); return null; }
-            var model = f.Art.CreateIconSource(prefab, name, false);
-            ModLog.Verbose("WeaponFamily: viewer model of " + name + (model != null ? " made from the item prefab (rest pose, skinned family " + f.Art.Skinned + ")" : " NOT made (no visual / material on the item prefab)"));
+            bool coil = coiled && Ui.ViewerPose.HasSwitch(family);
+            if (coiled && !coil) ModLog.Verbose("WeaponFamily: viewer model of " + name + ": coiled asked but " + family + " has no coil switch - rest pose");
+            var model = f.Art.CreateIconSource(prefab, name, coil);
+            ModLog.Verbose("WeaponFamily: viewer model of " + name + (model != null ? " made from the item prefab (" + (coil ? "coiled, the icon pose baked" : "rest pose") + ", skinned family " + f.Art.Skinned + ")" : " NOT made (no visual / material on the item prefab)"));
             return model;
         }
 

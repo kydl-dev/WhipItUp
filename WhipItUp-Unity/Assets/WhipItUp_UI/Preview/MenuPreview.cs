@@ -118,8 +118,10 @@ namespace WhipItUp.Ui
         }
 
         // Preview model: Assets/WhipItUp/<Family>/<Family>.fbx with a Standard material of that rank's albedo + the shared normal / metal-gloss maps.
-        static GameObject MakeModel(WeaponInfo weapon)
+        static GameObject MakeModel(WeaponInfo weapon, bool coiled)
         {
+            // the FBX is the rest pose: the coil pose is baked from the game's item bones, so the preview shows no difference (the switch only logs here)
+            Debug.Log("[MenuPreview] model of " + weapon + " asked in the " + (coiled ? "coiled" : "rest") + " pose (the preview always shows the FBX rest pose)");
 #if UNITY_EDITOR
             string folder = "Assets/WhipItUp/" + weapon.Family + "/";
             string prefix = folder + weapon.Family.ToLowerInvariant() + "_";

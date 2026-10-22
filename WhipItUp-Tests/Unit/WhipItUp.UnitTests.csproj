@@ -21,5 +21,6 @@
     <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerSettings.cs" Link="Mod\ViewerSettings.cs" />
     <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerMath.cs" Link="Mod\ViewerMath.cs" />
     <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerOrbit.cs" Link="Mod\ViewerOrbit.cs" />
+    <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerPose.cs" Link="Mod\ViewerPose.cs" />
   </ItemGroup>
 </Project>
