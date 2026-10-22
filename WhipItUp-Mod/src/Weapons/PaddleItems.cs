@@ -11,7 +11,6 @@ namespace WhipItUp.Weapons
     internal sealed class PaddleItems : WeaponFamily
     {
         public override string Family { get { return "Paddle"; } }
-        protected override string Description { get { return "A studded leather paddle with a wolf-crest pommel. Placeholder text until the names are chosen."; } }
         protected override Vector3 Rotation { get { return ModSettings.PaddleRotation; } }
         protected override float Grip { get { return ModSettings.PaddleGrip.Value; } }
         protected override float Scale { get { return ModSettings.PaddleScale.Value; } }

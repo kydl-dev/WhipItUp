@@ -11,7 +11,6 @@ namespace WhipItUp.Weapons
     internal sealed class FloggerItems : WeaponFamily
     {
         public override string Family { get { return "Flogger"; } }
-        protected override string Description { get { return "A wolf-crested flogger of braided leather falls. Placeholder text until the names are chosen."; } }
         protected override Vector3 Rotation { get { return ModSettings.FloggerRotation; } }
         protected override float Grip { get { return ModSettings.FloggerGrip.Value; } }
         protected override float Scale { get { return ModSettings.FloggerScale.Value; } }

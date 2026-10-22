@@ -12,7 +12,7 @@ namespace WhipItUp.Weapons
     /// <summary>
     /// One weapon family = 7 rank items &lt;Family&gt;_V1..V7 (D-005) cloned from a vanilla weapon, with the family's art from the bundle
     /// (WeaponArt), the crop-ladder stats (Ladder; each family decides its damage in ApplyDamage), the mod's whoosh/slap sounds, an
-    /// optional attack 2 copied from MaceEldner (+ BackhandRoll wrist roll) and a rendered inventory icon. Names are placeholders until T-012.
+    /// optional attack 2 copied from MaceEldner (+ BackhandRoll wrist roll) and a rendered inventory icon. Names and descriptions come from WeaponNames (T-012).
     /// </summary>
     internal abstract class WeaponFamily
     {
@@ -20,7 +20,6 @@ namespace WhipItUp.Weapons
         protected virtual string VanillaBase { get { return "Club"; } }
         protected const string SecondarySource = "MaceEldner";   // Flametal mace: its secondary attack is attack 2 (D-026)
         protected virtual bool HasMaceSecondary { get { return true; } }
-        protected abstract string Description { get; }
         protected abstract Vector3 Rotation { get; }
         protected abstract float Grip { get; }
         protected abstract float Scale { get; }
@@ -83,7 +82,7 @@ namespace WhipItUp.Weapons
             var config = new ItemConfig
             {
                 Name = Kydl.Common.Loc.Token(WeaponNames.Key(Family, rank)),
-                Description = Description,
+                Description = Kydl.Common.Loc.Token(WeaponNames.DescKey(Family, rank)),
                 CraftingStation = Ladder.Station[i],
                 MinStationLevel = Ladder.StationLevel[i],
                 Requirements = Ladder.Ingredients[i].Select(g => new RequirementConfig(g.Item, g.Amount, g.AmountPerLevel, true)).ToArray(),
@@ -99,7 +98,7 @@ namespace WhipItUp.Weapons
             ItemManager.Instance.AddItem(item);
             Items.Add(item);
             RenderIcon(item, shared, name, rank);
-            ModLog.Verbose(Family + "Items: " + name + " '" + Kydl.Common.Loc.T(WeaponNames.Key(Family, rank)) + "' added (" + config.CraftingStation + " " + config.MinStationLevel + ", " + string.Join(", ", Ladder.Ingredients[i].Select(g => g.ToString())) + ")");
+            ModLog.Verbose(Family + "Items: " + name + " '" + Kydl.Common.Loc.T(WeaponNames.Key(Family, rank)) + "' (" + Kydl.Common.Loc.T(WeaponNames.DescKey(Family, rank)) + ") added (" + config.CraftingStation + " " + config.MinStationLevel + ", " + string.Join(", ", Ladder.Ingredients[i].Select(g => g.ToString())) + ")");
         }
 
         /// Expected outcome: the shared data holds the ladder's values for this rank (returns that check).
@@ -157,7 +156,10 @@ namespace WhipItUp.Weapons
                 if (source == null) { ModLog.Warn(Family + "Items: no visual on " + name + " - it keeps the " + VanillaBase + "'s icon"); return; }
                 var icon = RenderManager.Instance.Render(new RenderManager.RenderRequest(source)
                 {
-                    Width = 128, Height = 128, Rotation = IconRotation, UseCache = false,
+                    Width = 128,
+                    Height = 128,
+                    Rotation = IconRotation,
+                    UseCache = false,
                 });
                 if (icon == null) { ModLog.Warn(Family + "Items: icon render returned nothing - " + name + " keeps the " + VanillaBase + "'s icon"); return; }
                 shared.m_icons = new[] { icon };

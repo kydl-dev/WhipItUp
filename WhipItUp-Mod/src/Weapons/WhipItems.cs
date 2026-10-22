@@ -16,7 +16,6 @@ namespace WhipItUp.Weapons
         const string GrabSource = "SpearBronze";      // its secondary 'spear_throw' clip is the throw of attack 2
 
         public override string Family { get { return FamilyName; } }
-        protected override string Description { get { return "A wolf-crested bullwhip with a long braided lash. Placeholder text until the names are chosen."; } }
         protected override Vector3 Rotation { get { return ModSettings.WhipRotation; } }
         protected override float Grip { get { return ModSettings.WhipGrip.Value; } }
         protected override float Scale { get { return ModSettings.WhipScale.Value; } }
