@@ -20,6 +20,11 @@ namespace WhipItUp.Ui
             { "whipitup_family_flogger", "Flogger" },
             { "whipitup_family_whip", "Whip" },
 
+            // Viewer tab (the 3D view)
+            { "whipitup_viewer_hint", "Drag to turn, mouse wheel to zoom" },
+            { "whipitup_viewer_reset", "Reset" },
+            { "whipitup_viewer_unavailable", "No 3D view here." },
+
             // Details tab: blocks, row labels, damage types, templates ({0} / {1} are filled in by WeaponDetailsBuilder)
             { "whipitup_details_quality", "Quality" },
             { "whipitup_details_unavailable", "No item data yet: open this menu in a world to see the numbers." },

@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Kydl.Ui;
 using UnityEngine;
+using UnityEngine.UIElements;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -25,17 +28,126 @@ namespace WhipItUp.Ui
         [Tooltip("UI pixels the body is scrolled once the layout exists (preview only: the Unity MCP has no scroll tool). 0 = top.")]
         [SerializeField] float startScroll;
 
+        [Tooltip("Layer the 3D viewer's camera and model use (preview only; the game picks its own in S5).")]
+        [SerializeField] int viewerLayer = 31;
+
+        [Tooltip("Preview only: input sent to the menu as real UI Toolkit events when this text changes in Play mode (the Unity MCP has no mouse). "
+            + "Commands separated by ';': 'drag dx dy' (UI px on the viewport), 'wheel n' (n > 0 = toward the player = zoom out), 'click <button text>' (e.g. '+', 'Reset', a drop-down entry).")]
+        [SerializeField] string inputCommand = "";
+        string _lastCommand = "";
+
         void OnEnable()
         {
             LoadGameFonts();
             UiKit.Reset();
             var root = UiKit.Root;
             if (root == null) { Debug.LogError("[MenuPreview] UI Toolkit panel could not be made"); return; }
-            root.Add(MainMenuView.Build(UiText.English, StartWith(SampleWeapons(), startFamily), () => Debug.Log("[MenuPreview] close pressed"), startTab, startScroll));
+            root.Add(MainMenuView.Build(UiText.English, StartWith(SampleWeapons(), startFamily), () => Debug.Log("[MenuPreview] close pressed"), startTab, startScroll,
+                MakeScene, new ViewerSettings()));
             Debug.Log("[MenuPreview] WhipItUp menu shown, start tab " + startTab);
         }
 
         void OnDisable() { UiKit.Reset(); }
+
+        void Update()
+        {
+            if (inputCommand == _lastCommand) return;
+            _lastCommand = inputCommand;
+            foreach (var c in (inputCommand ?? "").Split(';'))
+                if (c.Trim().Length > 0) RunCommand(c.Trim());
+        }
+
+        // One preview input command (see inputCommand's tooltip): IMGUI events turned into UI Toolkit pointer / wheel events, sent to the element.
+        static void RunCommand(string command)
+        {
+            var root = UiKit.Root;
+            var parts = command.Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+            string verb = parts[0].ToLowerInvariant(), arg = parts.Length > 1 ? parts[1].Trim() : "";
+            var view = root != null ? root.Q("whipitup-viewport-image") : null;
+            if (verb == "drag" || verb == "wheel")
+            {
+                if (view == null) { Debug.LogWarning("[MenuPreview] input '" + command + "': no 3D viewport (Viewer tab hidden or no scene)"); return; }
+                Vector2 c = view.worldBound.center;
+                var n = arg.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (verb == "wheel")
+                {
+                    float d = n.Length > 0 ? float.Parse(n[0], CultureInfo.InvariantCulture) : 1f;
+                    Send(view, new Event { type = EventType.ScrollWheel, delta = new Vector2(0f, d), mousePosition = c });
+                    Debug.Log("[MenuPreview] input: wheel " + d + " at " + c);
+                    return;
+                }
+                float dx = n.Length > 0 ? float.Parse(n[0], CultureInfo.InvariantCulture) : 0f, dy = n.Length > 1 ? float.Parse(n[1], CultureInfo.InvariantCulture) : 0f;
+                Send(view, new Event { type = EventType.MouseDown, button = 0, mousePosition = c });
+                const int steps = 5;
+                for (int i = 1; i <= steps; i++) Send(view, new Event { type = EventType.MouseDrag, button = 0, mousePosition = c + new Vector2(dx, dy) * i / steps });
+                Send(view, new Event { type = EventType.MouseUp, button = 0, mousePosition = c + new Vector2(dx, dy) });
+                Debug.Log("[MenuPreview] input: drag " + dx + ", " + dy + " UI px from " + c);
+                return;
+            }
+            if (verb == "click")
+            {
+                Button hit = null;
+                if (root != null) root.Query<Button>().ForEach(b => { if (hit == null && b.resolvedStyle.display != DisplayStyle.None && string.Equals((b.text ?? "").Trim(), arg, StringComparison.OrdinalIgnoreCase)) hit = b; });
+                if (hit == null) { Debug.LogWarning("[MenuPreview] input '" + command + "': no button with the text '" + arg + "'"); return; }
+                Vector2 c = hit.worldBound.center;
+                Send(hit, new Event { type = EventType.MouseDown, button = 0, mousePosition = c });
+                Send(hit, new Event { type = EventType.MouseUp, button = 0, mousePosition = c });
+                Debug.Log("[MenuPreview] input: clicked '" + arg + "' at " + c);
+                return;
+            }
+            Debug.LogWarning("[MenuPreview] input: unknown command '" + command + "' (drag dx dy / wheel n / click text)");
+        }
+
+        static void Send(VisualElement target, Event imgui)
+        {
+            EventBase e;
+            switch (imgui.type)
+            {
+                case EventType.MouseDown: e = PointerDownEvent.GetPooled(imgui); break;
+                case EventType.MouseUp: e = PointerUpEvent.GetPooled(imgui); break;
+                case EventType.ScrollWheel: e = WheelEvent.GetPooled(imgui); break;
+                default: e = PointerMoveEvent.GetPooled(imgui); break;
+            }
+            using (e) target.SendEvent(e);
+        }
+
+        // The Viewer tab's 3D scene: the same rig the game uses, with the Unity project's FBX + rank textures as the model.
+        IWeaponScene MakeScene()
+        {
+            return new WeaponViewerRig(MakeModel, viewerLayer, new ViewerSettings(), UiKit.Track, s => Debug.Log("[MenuPreview] " + s));
+        }
+
+        // Preview model: Assets/WhipItUp/<Family>/<Family>.fbx with a Standard material of that rank's albedo + the shared normal / metal-gloss maps.
+        static GameObject MakeModel(WeaponInfo weapon)
+        {
+#if UNITY_EDITOR
+            string folder = "Assets/WhipItUp/" + weapon.Family + "/";
+            string prefix = folder + weapon.Family.ToLowerInvariant() + "_";
+            var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(folder + weapon.Family + ".fbx");
+            if (fbx == null) { Debug.LogWarning("[MenuPreview] no model " + folder + weapon.Family + ".fbx"); return null; }
+            var go = Instantiate(fbx);
+            go.name = "Preview_" + weapon.Family + "_V" + weapon.Rank;
+            var mat = new Material(Shader.Find("Standard")) { name = go.name };
+            var albedo = AssetDatabase.LoadAssetAtPath<Texture2D>(prefix + "Albedo_V" + weapon.Rank + ".png");
+            var normal = AssetDatabase.LoadAssetAtPath<Texture2D>(prefix + "Normal.png");
+            var metal = AssetDatabase.LoadAssetAtPath<Texture2D>(prefix + "MetalGloss.png");
+            mat.SetTexture("_MainTex", albedo);
+            if (normal != null) { mat.SetTexture("_BumpMap", normal); mat.EnableKeyword("_NORMALMAP"); }
+            if (metal != null) { mat.SetTexture("_MetallicGlossMap", metal); mat.EnableKeyword("_METALLICGLOSSMAP"); }
+            int n = 0;
+            foreach (var r in go.GetComponentsInChildren<Renderer>(true))
+            {
+                var mats = r.sharedMaterials;
+                for (int i = 0; i < mats.Length; i++) mats[i] = mat;
+                r.sharedMaterials = mats;
+                n++;
+            }
+            Debug.Log("[MenuPreview] model " + go.name + ": " + n + " renderer(s), albedo " + (albedo != null ? albedo.name : "MISSING") + ", normal " + (normal != null) + ", metal " + (metal != null));
+            return go;
+#else
+            return null;
+#endif
+        }
 
         // The list with the weapons of `family` first (the menu starts on the first weapon of the list); empty or unknown family = unchanged.
         static List<WeaponInfo> StartWith(List<WeaponInfo> all, string family)

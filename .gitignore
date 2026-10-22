@@ -69,3 +69,7 @@ Desktop.ini
 
 # --- Blender preview renders (regenerate with scripts/preview_render.py) ---
 /WhipItUp-Blender/renders/
+
+# Unity MCP screenshots (agent checks, not project assets)
+WhipItUp-Unity/Assets/Screenshots/
+WhipItUp-Unity/Assets/Screenshots.meta
