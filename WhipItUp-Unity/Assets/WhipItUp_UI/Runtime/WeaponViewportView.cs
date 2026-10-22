@@ -8,7 +8,7 @@ namespace WhipItUp.Ui
 {
     /// <summary>
     /// The Viewer tab: the two drop-downs, then a fixed-size viewport with the selected weapon in 3D (IWeaponScene renders it into a texture).
-    /// Left-drag turns it, the mouse wheel and [+] / [-] zoom, [Reset] returns to the default view; a new weapon also starts at the default view.
+    /// Left-drag turns it, right-drag moves it inside the view (D-056), the mouse wheel and [+] / [-] zoom, [Reset] returns to the default view; a new weapon also starts at the default view.
     /// The viewport keeps its size: zoomed in, the weapon simply runs past the edges (the texture is the viewport, nothing outside it is drawn).
     /// Without a scene (null) the frame only shows the weapon's name and a note.
     /// </summary>
@@ -66,7 +66,10 @@ namespace WhipItUp.Ui
             readonly ViewerOrbit _orbit;
             readonly Image _image;
             readonly Label _name;
+            readonly VisualElement _frame;
             bool _dragging;
+            bool _panning;                                              // the drag in progress: right button = pan, left button = rotate
+            int _dragButton = -1;
             Vector2 _last;
             int _pointer = -1;
 
@@ -74,6 +77,7 @@ namespace WhipItUp.Ui
             {
                 _selection = selection;
                 _scene = scene;
+                _frame = frame;
                 _orbit = new ViewerOrbit(settings, UiLog.Verbose);
 
                 _image = new Image { name = "whipitup-viewport-image", scaleMode = ScaleMode.StretchToFill };
@@ -124,13 +128,20 @@ namespace WhipItUp.Ui
 
             void OnDown(PointerDownEvent e)
             {
-                if (e.button != 0) return;
+                if (e.button != 0 && e.button != 1) return;                // left = rotate, right = pan, other buttons are not ours
+                if (_dragging)
+                {
+                    UiLog.Verbose("WeaponViewportView: button " + e.button + " pressed during a " + (_panning ? "pan" : "rotate") + " drag (button " + _dragButton + ") - ignored");
+                    return;
+                }
                 _dragging = true;
+                _panning = e.button == 1;
+                _dragButton = e.button;
                 _pointer = e.pointerId;
                 _last = new Vector2(e.position.x, e.position.y);
                 _image.CapturePointer(e.pointerId);
                 e.StopPropagation();
-                UiLog.Verbose("WeaponViewportView: drag started at " + P(_last) + " (pointer " + e.pointerId + ")");
+                UiLog.Verbose("WeaponViewportView: " + (_panning ? "pan" : "rotate") + " drag started at " + P(_last) + " (button " + e.button + ", pointer " + e.pointerId + ", frame " + FrameHeightPx().ToString("0", CultureInfo.InvariantCulture) + " UI px high)");
             }
 
             void OnMove(PointerMoveEvent e)
@@ -140,15 +151,16 @@ namespace WhipItUp.Ui
                 var d = now - _last;
                 _last = now;
                 if (d.sqrMagnitude <= 0f) return;
-                if (_orbit.Drag(d.x, d.y)) Draw(null);
+                bool changed = _panning ? _orbit.Pan(d.x, d.y, FrameHeightPx()) : _orbit.Drag(d.x, d.y);
+                if (changed) Draw(null);
                 e.StopPropagation();
             }
 
             void OnUp(PointerUpEvent e)
             {
-                if (e.button != 0 || e.pointerId != _pointer) return;
+                if (e.button != _dragButton || e.pointerId != _pointer) return;
                 if (_image.HasPointerCapture(e.pointerId)) _image.ReleasePointer(e.pointerId);
-                EndDrag("button released");
+                EndDrag("button " + e.button + " released");
                 e.StopPropagation();
             }
 
@@ -157,8 +169,13 @@ namespace WhipItUp.Ui
                 if (!_dragging) return;
                 _dragging = false;
                 _pointer = -1;
-                UiLog.Verbose("WeaponViewportView: drag ended (" + why + "), view " + _orbit);
+                UiLog.Verbose("WeaponViewportView: " + (_panning ? "pan" : "rotate") + " drag ended (" + why + "), view " + _orbit);
+                _panning = false;
+                _dragButton = -1;
             }
+
+            // The frame's height in UI pixels: what a dragged pixel is measured against, so the weapon follows the mouse.
+            float FrameHeightPx() { return _frame.contentRect.height; }
 
             void OnWheel(WheelEvent e)
             {
@@ -196,7 +213,7 @@ namespace WhipItUp.Ui
             // `why` null = a drag step (the scene logs those throttled).
             void Draw(string why)
             {
-                bool done = _scene.Render(_orbit.Yaw, _orbit.Pitch, _orbit.Zoom);
+                bool done = _scene.Render(_orbit.Yaw, _orbit.Pitch, _orbit.Zoom, _orbit.PanX, _orbit.PanY, _orbit.PanZ);
                 _image.MarkDirtyRepaint();
                 if (why != null) UiLog.Verbose("WeaponViewportView: drawn after " + why + " (" + _orbit + ")" + (done ? "" : " - scene did not render"));
             }

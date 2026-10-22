@@ -151,6 +151,113 @@ namespace WhipItUp.Tests.Unit
         }
 
         [Test]
+        public void CameraAxes_FrontView_RightIsX_UpIsY()
+        {
+            ViewerMath.CameraAxes(0f, 0f, out float rx, out float ry, out float rz, out float ux, out float uy, out float uz);
+            Assert.That(new[] { rx, ry, rz, ux, uy, uz }, Is.EqualTo(new[] { 1f, 0f, 0f, 0f, 1f, 0f }).Within(Eps));
+        }
+
+        [Test]
+        public void CameraAxes_AreUnitLength_AndSquareToEachOtherAndTheViewDirection()
+        {
+            foreach (float yaw in new[] { -170f, -45f, 0f, 20f, 90f, 135f })
+            {
+                foreach (float pitch in new[] { -80f, -12f, 0f, 30f, 80f })
+                {
+                    ViewerMath.CameraAxes(yaw, pitch, out float rx, out float ry, out float rz, out float ux, out float uy, out float uz);
+                    ViewerMath.Orbit(yaw, pitch, 1f, out float cx, out float cy, out float cz);   // camera position = minus the view direction
+                    Assert.That(Math.Sqrt(rx * rx + ry * ry + rz * rz), Is.EqualTo(1.0).Within(Eps));
+                    Assert.That(Math.Sqrt(ux * ux + uy * uy + uz * uz), Is.EqualTo(1.0).Within(Eps));
+                    Assert.That(rx * ux + ry * uy + rz * uz, Is.EqualTo(0f).Within(Eps), "right and up are square, yaw " + yaw + " pitch " + pitch);
+                    Assert.That(rx * cx + ry * cy + rz * cz, Is.EqualTo(0f).Within(Eps), "right is square to the view direction");
+                    Assert.That(ux * cx + uy * cy + uz * cz, Is.EqualTo(0f).Within(Eps), "up is square to the view direction");
+                }
+            }
+        }
+
+        [Test]
+        public void ClampLength_KeepsTheDirection_AndReportsShortening()
+        {
+            float x = 3f, y = 4f, z = 0f;
+            Assert.That(ViewerMath.ClampLength(ref x, ref y, ref z, 1f), Is.True);
+            Assert.That(x, Is.EqualTo(0.6f).Within(Eps));
+            Assert.That(y, Is.EqualTo(0.8f).Within(Eps));
+            float a = 0.1f, b = 0.1f, c = 0f;
+            Assert.That(ViewerMath.ClampLength(ref a, ref b, ref c, 1f), Is.False, "inside the limit nothing changes");
+            float n = float.NaN, m = 1f, o = 1f;
+            Assert.That(ViewerMath.ClampLength(ref n, ref m, ref o, 1f), Is.True);
+            Assert.That(new[] { n, m, o }, Is.EqualTo(new[] { 0f, 0f, 0f }));
+        }
+
+        [Test]
+        public void Orbit_Pan_RightDragMovesTheLookAtPointLeft_DragDownMovesItUp()
+        {
+            var s = new ViewerSettings { StartYaw = 0f, StartPitch = 0f, PanSpeed = 1f, PanLimit = 3f };
+            var o = new ViewerOrbit(s);
+            Assert.That(o.Pan(100f, 0f, 400f), Is.True);
+            Assert.That(o.PanX, Is.EqualTo(-0.25f).Within(Eps), "100 px of a 400 px frame = a quarter of the view height, weapon follows the mouse right");
+            Assert.That(o.PanY, Is.EqualTo(0f).Within(Eps));
+            Assert.That(o.PanZ, Is.EqualTo(0f).Within(Eps));
+            o.Pan(0f, 40f, 400f);
+            Assert.That(o.PanY, Is.EqualTo(0.1f).Within(Eps), "the weapon moved down, so the look-at point went up");
+        }
+
+        [Test]
+        public void Orbit_Pan_ZoomedIn_MovesLessPerPixel_PanSpeedScalesIt()
+        {
+            var s = new ViewerSettings { StartYaw = 0f, StartPitch = 0f, PanSpeed = 2f, PanLimit = 3f };
+            var o = new ViewerOrbit(s);
+            o.StepZoom(0f);
+            o.Pan(100f, 0f, 400f);
+            Assert.That(o.PanX, Is.EqualTo(-0.5f).Within(Eps), "speed x2");
+            var z = new ViewerOrbit(new ViewerSettings { StartYaw = 0f, StartPitch = 0f, PanSpeed = 1f, PanLimit = 3f });
+            while (z.Zoom < 2f) z.StepZoom(1f);
+            float zoom = z.Zoom;
+            z.Pan(100f, 0f, 400f);
+            Assert.That(z.PanX, Is.EqualTo(-0.25f / zoom).Within(Eps), "zoomed in x" + zoom + " the same drag moves the world point less");
+        }
+
+        [Test]
+        public void Orbit_Pan_FollowsTheTurnedView_AndStaysWithinTheLimit()
+        {
+            var s = new ViewerSettings { StartYaw = 90f, StartPitch = 0f, PanSpeed = 1f, PanLimit = 0.5f };
+            var o = new ViewerOrbit(s);
+            o.Pan(100f, 0f, 400f);                                      // camera on -X looking +X: its right is -Z, so the look-at point moves +Z
+            Assert.That(o.PanX, Is.EqualTo(0f).Within(Eps));
+            Assert.That(o.PanZ, Is.EqualTo(0.25f).Within(Eps));
+            o.Pan(1000f, 0f, 400f);
+            Assert.That(o.PanZ, Is.EqualTo(0.5f).Within(Eps), "limited to PanLimit");
+            var log = new List<string>();
+            var l = new ViewerOrbit(s, log.Add);
+            l.Pan(1000f, 0f, 400f);
+            Assert.That(l.Pan(10f, 0f, 400f), Is.False, "at the limit a further drag in the same direction changes nothing");
+            Assert.That(log.Exists(t => t.Contains("pan at the limit")), Is.True);
+        }
+
+        [Test]
+        public void Orbit_Pan_BadInput_IsIgnored_ResetClearsThePan()
+        {
+            var log = new List<string>();
+            var o = new ViewerOrbit(new ViewerSettings(), log.Add);
+            Assert.That(o.Pan(float.NaN, 1f, 400f), Is.False);
+            Assert.That(o.Pan(10f, 10f, 0f), Is.False, "no frame height, nothing to measure against");
+            Assert.That(log.Exists(t => t.Contains("frame height")), Is.True);
+            o.Pan(50f, 30f, 400f);
+            Assert.That(o.PanX != 0f || o.PanY != 0f || o.PanZ != 0f, Is.True);
+            Assert.That(o.Reset(), Is.True, "a panned view is not the default view");
+            Assert.That(new[] { o.PanX, o.PanY, o.PanZ }, Is.EqualTo(new[] { 0f, 0f, 0f }));
+        }
+
+        [Test]
+        public void Settings_Clamp_PanValuesAreRanged()
+        {
+            var s = new ViewerSettings { PanSpeed = 99f, PanLimit = -1f };
+            Assert.That(s.Clamp(), Is.EqualTo(2));
+            Assert.That(s.PanSpeed, Is.EqualTo(ViewerSettings.PanSpeedMax));
+            Assert.That(s.PanLimit, Is.EqualTo(ViewerSettings.PanLimitMin));
+        }
+
+        [Test]
         public void Settings_Defaults_AreInsideTheirRanges()
         {
             var s = new ViewerSettings();

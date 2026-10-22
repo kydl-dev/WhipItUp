@@ -104,6 +104,8 @@ namespace WhipItUp
         public static readonly Tunable<float> ViewerMargin = new Tunable<float>("Viewer", "Margin", Ui.ViewerSettings.MarginDefault, Ui.ViewerSettings.MarginMin, Ui.ViewerSettings.MarginMax, "Room around the weapon at zoom 1 (0.08 = 8 %).");
         public static readonly Tunable<float> ViewerStartYaw = new Tunable<float>("Viewer", "StartYaw", Ui.ViewerSettings.StartYawDefault, Ui.ViewerSettings.StartYawMin, Ui.ViewerSettings.StartYawMax, "Degrees the default view (and Reset) is turned.");
         public static readonly Tunable<float> ViewerStartPitch = new Tunable<float>("Viewer", "StartPitch", Ui.ViewerSettings.StartPitchDefault, Ui.ViewerSettings.StartPitchMin, Ui.ViewerSettings.StartPitchMax, "Degrees the default view (and Reset) looks down on the weapon.");
+        public static readonly Tunable<float> ViewerPanSpeed = new Tunable<float>("Viewer", "PanSpeed", Ui.ViewerSettings.PanSpeedDefault, Ui.ViewerSettings.PanSpeedMin, Ui.ViewerSettings.PanSpeedMax, "How far the weapon moves per pixel you right-drag (x times; 1 = it follows the mouse exactly).");
+        public static readonly Tunable<float> ViewerPanLimit = new Tunable<float>("Viewer", "PanLimit", Ui.ViewerSettings.PanLimitDefault, Ui.ViewerSettings.PanLimitMin, Ui.ViewerSettings.PanLimitMax, "Farthest the weapon may be moved from the middle, in view heights at zoom 1 (0.8 = about half a weapon length).");
 
         /// The viewer values as the menu uses them (read fresh at every menu open, so KydlTools changes apply on the next open).
         internal static Ui.ViewerSettings Viewer()
@@ -119,6 +121,8 @@ namespace WhipItUp
                 Margin = ViewerMargin.Value,
                 StartYaw = ViewerStartYaw.Value,
                 StartPitch = ViewerStartPitch.Value,
+                PanSpeed = ViewerPanSpeed.Value,
+                PanLimit = ViewerPanLimit.Value,
             };
             v.Clamp(ModLog.Verbose);
             return v;

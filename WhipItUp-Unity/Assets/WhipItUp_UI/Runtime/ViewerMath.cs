@@ -73,5 +73,27 @@ namespace WhipItUp.Ui
             y = (float)(distance * Math.Sin(pitch));
             z = (float)(-flat * Math.Cos(yaw));
         }
+
+        /// The camera's right and up axes (unit vectors in world space) for a yaw / pitch, as Orbit places the camera: the camera looks at the
+        /// weapon, so right stays level and up tilts with the pitch. Yaw 0, pitch 0 = right (1, 0, 0), up (0, 1, 0).
+        internal static void CameraAxes(float yawDeg, float pitchDeg, out float rx, out float ry, out float rz, out float ux, out float uy, out float uz)
+        {
+            double yaw = yawDeg * Rad, pitch = pitchDeg * Rad;
+            double sy = Math.Sin(yaw), cy = Math.Cos(yaw), sp = Math.Sin(pitch), cp = Math.Cos(pitch);
+            rx = (float)cy; ry = 0f; rz = (float)-sy;
+            ux = (float)(sp * sy); uy = (float)cp; uz = (float)(sp * cy);
+        }
+
+        /// A vector scaled down so its length is at most `limit` (the direction is kept). Returns whether it had to be shortened.
+        internal static bool ClampLength(ref float x, ref float y, ref float z, float limit)
+        {
+            if (float.IsNaN(x) || float.IsNaN(y) || float.IsNaN(z)) { x = 0f; y = 0f; z = 0f; return true; }
+            limit = float.IsNaN(limit) ? 0f : Math.Max(0f, limit);
+            double len = Math.Sqrt((double)x * x + (double)y * y + (double)z * z);
+            if (len <= limit) return false;
+            double k = len > 0.0 ? limit / len : 0.0;
+            x = (float)(x * k); y = (float)(y * k); z = (float)(z * k);
+            return true;
+        }
     }
 }

@@ -21,7 +21,7 @@ namespace WhipItUp.Ui
             { "whipitup_family_whip", "Whip" },
 
             // Viewer tab (the 3D view)
-            { "whipitup_viewer_hint", "Drag to turn, mouse wheel to zoom" },
+            { "whipitup_viewer_hint", "Left-drag: turn   Right-drag: move   Wheel: zoom" },
             { "whipitup_viewer_reset", "Reset" },
             { "whipitup_viewer_unavailable", "No 3D view here." },
 

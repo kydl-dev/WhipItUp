@@ -161,18 +161,22 @@ namespace WhipItUp.Ui
             return true;
         }
 
-        public bool Render(float yawDeg, float pitchDeg, float zoom)
+        public bool Render(float yawDeg, float pitchDeg, float zoom, float panX, float panY, float panZ)
         {
             if (_root == null || _texture == null) { Log("WeaponViewerRig: Render skipped (" + (_root == null ? "disposed" : "no texture yet") + ")"); return false; }
             float aspect = (float)_texture.width / _texture.height;
             float fit = ViewerMath.FitDistance(_halfWidth, _halfHeight, _radius, FieldOfView, aspect, _settings.Margin);
             float distance = fit / Mathf.Max(0.01f, zoom);
+            // pan is in view heights at zoom 1: one of them = the height the camera sees at the weapon's centre when it stands `fit` metres away
+            float viewHeight = 2f * fit * Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad);
+            Vector3 pan = new Vector3(panX, panY, panZ) * viewHeight;
             float x, y, z;
             ViewerMath.Orbit(yawDeg, pitchDeg, distance, out x, out y, out z);
-            Vector3 centre = _pivot.transform.position;
-            _camera.transform.position = centre + new Vector3(x, y, z);
-            _camera.transform.LookAt(centre, Vector3.up);
-            _camera.nearClipPlane = Mathf.Clamp(distance - _radius * 1.2f, 0.01f, 0.5f);
+            Vector3 target = _pivot.transform.position + pan;          // the point the camera looks at (the weapon's centre when not panned)
+            _camera.transform.position = target + new Vector3(x, y, z);
+            _camera.transform.LookAt(target, Vector3.up);
+            // the nearest weapon point is at least this far from the camera; the near plane stays just in front of it
+            _camera.nearClipPlane = Mathf.Clamp(distance - pan.magnitude - _radius * 1.2f, 0.01f, 0.5f);
             RenderLit();
             _renders++;
             float now = Time.realtimeSinceStartup;
@@ -180,7 +184,8 @@ namespace WhipItUp.Ui
             {
                 _lastLog = now;
                 Log("WeaponViewerRig: render #" + _renders + " of " + (_weapon != null ? _weapon.ToString() : "nothing") + ": yaw " + F(yawDeg) + " / pitch " + F(pitchDeg)
-                    + " deg, zoom x" + F(zoom) + ", fit " + F(fit) + " m, distance " + F(distance) + " m, aspect " + F(aspect) + ", model " + (_model != null ? "shown" : "none"));
+                    + " deg, zoom x" + F(zoom) + ", fit " + F(fit) + " m, distance " + F(distance) + " m, aspect " + F(aspect) + ", pan " + V(pan) + " m (" + V(new Vector3(panX, panY, panZ))
+                    + " view heights of " + F(viewHeight) + " m), near " + F(_camera.nearClipPlane) + " m, model " + (_model != null ? "shown" : "none"));
             }
             return true;
         }

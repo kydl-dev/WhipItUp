@@ -19,7 +19,8 @@ namespace WhipItUp.Ui
         /// The viewport's size in screen pixels; makes a new texture when it changed. Expected outcome: returns whether a texture exists.
         bool Resize(int widthPx, int heightPx);
 
-        /// Renders once from that view. Expected outcome: returns whether something was rendered.
-        bool Render(float yawDeg, float pitchDeg, float zoom);
+        /// Renders once from that view. `pan` = where the camera looks, as an offset from the weapon's centre in world axes, in view heights at zoom 1
+        /// (ViewerOrbit.PanX / Y / Z). Expected outcome: returns whether something was rendered.
+        bool Render(float yawDeg, float pitchDeg, float zoom, float panX, float panY, float panZ);
     }
 }

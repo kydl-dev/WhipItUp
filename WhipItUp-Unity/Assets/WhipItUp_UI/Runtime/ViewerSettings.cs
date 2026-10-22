@@ -19,6 +19,8 @@ namespace WhipItUp.Ui
         internal const float MarginMin = 0f, MarginMax = 0.5f, MarginDefault = 0.08f;                    // room around the weapon at zoom 1 (0.08 = 8 %)
         internal const float StartYawMin = -180f, StartYawMax = 180f, StartYawDefault = 20f;             // degrees the default view is turned
         internal const float StartPitchMin = -89f, StartPitchMax = 89f, StartPitchDefault = 12f;         // degrees the default view looks down
+        internal const float PanSpeedMin = 0.2f, PanSpeedMax = 3f, PanSpeedDefault = 1f;                 // right-drag: 1 = the weapon follows the mouse exactly
+        internal const float PanLimitMin = 0f, PanLimitMax = 3f, PanLimitDefault = 0.8f;                 // how far the weapon may be moved, in view heights at zoom 1 (0.8 = about half a weapon length)
 
         internal float RotateSpeed = RotateSpeedDefault;
         internal float ZoomStep = ZoomStepDefault;
@@ -29,6 +31,8 @@ namespace WhipItUp.Ui
         internal float Margin = MarginDefault;
         internal float StartYaw = StartYawDefault;
         internal float StartPitch = StartPitchDefault;
+        internal float PanSpeed = PanSpeedDefault;
+        internal float PanLimit = PanLimitDefault;
 
         /// Puts every value into its range (NaN = the default). Expected outcome: returns how many values were changed.
         internal int Clamp(Action<string> log = null)
@@ -43,6 +47,8 @@ namespace WhipItUp.Ui
             Margin = Fix("Margin", Margin, MarginMin, MarginMax, MarginDefault, ref changed, log);
             StartYaw = Fix("StartYaw", StartYaw, StartYawMin, StartYawMax, StartYawDefault, ref changed, log);
             StartPitch = Fix("StartPitch", StartPitch, StartPitchMin, StartPitchMax, StartPitchDefault, ref changed, log);
+            PanSpeed = Fix("PanSpeed", PanSpeed, PanSpeedMin, PanSpeedMax, PanSpeedDefault, ref changed, log);
+            PanLimit = Fix("PanLimit", PanLimit, PanLimitMin, PanLimitMax, PanLimitDefault, ref changed, log);
             if (StartPitch > PitchLimit || StartPitch < -PitchLimit)
             {
                 float was = StartPitch;
@@ -70,7 +76,8 @@ namespace WhipItUp.Ui
         public override string ToString()
         {
             return "rotate " + F(RotateSpeed) + " deg/px, zoom step x" + F(ZoomStep) + ", zoom " + F(ZoomMin) + ".." + F(ZoomMax) + ", pitch limit " + F(PitchLimit)
-                + " deg, frame " + F(FrameHeight) + " px, margin " + F(Margin) + ", start yaw " + F(StartYaw) + " / pitch " + F(StartPitch) + " deg";
+                + " deg, frame " + F(FrameHeight) + " px, margin " + F(Margin) + ", start yaw " + F(StartYaw) + " / pitch " + F(StartPitch) + " deg, pan speed x" + F(PanSpeed)
+                + ", pan limit " + F(PanLimit) + " view heights";
         }
     }
 }
