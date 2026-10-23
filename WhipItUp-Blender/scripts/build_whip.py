@@ -2,7 +2,7 @@
 
 Run inside Blender 5.x (exec the file). Layout: whip_layout.py. Re-running replaces both objects.
 Parts: wolf-icon pommel disc, the paddle's handle (R1 band ring, wood + spiral grip + wood core, R2, tall valknut ring, R3: handle_layout.py,
-grip_tools.py, ring_tools.py), thong core + modelled plait (2 cords + 2 gold strings, D-071 / D-072), flat fall, cracker.
+grip_tools.py, ring_tools.py), thong core + modelled braid (2 flat ribbons each way, plain weave, thin edge strings, D-073), flat fall, cracker.
 Bones: 'root' (handle, weight 1) + one chain 'fall_00_0'..'fall_00_37' along the lash (BONES in whip_layout.py; the name pattern FallChains looks for).
 Rings (D-066): valknut rings on bones 8 / 16 / 24 and a small one at the cracker tip, each rigid and weighted 100 % to its ONE bone.
 """
@@ -36,7 +36,7 @@ log = T.log
 
 
 def build_thong(bm, uv):
-    """The dark core tube along +Z under the plait (radius W.core_radius, tapering). UVs are per face corner, so the core texture repeats
+    """The core tube along +Z under the braid (radius W.core_radius, tapering). UVs are per face corner, so the core texture repeats
     every THONG_UV_REPEAT metres (k rings per repeat) without duplicated vertices."""
     n = W.THONG_SIDES
     k = max(1, round(W.THONG_UV_REPEAT * W.THONG_RINGS_PER_M))       # rings per texture repeat
@@ -63,47 +63,64 @@ def build_thong(bm, uv):
     return out, rings[-1]
 
 
-def build_cord(bm, uv, pts, sides, rect, uv_point):
-    """One tube along a list of (centre Vector, radius, s) with `sides` corners per ring (circle in the XY plane, closed at both ends).
-    Every face gets the same UV point inside `rect` (flat colour). Returns [(vert, s)] for the bone weights."""
-    rings, out = [], []
-    for centre, r, s in pts:
-        ring = [bm.verts.new(centre + Vector((r * math.cos(2 * math.pi * j / sides), r * math.sin(2 * math.pi * j / sides), 0))) for j in range(sides)]
-        rings.append(ring)
-        out += [(v, s) for v in ring]
-    uvc = lerp_rect(rect, uv_point[0], uv_point[1])
+def _grid(bm, pts):
+    """Vertices for rows of points ([[Vector]]). Returns the vertex grid."""
+    return [[bm.verts.new(p) for p in row] for row in pts]
+
+
+def _quads(bm, uv, grid, uv_point):
+    """Quad faces between neighbouring rows / columns of a vertex grid, wound so the normals point away from the thong axis, one flat UV point."""
+    r0, r1 = len(grid) // 2, len(grid) // 2 + 1
+    a, b, d = grid[r0][0].co, grid[r0][1].co, grid[r1][0].co
+    radial = Vector((a.x, a.y, 0.0))
+    flip = (b - a).cross(d - a).dot(radial) < 0
     faces = []
-    for i in range(len(rings) - 1):
-        for j in range(sides):
-            faces.append(bm.faces.new((rings[i][j], rings[i][(j + 1) % sides], rings[i + 1][(j + 1) % sides], rings[i + 1][j])))
-    faces.append(bm.faces.new(list(reversed(rings[0]))))
-    faces.append(bm.faces.new(list(rings[-1])))
-    for f in faces:
-        for loop in f.loops:
-            loop[uv].uv = uvc
-    return out
+    for i in range(len(grid) - 1):
+        for j in range(len(grid[0]) - 1):
+            quad = (grid[i][j], grid[i][j + 1], grid[i + 1][j + 1], grid[i + 1][j])
+            f = bm.faces.new(tuple(reversed(quad)) if flip else quad)
+            faces.append(f)
+            for loop in f.loops:
+                loop[uv].uv = uv_point
+    return faces, flip
 
 
-def build_plait(bm, uv):
-    """The modelled plait (D-071 / D-072): cord A winds one way (angle +phi, rank leather colour), cord B the other way (angle -phi, 2nd colour);
-    where they cross (phi = k pi) the one on top alternates (W.cord_radial). A thin gold string runs beside each cord on the same helix."""
-    samples = W.plait_samples()
+def build_braid(bm, uv):
+    """The modelled braid (D-073): BRAID_STRANDS flat ribbons each way round the core, plain weave (W.ribbon_height), plus a thin string along
+    both edges of every ribbon. Returns [(vert, s)] for the bone weights."""
+    n = int(math.ceil(W.THONG_LENGTH / W.BRAID_STEP))
+    ss = [min(W.THONG_LENGTH, i * W.BRAID_STEP) for i in range(n + 1)]
     out = []
+    ribbons = edges = 0
     for direction in (1, -1):
-        cord, gold = [], []
-        for s, phi in samples:
-            radial, c = W.cord_radial(s, phi, direction)
-            g = W.gold_radius(s)
-            ang = direction * phi
-            dang = (c + 0.6 * g) / radial
-            z = W.THONG_START + s
-            cord.append((Vector((radial * math.cos(ang), radial * math.sin(ang), z)), c, s))
-            gold.append((Vector((radial * math.cos(ang + dang), radial * math.sin(ang + dang), z)), g, s))
-        out += build_cord(bm, uv, cord, W.CORD_SIDES, W.UV_FALL, W.CORD_UV[direction])
-        out += build_cord(bm, uv, gold, W.GOLD_SIDES, W.UV_GOLD, W.GOLD_UV)
-        log(f"plait cord {'A' if direction > 0 else 'B'}: {len(cord)} rings, radius {cord[0][1]:.4f} -> {cord[-1][1]:.4f} m, gold radius {gold[0][1]:.5f} -> {gold[-1][1]:.5f} m")
-    revs = samples[-1][1] / (2 * math.pi)
-    log(f"plait: {len(samples)} samples, {revs:.1f} turns per cord over {W.THONG_LENGTH:.2f} m (pitch {W.plait_pitch(0):.3f} m at the handle, {W.plait_pitch(W.THONG_LENGTH):.3f} m at the end)")
+        for strand in range(W.BRAID_STRANDS):
+            colour = W.ribbon_colour(direction, strand)
+            pts = []
+            for s in ss:
+                row = []
+                for j in range(W.BRAID_COLS + 1):
+                    w = j / W.BRAID_COLS
+                    ang = W.ribbon_angle(direction, strand, w, s)
+                    r = W.ribbon_radius(direction, w, s)
+                    row.append(Vector((r * math.cos(ang), r * math.sin(ang), W.THONG_START + s)))
+                pts.append(row)
+            grid = _grid(bm, pts)
+            _quads(bm, uv, grid, lerp_rect(W.UV_FALL, *W.CORD_UV[colour]))
+            out += [(v, ss[i]) for i, row in enumerate(grid) for v in row]
+            ribbons += 1
+            for w in (0.0, 1.0):
+                epts = []
+                for s in ss:
+                    ang = W.ribbon_angle(direction, strand, w, s)
+                    r = W.ribbon_radius(direction, w, s) + W.EDGE_LIFT
+                    d = (W.EDGE_WIDTH / 2) / r
+                    epts.append([Vector((r * math.cos(ang + k * d), r * math.sin(ang + k * d), W.THONG_START + s)) for k in (-1, 1)])
+                egrid = _grid(bm, epts)
+                _quads(bm, uv, egrid, lerp_rect(W.UV_GOLD, *W.GOLD_UV))
+                out += [(v, ss[i]) for i, row in enumerate(egrid) for v in row]
+                edges += 1
+    log(f"braid: {ribbons} ribbons + {edges} edge strings, {len(ss)} rings of {W.BRAID_STEP * 1000:.1f} mm, turn {W.BRAID_TURN:.3f} m, "
+        f"radius {W.thong_radius(0):.4f} -> {W.thong_radius(W.THONG_LENGTH):.4f} m, {len(out)} verts")
     return out
 
 
@@ -236,7 +253,7 @@ def main():
     R.build_handle_rings(bm, uv, W.RINGS, HL.RING_RECTS)
     handle = {v for v in bm.verts}
     lash, end_ring = build_thong(bm, uv)
-    plait = build_plait(bm, uv)
+    plait = build_braid(bm, uv)
     lash += plait
     lash += build_fall(bm, uv, end_ring)
     ring_verts = build_lash_rings(bm, uv)

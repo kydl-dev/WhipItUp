@@ -55,64 +55,64 @@ def thong_radius(s):
     return THONG_R0 + (THONG_R1 - THONG_R0) * (t ** 0.8)
 
 
-# ---- modelled plait (D-071 / D-072): a dark core tube + 2 cords (one winds each way) over / under at every crossing, a thin gold string beside each ----
-CORE_FRAC = 0.50              # core radius / thong radius (the thong radius is the outer envelope of the cords)
-CORD_FRAC = 0.26              # cord radius / thong radius
-CORD_LIFT = 0.60              # cord centre rides CORD_LIFT * cord radius above the core, +- the same again for over / under
-PLAIT_PITCH0 = 0.090          # metres of thong per full turn of a cord at the handle end (a crossing every half pitch)
-PLAIT_PITCH_EXP = 0.6         # the pitch shrinks with (radius ratio) ** this, so the plait keeps its look while the thong thins
-PLAIT_RINGS_PER_REV = 10      # tube rings per full turn of a cord
-CORD_SIDES = 6
-GOLD_FRAC = 0.07              # gold string radius / thong radius
-GOLD_MIN = 0.00025            # but never thinner than 0.25 mm
-GOLD_SIDES = 3
+# ---- modelled braid (D-073): the plain weave of the user's photo (renders/Whip_W_ring8.png) as real geometry ----
+# BRAID_STRANDS flat ribbons wind one way round the core and BRAID_STRANDS the other way; each ribbon is 1 / BRAID_STRANDS of the circumference wide,
+# so every direction covers the whole thong. Every ribbon goes over / under at every crossing (plain weave, the cells are the diamonds of the photo).
+# In each direction one ribbon has colour A (rank leather) and one colour B (2nd colour); the colours swap between the directions (as in the photo).
+# A thin string (the medallion brown) runs along both edges of every ribbon.
+BRAID_STRANDS = 2             # ribbons per direction
+BRAID_TURN = 0.060            # metres of thong per full turn of a ribbon (the photo: 0.06 m, constant along the thong)
+BRAID_STEP = 0.003            # metres between two sample rings along a ribbon (5 per diamond cell)
+BRAID_COLS = 5                # quads across one ribbon
+BRAID_MID = 0.85              # ribbon surface radius / thong radius half way between over and under
+BRAID_LIFT = 0.15             # over = MID + LIFT (the thong radius itself), under = MID - LIFT
+BRAID_SHARP = 4.0             # steepness of the over / under swap (tanh of sin)
+CORE_FRAC = 0.58              # core radius / thong radius (the under ribbons ride at 0.70 of the thong radius)
+EDGE_WIDTH = 0.0009           # width of the thin string on a ribbon edge (m)
+EDGE_LIFT = 0.0002            # the thin string sits this far above the ribbon surface (m)
 
 
 def core_radius(s):
-    """Radius of the dark core tube at s metres along the thong."""
+    """Radius of the core tube under the braid at s metres along the thong."""
     return CORE_FRAC * thong_radius(s)
 
 
-def plait_pitch(s):
-    """Metres of thong per full turn of a cord at s."""
-    return PLAIT_PITCH0 * (thong_radius(s) / THONG_R0) ** PLAIT_PITCH_EXP
+def braid_rate():
+    """Ribbon bands per metre of thong (the photo's 'along' / repeat): a ribbon turns 2 pi / BRAID_TURN * ... radians per metre."""
+    return BRAID_STRANDS / BRAID_TURN
 
 
-def plait_samples():
-    """[(s, phi)]: s = metres along the thong, phi = angle (radians) a cord has turned by there; one sample per 2 pi / PLAIT_RINGS_PER_REV of phi,
-    the last one exactly at THONG_LENGTH. Cord A is at angle +phi, cord B at -phi: they cross when phi is a multiple of pi."""
-    step = 2 * math.pi / PLAIT_RINGS_PER_REV
-    out = [(0.0, 0.0)]
-    s, phi = 0.0, 0.0
-    while True:
-        ds = plait_pitch(s) / PLAIT_RINGS_PER_REV
-        if s + ds >= THONG_LENGTH:
-            out.append((THONG_LENGTH, phi + step * (THONG_LENGTH - s) / ds))
-            return out
-        s += ds
-        phi += step
-        out.append((s, phi))
+def ribbon_angle(direction, strand, w, s):
+    """Angle (rad) round the thong of the point at fraction w (0..1) across ribbon `strand` of the given direction (+1 / -1) at s metres.
+    The two directions wind opposite ways."""
+    return 2 * math.pi * (strand + w - direction * braid_rate() * s) / BRAID_STRANDS
 
 
-def cord_radial(s, phi, direction):
-    """(radius of the cord centre from the thong axis, cord radius) at s. direction +1 = cord A (angle +phi), -1 = cord B (angle -phi):
-    A rides high where cos(phi) = +1 and B where it is -1, so at every crossing (phi = k pi) the cord on top alternates."""
-    t = thong_radius(s)
-    c = CORD_FRAC * t
-    return CORE_FRAC * t + CORD_LIFT * c * (1.0 + direction * math.cos(phi)), c
+def ribbon_height(direction, w, s):
+    """-1 (under) .. +1 (over) of a ribbon at (w, s). The plain weave of the photo: direction +1 is over where sin(pi (w - 2 q s)) > 0,
+    direction -1 is over exactly where +1 is under (they swap at every diagonal cell boundary)."""
+    q = braid_rate()
+    if direction > 0:
+        return math.tanh(BRAID_SHARP * math.sin(math.pi * (w - 2 * q * s)))
+    return -math.tanh(BRAID_SHARP * math.sin(math.pi * (w + 2 * q * s)))
 
 
-def gold_radius(s):
-    """Radius of a gold string at s."""
-    return max(GOLD_MIN, GOLD_FRAC * thong_radius(s))
+def ribbon_radius(direction, w, s):
+    """Radius of the outer surface of a ribbon at (w, s)."""
+    return thong_radius(s) * (BRAID_MID + BRAID_LIFT * ribbon_height(direction, w, s))
+
+
+def ribbon_colour(direction, strand):
+    """0 = colour A (rank leather), 1 = colour B (2nd colour): direction +1 has A on the even strands, direction -1 on the odd ones."""
+    return 0 if (strand % 2 == 0) == (direction > 0) else 1
 
 
 # ---- UV atlas (1024), v up: rows 0 .. 0.34 = the handle parts (handle_layout.py, same as the paddle), thong + fall above ----
 UV_THONG = (0.00, HL.BODY_V0, 0.50, 1.00)       # dark core tube: u around, v along (repeats every THONG_UV_REPEAT m)
 UV_FALL = (0.50, HL.BODY_V0, 0.625, 1.00)       # flat fall + cracker strands; v 0.30 = rank leather (cord A), v 0.88 = 2nd colour (cord B)
-UV_GOLD = (0.625, HL.BODY_V0, 0.75, 1.00)       # the thin gold strings (one flat metal colour)
-CORD_UV = {1: (0.5, 0.30), -1: (0.5, 0.88)}     # point inside UV_FALL per cord direction
-GOLD_UV = (0.5, 0.5)                            # point inside UV_GOLD
+UV_GOLD = (0.625, HL.BODY_V0, 0.75, 1.00)       # the thin edge strings (one flat colour per rank)
+CORD_UV = {0: (0.5, 0.30), 1: (0.5, 0.88)}      # point inside UV_FALL per ribbon colour (0 = A rank leather, 1 = B 2nd colour)
+GOLD_UV = (0.5, 0.5)                            # point inside UV_GOLD (the thin edge strings, painted in the medallion brown)
 UV_WOOD, UV_WRAP, UV_METAL, UV_POMMEL_FACE = HL.UV_WOOD, HL.UV_WRAP, HL.UV_METAL, HL.UV_POMMEL_FACE
 UV_RING_BAND, UV_VALK_SQ, UV_RING_METAL = HL.UV_RING_BAND, HL.UV_VALK_SQ, HL.UV_RING_METAL
 

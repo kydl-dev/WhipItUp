@@ -1,6 +1,6 @@
 """Writes the whip textures into WhipItUp-Blender/textures/ (numpy + PIL):
   whip_Albedo_V1..V7.png, whip_Normal.png (+Y up), whip_MetalGloss.png (R metallic, A smoothness).
-Colours (D-034, D-071): thong core = per-rank contrast colour, plait cord A = rank leather, cord B = 2nd colour, gold strings = flat gold, fall = rank leather, cracker = 2nd colour,
+Colours (D-034, D-073): thong core = per-rank contrast colour, braid ribbon A = rank leather, ribbon B = 2nd colour, thin edge strings = the medallion brown (fitting colour x 0.55), fall = rank leather, cracker = 2nd colour,
 pommel rim = fitting metal, pommel faces = TrophyWolf icon. Handle (D-064 / D-069) = the paddle's: wood + spiral wrap in the rank accent
 colour (ring_textures.paint_grip), band rings / valknut squares / dark old metal (ring_textures.paint_rings).
 Usage: python whip_textures.py [out_dir]
@@ -28,9 +28,9 @@ def log(msg):
     print("[whip_textures] " + msg)
 
 
-LABEL_GOLD = 7          # the thin gold strings of the plait (D-071)
+LABEL_GOLD = 7          # the thin edge strings of the braid (D-073): painted in the medallion brown
 LABEL_CORE = 8          # the core tube under the plait: a per-rank colour picked for contrast with both cords
-GOLD_RGB = np.array([232, 182, 48], np.float32)
+MEDALLION_BROWN = 0.55   # the brown around the wolf head (D-073): the rank's fitting colour x this, as painted on the pommel face below
 
 def luminance(c):
     """WCAG relative luminance of an sRGB colour (0..255)."""
@@ -75,7 +75,7 @@ def build(out_dir):
     H[y0:y1, x0:x1] = 0.4 + 0.2 * fibre
     smooth[y0:y1, x0:x1] = 0.3
 
-    # gold strings: one flat metal colour
+    # thin edge strings: one flat colour (the medallion brown, set per rank below)
     (x0, y0, x1, y1), U, V = P.rect_grid(W.UV_GOLD)
     gn = P.noise(*U.shape, scale=6, seed=37)
     label[y0:y1, x0:x1] = LABEL_GOLD
@@ -143,7 +143,7 @@ def build(out_dir):
         img = np.where((label == 4)[..., None], fit_c * s, img)
         core_c, core_score = core_colour(main, two)
         img = np.where((label == LABEL_CORE)[..., None], core_c * s, img)
-        img = np.where((label == LABEL_GOLD)[..., None], GOLD_RGB * s, img)
+        img = np.where((label == LABEL_GOLD)[..., None], fit_c * MEDALLION_BROWN * s, img)
         img = RT.grip_albedo(img, label, shade, acc, LABEL_WOOD, LABEL_WRAP)
         m_metal, c_metal, m_emboss, c_emboss = RT.ring_albedo(rank, label, shade)
         img = np.where(m_metal[..., None], c_metal * s, img)
