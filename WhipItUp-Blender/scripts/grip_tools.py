@@ -22,3 +22,14 @@ def build_grip(bm, uv_layer, g, rects, segments=18):
     build_lathe(bm, uv_layer, wrap, rects["wrap"], segments=segments)
     log(f"grip: wood z {g['bottom']:.3f}..{g['top']:.3f} r {g['radius']:.4f}, wrap z {g['wrap_bottom']:.3f}..{g['wrap_top']:.3f}")
     return g["top"] - g["bottom"]
+
+
+def build_core(bm, uv_layer, g, z_top, rects, segments=18):
+    """Wooden shaft that runs on from the top of the grip through R2, the tall valknut ring and R3 (user 2026-10-23: the rings must not
+    look like they hang in the air; it shows in the 2 mm gaps between the rings). z_top = a little below the top of R3 so it never meets the cap."""
+    z0 = g["top"]
+    if z_top <= z0:
+        raise ValueError(f"core top {z_top:.4f} is not above the grip top {z0:.4f}")
+    build_lathe(bm, uv_layer, [(z0, g["radius"]), (z_top, g["radius"])], rects["wood"], segments=segments)
+    log(f"core: wood shaft z {z0:.3f}..{z_top:.3f} r {g['radius']:.4f} (through the rings)")
+    return z_top - z0

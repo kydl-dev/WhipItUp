@@ -18,7 +18,8 @@ LIP_FOOT = 0.0005         # chamfer height under a lip
 BAND_RECESS = 0.0006      # the embossed band sits this much below the lips
 WALL = 0.0002             # width of the little step between lip and band
 
-SQUARE = 0.020            # valknut square (outer size, curved around the ring)
+SQUARE = 0.025            # valknut square (outer size, curved around the ring); was 0.020, user 2026-10-23: bigger / as wide as the handle (D-068).
+                          # 0.0258 is the most that fits the 0.030 m ring between the lips, square_geometry() raises an error above that
 SQUARE_FRAME = 0.0015     # raised frame width
 SQUARE_RAISE = 0.0008     # frame height over the ring body (the field inside is imprinted: lower than the frame)
 SQUARE_WALL = 0.0004      # slope between body and frame
@@ -47,6 +48,9 @@ def square_geometry(z0, z1, r):
     """Valknut square on the ring (z0, z1, frame radius r): half angle, frame angle, z bounds of the outer square and of the field."""
     zm = (z0 + z1) / 2
     zs0, zs1 = zm - SQUARE / 2, zm + SQUARE / 2
+    room = (zs0 - SQUARE_WALL) - (z0 + LIP_H + WALL)       # body left between the lip step and the square's slope, each side
+    if room <= 0:
+        raise ValueError(f"valknut square {SQUARE:.4f} m does not fit the ring {z1 - z0:.4f} m between the lips (room {room:.5f} m)")
     return {
         "half_angle": (SQUARE / 2) / r,
         "frame_angle": SQUARE_FRAME / r,

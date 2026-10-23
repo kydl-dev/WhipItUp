@@ -153,6 +153,7 @@ def main():
     grip = dict(bottom=L.HANDLE_BOTTOM, top=L.HANDLE_TOP, radius=L.HANDLE_RADIUS, swell=L.HANDLE_SWELL,
                 wrap_bottom=L.WRAP_BOTTOM, wrap_top=L.WRAP_TOP, wrap_extra=L.WRAP_EXTRA)
     G.build_grip(bm, uv_layer, grip, {"wood": L.UV_WOOD, "wrap": L.UV_WRAP})
+    G.build_core(bm, uv_layer, grip, L.RINGS["top"] - 0.002, {"wood": L.UV_WOOD})
     R.build_handle_rings(bm, uv_layer, L.RINGS, {"band": L.UV_RING_BAND, "ring_metal": L.UV_RING_METAL, "valk": L.UV_VALK_SQ})
     build_guard(bm, uv_layer)
     bm.to_mesh(me)
