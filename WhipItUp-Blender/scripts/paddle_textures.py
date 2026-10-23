@@ -5,7 +5,8 @@
   paddle_MetalGloss.png     Unity Standard packing: R = metallic, A = smoothness, shared by all ranks
 
 Usage: python paddle_textures.py [out_dir]. Layout + UV rects: paddle_layout.py (shared with build_paddle.py).
-Tooling (D-017, D-019): knotwork medallion + small Valknut, darker shade of the rank's main leather colour, raised in the normal map.
+Tooling (D-017, D-019): knotwork medallion + Valknut (valknut.png, D-060), darker shade of the rank's main leather colour, raised in the normal map.
+Handle rings (D-064): band + valknut squares + dark metal, ring_textures.py (rank-independent metal, embossed strands in the highest-contrast rank colour).
 """
 import math
 import os
@@ -17,6 +18,8 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import paddle_layout as L  # noqa: E402
 import medallion_knot  # noqa: E402
+import ring_textures as RT  # noqa: E402
+from ring_textures import noise  # noqa: E402,F401
 from rank_palette import PALETTE, INLAY_OVERRIDE, luminance, contrast_colour  # noqa: E402,F401
 
 N = L.TEXTURE_SIZE
@@ -55,21 +58,6 @@ def rect_grid(rect):
     vv = 1.0 - (np.arange(h) + 0.5) / h
     U, V = np.meshgrid(uu, vv)
     return (x0, y0, x1, y1), U, V
-
-
-def noise(h, w, scale, octaves=4, seed=0):
-    rng = np.random.default_rng(seed)
-    out = np.zeros((h, w), np.float32)
-    amp, tot = 1.0, 0.0
-    for o in range(octaves):
-        gh, gw = max(2, int(h / scale) + 2), max(2, int(w / scale) + 2)
-        g = rng.random((gh, gw)).astype(np.float32)
-        img = Image.fromarray((g * 255).astype(np.uint8)).resize((w, h), Image.BICUBIC)
-        out += amp * (np.asarray(img, np.float32) / 255.0)
-        tot += amp
-        amp *= 0.5
-        scale = max(1.0, scale / 2)
-    return out / tot
 
 
 def seg_dist(px, pz, a, b):
@@ -129,28 +117,8 @@ def medallion(X, Z):
 
 
 def valknut(X, Z):
-    s = L.VALKNUT_SIZE
-    px, pz = X, Z - L.VALKNUT_Z
-    w = s * 0.075
-    b = s * 0.03
-    strands = []
-    for k in range(3):
-        a = math.radians(90 + 120 * k)
-        cx, cz = math.cos(a) * s * 0.16, math.sin(a) * s * 0.16
-        rad = s * 0.42
-        verts = [(cx + math.cos(math.radians(90 + 120 * j)) * rad, cz + math.sin(math.radians(90 + 120 * j)) * rad)
-                 for j in range(3)]
-        dmin = np.full(px.shape, 1e9, np.float32)
-        tpar = np.zeros(px.shape, np.float32)
-        for j in range(3):
-            d, t = seg_dist(px, pz, verts[j], verts[(j + 1) % 3])
-            m = d < dmin
-            dmin = np.where(m, d, dmin)
-            tpar = np.where(m, j + t, tpar)
-        strands.append((dmin, np.sin(tpar * math.pi * 2 + k * 2.1)))
-    fill, groove, profile = interlace(strands, px, pz, w, b)
-    area = np.hypot(px, pz) < s * 0.7
-    return fill & area, groove & area, profile, area
+    """The user's valknut.png (D-060) on the blade at VALKNUT_Z, VALKNUT_SIZE high. Returns fill, groove, profile, area."""
+    return RT.valknut_blade(X, Z - L.VALKNUT_Z, L.VALKNUT_SIZE)
 
 
 def stitches(X, Z, de):
@@ -277,6 +245,10 @@ def build(out_dir):
     metal[y0:y1, x0:x1] = np.where(alpha > 0.5, 0.2, 0.9)
     smooth[y0:y1, x0:x1] = np.where(rim, 0.6, np.where(alpha > 0.5, 0.4, 0.35))
 
+    # handle rings (D-064): band, valknut squares, dark metal; labels 10 / 11 are coloured per rank below
+    RT.paint_rings({"band": L.UV_RING_BAND, "valk": L.UV_VALK_SQ, "ring_metal": L.UV_RING_METAL}, rect_box,
+                   {"H": H, "shade": shade, "label": label, "metal": metal, "smooth": smooth})
+
     # ---- normal map (shared). Image rows go down: dH/dv (v up) = -(row gradient).
     strength = 6.0
     gx = np.zeros_like(H)
@@ -316,6 +288,9 @@ def build(out_dir):
         # background: darker leather behind light strands; plain leather behind dark strands (keeps the contrast)
         bg_f = TOOL_BG if luminance(inlay_c) > luminance(main) else 1.0
         img = np.where(MED_BG[..., None], img * bg_f, img)
+        m_metal, c_metal, m_emboss, c_emboss = RT.ring_albedo(rank, label, shade)
+        img = np.where(m_metal[..., None], c_metal * s, img)
+        img = np.where(m_emboss[..., None], c_emboss * s, img)
         a = ICON_A[..., None]
         img = img * (1 - a) + ICON_RGB * a
         path = os.path.join(out_dir, f"paddle_Albedo_V{rank}.png")

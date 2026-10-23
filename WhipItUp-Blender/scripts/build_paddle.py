@@ -2,7 +2,8 @@
 
 Run inside Blender 5.x (Blender MCP, or: blender -b source/Paddle.blend --python scripts/build_paddle.py).
 Layout and UV regions: paddle_layout.py (shared with paddle_textures.py). Re-running replaces the old 'Paddle' object.
-Parts: round metal pommel disc (TrophyWolf inlay), ferrules, wood handle, grip wrap, knotwork guard + rivets, blade with studded rim.
+Parts: round metal pommel disc (TrophyWolf inlay), handle (D-064: R1 band ring, wood + spiral grip, R2 band ring, tall valknut ring, R3 band ring),
+knotwork guard + rivets, blade with studded rim. Handle parts: handle_layout.py, grip_tools.py, ring_tools.py (shared with flogger / whip).
 """
 import math
 import os
@@ -18,10 +19,16 @@ if SCRIPT_DIR is None:
 if SCRIPT_DIR not in sys.path:
     sys.path.insert(0, SCRIPT_DIR)
 import importlib
+import handle_layout as HL
 import paddle_layout as L
 import mesh_tools as T
+import ring_tools as R
+import grip_tools as G
+importlib.reload(HL)
 importlib.reload(L)
 importlib.reload(T)
+importlib.reload(R)
+importlib.reload(G)
 from mesh_tools import lerp_rect, build_slab, build_lathe, add_primitive_mesh  # noqa: E402
 
 LOG = T.LOG
@@ -143,18 +150,10 @@ def main():
     build_blade(bm, uv_layer)
     build_pommel(bm, uv_layer)
 
-    zs = [L.HANDLE_BOTTOM + (L.HANDLE_TOP - L.HANDLE_BOTTOM) * i / 10 for i in range(11)]
-    mid = (L.HANDLE_BOTTOM + L.HANDLE_TOP) / 2
-    half = (L.HANDLE_TOP - L.HANDLE_BOTTOM) / 2
-    wood = [(z, L.HANDLE_RADIUS + L.HANDLE_SWELL * (1 - ((z - mid) / half) ** 2)) for z in zs]
-    build_lathe(bm, uv_layer, wood, L.UV_WOOD, segments=18)
-    wz = [L.WRAP_BOTTOM + (L.WRAP_TOP - L.WRAP_BOTTOM) * i / 8 for i in range(9)]
-    wrap = [(z, L.HANDLE_RADIUS + L.WRAP_EXTRA + L.HANDLE_SWELL * (1 - ((z - mid) / half) ** 2)) for z in wz]
-    wrap = [(wz[0] - 0.001, wrap[0][1] - 0.001)] + wrap + [(wz[-1] + 0.001, wrap[-1][1] - 0.001)]
-    build_lathe(bm, uv_layer, wrap, L.UV_WRAP, segments=18)
-    for (z0, z1, r) in (L.FERRULE_TOP, L.FERRULE_BOTTOM):
-        prof = [(z0, r - 0.0015), (z0 + 0.0015, r), (z1 - 0.0015, r), (z1, r - 0.0015)]
-        build_lathe(bm, uv_layer, prof, L.UV_METAL, segments=18)
+    grip = dict(bottom=L.HANDLE_BOTTOM, top=L.HANDLE_TOP, radius=L.HANDLE_RADIUS, swell=L.HANDLE_SWELL,
+                wrap_bottom=L.WRAP_BOTTOM, wrap_top=L.WRAP_TOP, wrap_extra=L.WRAP_EXTRA)
+    G.build_grip(bm, uv_layer, grip, {"wood": L.UV_WOOD, "wrap": L.UV_WRAP})
+    R.build_handle_rings(bm, uv_layer, L.RINGS, {"band": L.UV_RING_BAND, "ring_metal": L.UV_RING_METAL, "valk": L.UV_VALK_SQ})
     build_guard(bm, uv_layer)
     bm.to_mesh(me)
     bm.free()
