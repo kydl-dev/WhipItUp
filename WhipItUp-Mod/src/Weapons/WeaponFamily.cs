@@ -82,13 +82,14 @@ namespace WhipItUp.Weapons
             string name = Ladder.PrefabName(Family, rank);
             if (!Art.HasRank(rank)) { ModLog.Error(Family + "Items: skipping " + name + " (its texture is not in the bundle)"); return; }
             int i = Ladder.Index(rank);
+            var ingredients = ResolveIngredients(name, i);
             var config = new ItemConfig
             {
                 Name = Kydl.Common.Loc.Token(WeaponNames.Key(Family, rank)),
                 Description = Kydl.Common.Loc.Token(WeaponNames.DescKey(Family, rank)),
                 CraftingStation = Ladder.Station[i],
                 MinStationLevel = Ladder.StationLevel[i],
-                Requirements = Ladder.Ingredients[i].Select(g => new RequirementConfig(g.Item, g.Amount, g.AmountPerLevel, true)).ToArray(),
+                Requirements = ingredients.Select(g => new RequirementConfig(g.Item, g.Amount, g.AmountPerLevel, true)).ToArray(),
             };
             var item = new CustomItem(name, VanillaBase, config);
             if (item.ItemPrefab == null) { ModLog.Error(Family + "Items: could not clone '" + VanillaBase + "' for " + name); return; }
@@ -101,7 +102,28 @@ namespace WhipItUp.Weapons
             ItemManager.Instance.AddItem(item);
             Items.Add(item);
             RenderIcon(item, shared, name, rank);
-            ModLog.Verbose(Family + "Items: " + name + " '" + Kydl.Common.Loc.T(WeaponNames.Key(Family, rank)) + "' (" + Kydl.Common.Loc.T(WeaponNames.DescKey(Family, rank)) + ") added (" + config.CraftingStation + " " + config.MinStationLevel + ", " + string.Join(", ", Ladder.Ingredients[i].Select(g => g.ToString())) + ")");
+            ModLog.Verbose(Family + "Items: " + name + " '" + Kydl.Common.Loc.T(WeaponNames.Key(Family, rank)) + "' (" + Kydl.Common.Loc.T(WeaponNames.DescKey(Family, rank)) + ") added (" + config.CraftingStation + " " + config.MinStationLevel + ", " + string.Join(", ", ingredients.Select(g => g.ToString())) + ")");
+        }
+
+        /// The recipe of one rank with every item id resolved against the game's prefabs (Ladder.Resolve: the user's metal id first, the rip's name as fallback).
+        /// An item that is in no form in the game is left out and logged as an error, so one wrong id cannot break the whole recipe.
+        /// Expected outcome: the list has one entry per ingredient of the ladder that exists in the game.
+        List<Ladder.Ingredient> ResolveIngredients(string name, int index)
+        {
+            var result = new List<Ladder.Ingredient>();
+            foreach (var g in Ladder.Ingredients[index])
+            {
+                string id = Ladder.Resolve(g, candidate => PrefabManager.Instance.GetPrefab(candidate) != null);
+                if (PrefabManager.Instance.GetPrefab(id) == null)
+                {
+                    ModLog.Error(Family + "Items: " + name + ": ingredient '" + g.Item + "'" + (g.Candidates != null ? " (tried " + string.Join(", ", g.Candidates) + ")" : "") + " is not in the game - the recipe is made WITHOUT it");
+                    continue;
+                }
+                if (id != g.Item) ModLog.Verbose(Family + "Items: " + name + ": ingredient '" + g.Item + "' is not in the game, using '" + id + "'");
+                result.Add(new Ladder.Ingredient(id, g.Amount, g.AmountPerLevel, null));
+            }
+            ModLog.Verbose(Family + "Items: " + name + ": recipe " + result.Count + " of " + Ladder.Ingredients[index].Length + " ingredients: " + string.Join(", ", result.Select(g => g.ToString())));
+            return result;
         }
 
         /// Expected outcome: the shared data holds the ladder's values for this rank (returns that check).

@@ -64,5 +64,47 @@ namespace WhipItUp.Tests.Unit
             Assert.That(Ladder.Ingredients[0][0].AmountPerLevel, Is.EqualTo(5));
             Assert.That(Ladder.Ingredients[0][1].AmountPerLevel, Is.EqualTo(1));
         }
+
+        [Test]
+        public void EveryRecipe_EndsWithItsRankMetal_15BaseAnd5PerLevel()
+        {
+            var expected = new[] { "Tin", "Copper", "Bronze", "Iron", "BlackMetal", "Flametal_New", "Gold" };
+            for (int i = 0; i < Ladder.Ranks; i++)
+            {
+                var metal = Ladder.Ingredients[i].Last();
+                Assert.That(metal.Item, Is.EqualTo(expected[i]), "rank " + (i + 1));
+                Assert.That(metal.Amount, Is.EqualTo(15));
+                Assert.That(metal.AmountPerLevel, Is.EqualTo(5));
+                Assert.That(Ladder.Ingredients[i].Length, Is.EqualTo(4), "the three crop ingredients stay (D-062: added, nothing removed)");
+            }
+        }
+
+        [Test]
+        public void TheCropIngredientsKeepTheirHalfAmountUpgradeRule()
+        {
+            foreach (var recipe in Ladder.Ingredients)
+                foreach (var g in recipe.Take(3))
+                    Assert.That(g.AmountPerLevel, Is.EqualTo(System.Math.Max(1, (g.Amount + 1) / 2)), g.Item);
+        }
+
+        [TestCase(1, 15)]
+        [TestCase(2, 5)]
+        [TestCase(3, 10)]
+        [TestCase(4, 20)]
+        public void UpgradeAmount_MirrorsTheGamesRequirementMath(int quality, int expected)
+        {
+            // Piece.Requirement.GetAmount in assembly_valheim.dll 1.0.20: q1 = amount, q2 = 1x, q3 = 2x, q4 = 4x amountPerLevel (D-065)
+            Assert.That(Ladder.UpgradeAmount(Ladder.Ingredients[0].Last(), quality), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Resolve_PicksTheFirstCandidateTheGameHas()
+        {
+            var flametal = Ladder.Ingredients[5].Last();
+            Assert.That(Ladder.Resolve(flametal, id => id == "Flametal_New" || id == "FlametalNew"), Is.EqualTo("Flametal_New"));
+            Assert.That(Ladder.Resolve(flametal, id => id == "FlametalNew"), Is.EqualTo("FlametalNew"));
+            Assert.That(Ladder.Resolve(flametal, id => false), Is.EqualTo("Flametal_New"), "nothing found: the ingredient's own id (the caller logs the error)");
+            Assert.That(Ladder.Resolve(Ladder.Ingredients[0][0], id => false), Is.EqualTo("LeatherScraps"), "no candidates: the ingredient's own id");
+        }
     }
 }

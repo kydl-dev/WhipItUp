@@ -37,17 +37,36 @@ namespace WhipItUp.Weapons
         public static readonly string[] Station = { "piece_workbench", "piece_workbench", "forge", "forge", "forge", "blackforge", "blackforge" };
         public static readonly int[] StationLevel = { 1, 2, 1, 2, 3, 1, 2 };
 
-        /// Ingredients per rank (item prefab id, amount at quality 1). Same as the crop ladder.
+        // Rank metal for the rings (D-062 / D-063 / D-064): 15 at quality 1, amountPerLevel 5 (the game scales the upgrade cost from it, see UpgradeAmount).
+        public const int MetalBaseAmount = 15;
+        public const int MetalAmountPerLevel = 5;
+
+        /// The rank metal's item prefab ids per rank, V1..V7 (user: Tin, Copper, Bronze, Iron, BlackMetal, Flametal_New, Gold). The first id is the user's;
+        /// the next ones are the names the AssetRipper rip uses, tried only when the first is not in the game (D-062: ids are read from the live ObjectDB, not guessed).
+        public static readonly string[][] MetalIds =
+        {
+            new[] { "Tin" },
+            new[] { "Copper" },
+            new[] { "Bronze" },
+            new[] { "Iron" },
+            new[] { "BlackMetal" },
+            new[] { "Flametal_New", "FlametalNew" },
+            new[] { "Gold" },
+        };
+
+        /// Ingredients per rank (item prefab id, amount at quality 1): the crop ladder's, plus the rank metal as the last entry (D-062 / D-063: added, nothing removed).
         public static readonly Ingredient[][] Ingredients =
         {
-            new[] { new Ingredient("LeatherScraps", 10), new Ingredient("Resin", 2), new Ingredient("Wood", 5) },
-            new[] { new Ingredient("DeerHide", 10), new Ingredient("Bronze", 2), new Ingredient("FineWood", 5) },
-            new[] { new Ingredient("BjornHide", 10), new Ingredient("SurtlingCore", 2), new Ingredient("RoundLog", 5) },
-            new[] { new Ingredient("WolfPelt", 10), new Ingredient("Obsidian", 2), new Ingredient("FineWood", 5) },
-            new[] { new Ingredient("LoxPelt", 10), new Ingredient("Tar", 2), new Ingredient("ElderBark", 5) },
-            new[] { new Ingredient("AskHide", 10), new Ingredient("CharredBone", 2), new Ingredient("Blackwood", 5) },
-            new[] { new Ingredient("MooseHide", 10), new Ingredient("SealHide", 2), new Ingredient("Frostwood", 5) },
+            new[] { new Ingredient("LeatherScraps", 10), new Ingredient("Resin", 2), new Ingredient("Wood", 5), Metal(0) },
+            new[] { new Ingredient("DeerHide", 10), new Ingredient("Bronze", 2), new Ingredient("FineWood", 5), Metal(1) },
+            new[] { new Ingredient("BjornHide", 10), new Ingredient("SurtlingCore", 2), new Ingredient("RoundLog", 5), Metal(2) },
+            new[] { new Ingredient("WolfPelt", 10), new Ingredient("Obsidian", 2), new Ingredient("FineWood", 5), Metal(3) },
+            new[] { new Ingredient("LoxPelt", 10), new Ingredient("Tar", 2), new Ingredient("ElderBark", 5), Metal(4) },
+            new[] { new Ingredient("AskHide", 10), new Ingredient("CharredBone", 2), new Ingredient("Blackwood", 5), Metal(5) },
+            new[] { new Ingredient("MooseHide", 10), new Ingredient("SealHide", 2), new Ingredient("Frostwood", 5), Metal(6) },
         };
+
+        static Ingredient Metal(int index) { return new Ingredient(MetalIds[index][0], MetalBaseAmount, MetalAmountPerLevel, MetalIds[index]); }
 
         /// The crop texture each rank's colours come from (documentation / logs only; the colours are baked by the Blender scripts).
         public static readonly string[] CropTexture = { "crop_Albedo", "crop_Albedo_V1", "crop_Albedo_V3", "crop_Albedo_V4", "crop_Albedo_V6", "crop_Albedo_V2", "crop_Albedo_V5" };
@@ -56,10 +75,38 @@ namespace WhipItUp.Weapons
         {
             public readonly string Item;
             public readonly int Amount;
-            /// Upgrade cost per level: half the base amount, rounded up, at least 1 (crop rule).
-            public int AmountPerLevel { get { return Math.Max(1, (Amount + 1) / 2); } }
-            public Ingredient(string item, int amount) { Item = item; Amount = amount; }
+            /// Item ids to try in this order when the first one is not in the game (null = just Item).
+            public readonly string[] Candidates;
+            readonly int _perLevel;
+            /// Upgrade cost per level: the explicit value when one was given, else half the base amount, rounded up, at least 1 (crop rule).
+            public int AmountPerLevel { get { return _perLevel > 0 ? _perLevel : Math.Max(1, (Amount + 1) / 2); } }
+            public Ingredient(string item, int amount) { Item = item; Amount = amount; _perLevel = 0; Candidates = null; }
+            public Ingredient(string item, int amount, int amountPerLevel, string[] candidates) { Item = item; Amount = amount; _perLevel = amountPerLevel; Candidates = candidates; }
             public override string ToString() { return Amount + " " + Item + " (+" + AmountPerLevel + "/upgrade)"; }
+        }
+
+        /// The item id to put into the recipe: the first of the ingredient's candidates that the game has (exists), else the ingredient's own id.
+        /// Expected outcome: a non-empty id.
+        public static string Resolve(Ingredient ingredient, Func<string, bool> exists)
+        {
+            if (ingredient.Candidates != null)
+            {
+                foreach (var id in ingredient.Candidates)
+                {
+                    if (exists(id)) return id;
+                }
+            }
+            return ingredient.Item;
+        }
+
+        /// How much of an ingredient the game charges at a quality level: a mirror of the game's `Piece.Requirement.GetAmount`
+        /// (read from assembly_valheim.dll 1.0.20): quality 1 = amount, then amountPerLevel x (quality - 1) up to quality 3, x (4 + (quality - 4) / 2) from quality 4.
+        /// Jotunn's RequirementConfig does not set `m_upgraderResource`, so the base amount is not added on upgrades.
+        public static int UpgradeAmount(Ingredient ingredient, int quality)
+        {
+            if (quality <= 1) return ingredient.Amount;
+            float factor = quality < 4 ? quality - 1 : 4f + (quality - 4) / 2f;
+            return (int)Math.Floor(factor * ingredient.AmountPerLevel);
         }
 
         /// Rank number 1..7 -> index 0..6. Throws for anything else.
