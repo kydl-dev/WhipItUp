@@ -35,12 +35,12 @@ namespace WhipItUp
         public static readonly Tunable<bool> WhipSlapSync = new Tunable<bool>("Sound", "WhipSlapSync", true, "Start the whip hit sound at its impact (skips the lead-in at playback, the file is not changed).");
         public static readonly Tunable<bool> SlapTrim = new Tunable<bool>("Sound", "SlapTrim", true, "Cut the quiet 50 ms lead-in of the slap so it lands on the hit (also normalises it).");
 
-        // Paddle in the hand (degrees around the model's own axes; grip in metres along the handle, + = hand toward the blade; scale 1 = as modelled, 0.56 m)
+        // Paddle in the hand (degrees around the model's own axes; grip in metres along the handle, + = hand toward the blade; scale 1 = as modelled, 0.65 m)
         public static readonly Tunable<float> PaddleRotX = new Tunable<float>("Paddle", "RotationX", 270f, -360f, 360f, "Paddle model rotation X (degrees) in the hand.");
         public static readonly Tunable<float> PaddleRotY = new Tunable<float>("Paddle", "RotationY", 180f, -360f, 360f, "Paddle model rotation Y (degrees) in the hand.");
         public static readonly Tunable<float> PaddleRotZ = new Tunable<float>("Paddle", "RotationZ", 0f, -360f, 360f, "Paddle model rotation Z (degrees) in the hand.");
         public static readonly Tunable<float> PaddleGrip = new Tunable<float>("Paddle", "GripOffset", 0.15f, -0.3f, 0.3f, "Metres the hand sits from the middle of the grip (+ = toward the blade).");
-        public static readonly Tunable<float> PaddleScale = new Tunable<float>("Paddle", "Scale", 1f, 0.5f, 2f, "Paddle model scale (1 = 0.56 m as modelled).");
+        public static readonly Tunable<float> PaddleScale = new Tunable<float>("Paddle", "Scale", 1f, 0.5f, 2f, "Paddle model scale (1 = 0.65 m as modelled).");
         // Paddle attack 2 (mace_secondary + wrist roll, T-005). Times = normalised clip time 0..1. Live.
         public static readonly Tunable<float> BackhandAngle = new Tunable<float>("Paddle", "BackhandAngle", 90f, -360f, 360f, "Wrist roll in degrees during attack 2 (0 = no roll, negative = the other way).");
         public static readonly Tunable<float> BackhandAxisX = new Tunable<float>("Paddle", "BackhandAxisX", 0f, -1f, 1f, "Roll axis X in the hand bone's own space.");
