@@ -63,9 +63,10 @@ def thong_radius(s):
 BRAID_STRANDS = 2             # ribbons per direction
 BRAID_TURN = 0.060            # metres of thong per full turn of a ribbon (the photo: 0.06 m, constant along the thong)
 BRAID_STEP = 0.003            # metres between two sample rings along a ribbon (5 per diamond cell)
-BRAID_COLS = 5                # quads across one ribbon
-BRAID_MID = 0.85              # ribbon surface radius / thong radius half way between over and under
-BRAID_LIFT = 0.15             # over = MID + LIFT (the thong radius itself), under = MID - LIFT
+BRAID_COLS = 8                # quads across one ribbon (the padded cross-section needs a few more than a flat strip)
+BRAID_MID = 0.78              # ribbon surface radius / thong radius half way between over and under (at the ribbon edge)
+BRAID_LIFT = 0.12             # over = MID + LIFT, under = MID - LIFT
+BRAID_BULGE = 0.10            # padded cross-section as in the braid photo: the ribbon middle stands this much higher than its edges
 BRAID_SHARP = 4.0             # steepness of the over / under swap (tanh of sin)
 CORE_FRAC = 0.58              # core radius / thong radius (the under ribbons ride at 0.70 of the thong radius)
 EDGE_WIDTH = 0.0009           # width of the thin string on a ribbon edge (m)
@@ -99,7 +100,7 @@ def ribbon_height(direction, w, s):
 
 def ribbon_radius(direction, w, s):
     """Radius of the outer surface of a ribbon at (w, s)."""
-    return thong_radius(s) * (BRAID_MID + BRAID_LIFT * ribbon_height(direction, w, s))
+    return thong_radius(s) * (BRAID_MID + BRAID_LIFT * ribbon_height(direction, w, s) + BRAID_BULGE * math.sin(math.pi * w))
 
 
 def ribbon_colour(direction, strand):
