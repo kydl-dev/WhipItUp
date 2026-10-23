@@ -1,7 +1,8 @@
 """Builds the flogger 'Flogger' (one skinned mesh, one material, one UV atlas) + its armature 'FloggerRig' in the open .blend.
 
 Run inside Blender 5.x (Blender MCP: exec the file). Layout: flogger_layout.py. Re-running replaces both objects.
-Parts: wolf-icon pommel disc, ferrule, two-tone braided grip, knotwork collar, 12 fall chains (10 x 4 flat strips, 2 braided round falls).
+Parts: wolf-icon pommel disc, the paddle's handle (R1 band ring, wood + spiral grip + wood core, R2, tall valknut ring, R3: handle_layout.py,
+grip_tools.py, ring_tools.py), 12 fall chains (10 x 4 flat strips, 2 braided round falls) that leave through the top of R3.
 Bones: 'root' (handle, weight 1 for every non-fall vertex) + per chain 'fall_KK_B' (B = 0..4 along the fall), parented in a chain under root.
 The mod's FallChains component simulates those bones (springs + gravity) in game.
 """
@@ -18,11 +19,19 @@ from mathutils import Matrix, Vector
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.path.join(os.path.dirname(bpy.data.filepath), "scripts")
 if SCRIPT_DIR not in sys.path:
     sys.path.insert(0, SCRIPT_DIR)
+import handle_layout as HL  # noqa: E402
+import paddle_layout as PL  # noqa: E402
+importlib.reload(HL)        # reload the layouts BEFORE flogger_layout imports them (Blender keeps old modules between runs)
+importlib.reload(PL)
 import flogger_layout as F  # noqa: E402
 import mesh_tools as T  # noqa: E402
+import ring_tools as R  # noqa: E402
+import grip_tools as G  # noqa: E402
 importlib.reload(F)
 importlib.reload(T)
-from mesh_tools import lerp_rect, build_slab, build_lathe  # noqa: E402
+importlib.reload(R)
+importlib.reload(G)
+from mesh_tools import lerp_rect, build_slab  # noqa: E402
 
 log = T.log
 
@@ -142,13 +151,11 @@ def main():
     cz, r, t = F.POMMEL_DISC
     outline = [(r * math.cos(2 * math.pi * k / 40), cz + r * math.sin(2 * math.pi * k / 40)) for k in range(40)]
     build_slab(bm, uv, outline, t, F.POMMEL_BEVEL, F.UV_POMMEL_FACE, F.UV_POMMEL_FACE, F.UV_METAL, (-r, r), (cz - r, cz + r), "pommel disc")
-    z0, z1, fr = F.FERRULE_BOTTOM
-    build_lathe(bm, uv, [(z0, fr - 0.0015), (z0 + 0.0015, fr), (z1 - 0.0015, fr), (z1, fr - 0.0015)], F.UV_METAL, segments=18)
-    mid, half = (F.GRIP_BOTTOM + F.GRIP_TOP) / 2, (F.GRIP_TOP - F.GRIP_BOTTOM) / 2
-    zs = [F.GRIP_BOTTOM + (F.GRIP_TOP - F.GRIP_BOTTOM) * i / 12 for i in range(13)]
-    build_lathe(bm, uv, [(z, F.GRIP_RADIUS + F.GRIP_SWELL * (1 - ((z - mid) / half) ** 2)) for z in zs], F.UV_GRIP, segments=20)
-    c0, c1, cr = F.COLLAR
-    build_lathe(bm, uv, [(c0, cr - 0.002), (c0 + 0.002, cr), (c1 - 0.002, cr), (c1, cr - 0.002)], F.UV_COLLAR, segments=24)
+    # the paddle's handle (D-064 / D-069): R1, wood + spiral grip, wood core through R2 / V / R3, R2, tall valknut ring, R3
+    grip = HL.grip_spec(F.GRIP_BOTTOM, F.GRIP_TOP, F.GRIP_RADIUS)
+    G.build_grip(bm, uv, grip, HL.GRIP_RECTS)
+    G.build_core(bm, uv, grip, F.RINGS["top"] - HL.CORE_UNDER_TOP, HL.GRIP_RECTS)
+    R.build_handle_rings(bm, uv, F.RINGS, HL.RING_RECTS)
     handle_verts = set(bm.verts)
 
     # falls

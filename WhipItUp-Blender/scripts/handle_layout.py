@@ -28,6 +28,34 @@ SQUARE_CENTRES = (math.pi / 2, 3 * math.pi / 2)   # +Y and -Y side: the faces of
 BAND_REPEATS = 16         # model.png repeats around one band ring (8 repeats per image, tiled twice)
 RING_SEGMENTS = 20
 
+# ---- the paddle's grip, reused by flogger and whip (user 2026-10-23: "flogger and whip handle should look like the current model of the paddle") ----
+GRIP_SWELL = 0.0018       # extra radius in the middle of the wood grip (paddle value)
+WRAP_EXTRA = 0.0016       # wrap radius over the wood (paddle value)
+WRAP_FROM_BOTTOM = 0.022  # the spiral wrap starts this far above the grip bottom (paddle: -0.078 -> -0.056)
+WRAP_FROM_TOP = 0.040     # ... and ends this far below the grip top (paddle: 0.108 -> 0.068)
+CORE_UNDER_TOP = 0.002    # the wood core stops this far below the top of R3 (grip_tools.build_core)
+
+# ---- UV atlas rows v 0 .. 0.34 of EVERY weapon: the handle parts use the same rects as the paddle atlas (paddle_layout.py, checked there);
+#      the weapon's own body (falls / thong / blade) uses v BODY_V0 .. 1 ----
+BODY_V0 = 0.34
+UV_WOOD = (0.00, 0.05, 0.25, 0.20)
+UV_WRAP = (0.25, 0.00, 0.45, 0.20)
+UV_METAL = (0.45, 0.00, 0.75, 0.08)
+UV_POMMEL_FACE = (0.78, 0.00, 0.98, 0.20)
+UV_RING_BAND = (0.00, 0.20, 0.70, 0.26)
+UV_VALK_SQ = (0.72, 0.20, 0.86, 0.34)
+UV_RING_METAL = (0.87, 0.20, 0.99, 0.34)
+
+# rect dicts as the build scripts (grip_tools / ring_tools) want them
+GRIP_RECTS = {"wood": UV_WOOD, "wrap": UV_WRAP}
+RING_RECTS = {"band": UV_RING_BAND, "ring_metal": UV_RING_METAL, "valk": UV_VALK_SQ}
+
+
+def grip_spec(bottom, top, radius):
+    """The dict grip_tools.build_grip / build_core want, with the paddle's swell and wrap proportions."""
+    return dict(bottom=bottom, top=top, radius=radius, swell=GRIP_SWELL,
+                wrap_bottom=bottom + WRAP_FROM_BOTTOM, wrap_top=top - WRAP_FROM_TOP, wrap_extra=WRAP_EXTRA)
+
 
 def handle_rings(grip_bottom, grip_top, grip_radius):
     """z / radius of the five rings for a wood grip from grip_bottom to grip_top.

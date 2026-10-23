@@ -1,7 +1,8 @@
 """Writes the whip textures into WhipItUp-Blender/textures/ (numpy + PIL):
   whip_Albedo_V1..V7.png, whip_Normal.png (+Y up), whip_MetalGloss.png (R metallic, A smoothness).
-Colours (D-034): thong = two-tone spiral braid (rank leather + rank 2nd colour, like the flogger grip), fall = rank leather,
-cracker = 2nd colour, grip = the flogger's braid, collar / ferrule / pommel = fitting metal + knotwork, pommel faces = TrophyWolf icon.
+Colours (D-034): thong = two-tone spiral braid (rank leather + rank 2nd colour), fall = rank leather, cracker = 2nd colour,
+pommel rim = fitting metal, pommel faces = TrophyWolf icon. Handle (D-064 / D-069) = the paddle's: wood + spiral wrap in the rank accent
+colour (ring_textures.paint_grip), band rings / valknut squares / dark old metal (ring_textures.paint_rings).
 Usage: python whip_textures.py [out_dir]
 """
 import math
@@ -13,11 +14,14 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import whip_layout as W  # noqa: E402
+import ring_textures as RT  # noqa: E402
 import flogger_textures as FT  # noqa: E402  (spiral_braid)
-import paddle_textures as P  # noqa: E402  (rect_grid, noise, interlace, WOLF_ICON)
+import paddle_textures as P  # noqa: E402  (rect_grid, rect_box, noise, interlace, WOLF_ICON)
 from rank_palette import PALETTE, second_colour  # noqa: E402
 
 N = W.TEXTURE_SIZE
+LABEL_WOOD = FT.LABEL_WOOD
+LABEL_WRAP = FT.LABEL_WRAP
 
 
 def log(msg):
@@ -52,30 +56,10 @@ def build(out_dir):
     H[y0:y1, x0:x1] = 0.5 + 0.05 * g
     smooth[y0:y1, x0:x1] = 0.35
 
-    # grip: the flogger's spiral braid
-    (x0, y0, x1, y1), U, V = P.rect_grid(W.UV_GRIP)
-    fam, h = FT.spiral_braid(U, V, 6, 7, 2.5)
-    n = P.noise(*U.shape, scale=6, seed=33)
-    label[y0:y1, x0:x1] = np.where(fam, 1, 3)
-    shade[y0:y1, x0:x1] = (0.5 + 0.55 * h) * (0.95 + 0.1 * n)
-    H[y0:y1, x0:x1] = h
-    smooth[y0:y1, x0:x1] = 0.38
-
-    # collar knotwork band
-    (x0, y0, x1, y1), U, V = P.rect_grid(W.UV_COLLAR)
-    c0, c1, cr = W.COLLAR
-    GX, GZ = U * 2 * math.pi * cr, V * (c1 - c0)
-    zc, span = (c1 - c0) / 2, c1 - c0
-    amp, k = span * 0.18, 2 * math.pi / ((2 * math.pi * cr) / 6)
-    strands = [(np.abs(GZ - (zc + amp * np.sin(k * GX))), np.cos(k * GX)), (np.abs(GZ - (zc - amp * np.sin(k * GX))), -np.cos(k * GX)),
-               (np.abs(GZ - (zc + amp * 1.9)), np.sin(k * GX * 2)), (np.abs(GZ - (zc - amp * 1.9)), np.sin(k * GX * 2 + 1))]
-    kf, kg, kp = P.interlace(strands, GX, GZ, span * 0.09, span * 0.035)
-    n = P.noise(*U.shape, scale=8, seed=34)
-    label[y0:y1, x0:x1] = 4
-    shade[y0:y1, x0:x1] = np.where(kf, 1.05 + 0.1 * kp, np.where(kg, 0.45, 0.7 + 0.1 * n))
-    H[y0:y1, x0:x1] = np.where(kf, 0.55 + 0.35 * kp, np.where(kg, 0.1, 0.35))
-    metal[y0:y1, x0:x1] = 0.9
-    smooth[y0:y1, x0:x1] = np.where(kf, 0.65, 0.45)
+    # grip = the paddle's wood + spiral wrap (D-069), rings = the paddle's band / valknut / dark metal (D-064)
+    arrays = {"H": H, "shade": shade, "label": label, "metal": metal, "smooth": smooth}
+    RT.paint_grip({"wood": W.UV_WOOD, "wrap": W.UV_WRAP}, P.rect_box, arrays, LABEL_WOOD, LABEL_WRAP)
+    RT.paint_rings({"band": W.UV_RING_BAND, "valk": W.UV_VALK_SQ, "ring_metal": W.UV_RING_METAL}, P.rect_box, arrays)
 
     (x0, y0, x1, y1), U, V = P.rect_grid(W.UV_METAL)
     n = P.noise(*U.shape, scale=8, seed=35)
@@ -122,6 +106,10 @@ def build(out_dir):
         img = np.where((label == 1)[..., None], main_c * s, img)
         img = np.where((label == 3)[..., None], two_c * s, img)
         img = np.where((label == 4)[..., None], fit_c * s, img)
+        img = RT.grip_albedo(img, label, shade, acc, LABEL_WOOD, LABEL_WRAP)
+        m_metal, c_metal, m_emboss, c_emboss = RT.ring_albedo(rank, label, shade)
+        img = np.where(m_metal[..., None], c_metal * s, img)
+        img = np.where(m_emboss[..., None], c_emboss * s, img)
         a = icon_a[..., None]
         img = img * (1 - a) + icon_rgb * a
         Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), "RGB").save(os.path.join(out_dir, f"whip_Albedo_V{rank}.png"))

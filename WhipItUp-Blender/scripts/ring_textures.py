@@ -20,6 +20,8 @@ BAND_PNG = os.path.join(REF, "nordic_band.png")
 VALKNUT_PNG = os.path.join(REF, "valknut.png")
 
 RING_METAL = (46, 44, 42)       # dark old metal, all ranks (the user: may be plain black metal)
+WOOD = (112, 74, 42)            # grip wood (the same values as paddle_textures.WOOD / WOOD_DARK)
+WOOD_DARK = (70, 44, 24)
 LABEL_METAL = 10
 LABEL_EMBOSS = 11
 BAND_ROWS = (2, 62)             # rows of nordic_band.png that hold the band (the rest is the border of the picture)
@@ -166,6 +168,48 @@ def paint_rings(rects, rect_box, arrays):
     painted = int((label >= LABEL_METAL).sum())
     log(f"rings painted: {painted} px, strand colours " + ", ".join(f"V{r}={ring_colour(r)}" for r in PALETTE))
     return painted
+
+
+def _grid(rect, rect_box):
+    """Per-pixel (u, v) inside a UV rect, both 0..1, v up. Returns the pixel box, U, V."""
+    x0, y0, x1, y1 = rect_box(rect)
+    w, h = x1 - x0, y1 - y0
+    uu = (np.arange(w) + 0.5) / w
+    vv = 1.0 - (np.arange(h) + 0.5) / h
+    U, V = np.meshgrid(uu, vv)
+    return (x0, y0, x1, y1), U, V
+
+
+def paint_grip(rects, rect_box, arrays, wood_label, wrap_label):
+    """The paddle's wood grain + spiral wrap (same code as paddle_textures.build, D-014 / D-069) into rects['wood'] / rects['wrap'] of the
+    atlas arrays (H, shade, label, smooth). The flogger and the whip call this so their grip is the paddle's grip."""
+    H, shade, label, smooth = (arrays[k] for k in ("H", "shade", "label", "smooth"))
+    (x0, y0, x1, y1), U, V = _grid(rects["wood"], rect_box)
+    g = noise(*U.shape, scale=3, seed=7)
+    grain = 0.5 + 0.5 * np.sin(U * 2 * math.pi * 9 + g * 6.0)
+    label[y0:y1, x0:x1] = wood_label
+    shade[y0:y1, x0:x1] = grain                      # 0 = dark grain, 1 = light wood (mixed in the albedo)
+    H[y0:y1, x0:x1] = 0.5 + 0.08 * grain
+    smooth[y0:y1, x0:x1] = 0.28
+
+    (x0, y0, x1, y1), U, V = _grid(rects["wrap"], rect_box)
+    turns = 14
+    f = (U + V * turns) % 1.0                        # diagonal leather strips
+    prof = np.sin(f * math.pi)
+    label[y0:y1, x0:x1] = wrap_label
+    shade[y0:y1, x0:x1] = 0.55 + 0.45 * prof * (0.9 + 0.2 * noise(*U.shape, scale=5, seed=9))
+    H[y0:y1, x0:x1] = prof
+    smooth[y0:y1, x0:x1] = 0.33
+    log(f"grip painted: wood label {wood_label}, wrap label {wrap_label}")
+    return int((label == wood_label).sum() + (label == wrap_label).sum())
+
+
+def grip_albedo(img, label, shade, accent, wood_label, wrap_label):
+    """Wood (dark..light by the grain shade) and wrap (rank accent colour) into an albedo image (N x N x 3 float)."""
+    s = shade[..., None]
+    wood = np.array(WOOD_DARK, np.float32) + (np.array(WOOD, np.float32) - np.array(WOOD_DARK, np.float32)) * s
+    img = np.where((label == wood_label)[..., None], wood, img)
+    return np.where((label == wrap_label)[..., None], np.array(accent, np.float32) * s, img)
 
 
 def ring_albedo(rank, label, shade):

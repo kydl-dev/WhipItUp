@@ -1,8 +1,9 @@
 """Writes the flogger textures into WhipItUp-Blender/textures/ (numpy + PIL):
   flogger_Albedo_V1..V7.png (sRGB, per rank), flogger_Normal.png (+Y up), flogger_MetalGloss.png (R metallic, A smoothness).
-Colours (D-029): falls = rank leather; the 2 braided falls and the grip braid = two-tone leather + rank contrast colour
-(rank_palette.second_colour, the paddle medallion colour); collar / ferrule / pommel rim = fitting metal with a knotwork band;
-pommel faces = the vanilla TrophyWolf icon (as on the paddle). Layout: flogger_layout.py.
+Colours (D-029): falls = rank leather; the 2 braided falls = two-tone leather + rank contrast colour (rank_palette.second_colour, the paddle
+medallion colour); pommel rim = fitting metal; pommel faces = the vanilla TrophyWolf icon (as on the paddle).
+Handle (D-064 / D-069) = the paddle's: wood + spiral wrap in the rank accent colour (ring_textures.paint_grip), band rings / valknut squares /
+dark old metal (ring_textures.paint_rings). Layout: flogger_layout.py.
 Usage: python flogger_textures.py [out_dir]
 """
 import math
@@ -14,11 +15,14 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import flogger_layout as F  # noqa: E402
+import ring_textures as RT  # noqa: E402
 from rank_palette import PALETTE, second_colour  # noqa: E402
 import paddle_textures as P  # noqa: E402  (shared helpers: rect_box/rect_grid/noise/interlace, the wolf icon path)
 
 N = F.TEXTURE_SIZE
 P.N = N
+LABEL_WOOD = 5       # grip wood
+LABEL_WRAP = 6       # spiral wrap (rank accent colour)
 
 
 def log(msg):
@@ -79,33 +83,10 @@ def build(out_dir):
     H[y0:y1, x0:x1] = h
     smooth[y0:y1, x0:x1] = 0.4
 
-    # grip: wider braid, two-tone
-    (x0, y0, x1, y1), U, V = P.rect_grid(F.UV_GRIP)
-    fam, h = spiral_braid(U, V, 6, 7, 2.5)
-    n = P.noise(*U.shape, scale=6, seed=23)
-    label[y0:y1, x0:x1] = np.where(fam, 2, 3)
-    shade[y0:y1, x0:x1] = (0.5 + 0.55 * h) * (0.95 + 0.1 * n)
-    H[y0:y1, x0:x1] = h
-    smooth[y0:y1, x0:x1] = 0.38
-
-    # collar: metal band with a woven knot (same 4-strand wave as the paddle guard)
-    (x0, y0, x1, y1), U, V = P.rect_grid(F.UV_COLLAR)
-    GX = U * 2 * math.pi * F.COLLAR[2]                 # metres around
-    GZ = V * (F.COLLAR[1] - F.COLLAR[0])
-    zc = GZ.max() / 2
-    amp, k = (F.COLLAR[1] - F.COLLAR[0]) * 0.18, 2 * math.pi / ((2 * math.pi * F.COLLAR[2]) / 6)   # 6 repeats around
-    s1 = (np.abs(GZ - (zc + amp * np.sin(k * GX))), np.cos(k * GX))
-    s2 = (np.abs(GZ - (zc - amp * np.sin(k * GX))), -np.cos(k * GX))
-    s3 = (np.abs(GZ - (zc + amp * 1.9)), np.sin(k * GX * 2))
-    s4 = (np.abs(GZ - (zc - amp * 1.9)), np.sin(k * GX * 2 + 1))
-    span = F.COLLAR[1] - F.COLLAR[0]
-    kf, kg, kp = P.interlace([s1, s2, s3, s4], GX, GZ, span * 0.09, span * 0.035)
-    n = P.noise(*U.shape, scale=8, seed=24)
-    label[y0:y1, x0:x1] = 4
-    shade[y0:y1, x0:x1] = np.where(kf, 1.05 + 0.1 * kp, np.where(kg, 0.45, 0.7 + 0.1 * n))
-    H[y0:y1, x0:x1] = np.where(kf, 0.55 + 0.35 * kp, np.where(kg, 0.1, 0.35))
-    metal[y0:y1, x0:x1] = 0.9
-    smooth[y0:y1, x0:x1] = np.where(kf, 0.65, 0.45)
+    # grip = the paddle's wood + spiral wrap (D-069), rings = the paddle's band / valknut / dark metal (D-064)
+    arrays = {"H": H, "shade": shade, "label": label, "metal": metal, "smooth": smooth}
+    RT.paint_grip({"wood": F.UV_WOOD, "wrap": F.UV_WRAP}, P.rect_box, arrays, LABEL_WOOD, LABEL_WRAP)
+    RT.paint_rings({"band": F.UV_RING_BAND, "valk": F.UV_VALK_SQ, "ring_metal": F.UV_RING_METAL}, P.rect_box, arrays)
 
     (x0, y0, x1, y1), U, V = P.rect_grid(F.UV_METAL)
     n = P.noise(*U.shape, scale=8, seed=25)
@@ -154,6 +135,10 @@ def build(out_dir):
         img = np.where((label == 1)[..., None] | (label == 2)[..., None], main_c * s, img)
         img = np.where((label == 3)[..., None], two_c * s, img)
         img = np.where((label == 4)[..., None], fit_c * s, img)
+        img = RT.grip_albedo(img, label, shade, acc, LABEL_WOOD, LABEL_WRAP)
+        m_metal, c_metal, m_emboss, c_emboss = RT.ring_albedo(rank, label, shade)
+        img = np.where(m_metal[..., None], c_metal * s, img)
+        img = np.where(m_emboss[..., None], c_emboss * s, img)
         a = icon_a[..., None]
         img = img * (1 - a) + icon_rgb * a
         Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), "RGB").save(os.path.join(out_dir, f"flogger_Albedo_V{rank}.png"))

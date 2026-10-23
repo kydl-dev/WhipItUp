@@ -1,7 +1,9 @@
 """Builds the whip 'Whip' (one skinned mesh, one material, one UV atlas) + its armature 'WhipRig' in the open .blend.
 
 Run inside Blender 5.x (exec the file). Layout: whip_layout.py. Re-running replaces both objects.
-Bones: 'root' (handle, weight 1) + one chain 'fall_00_0'..'fall_00_15' along the lash (the name pattern FallChains looks for).
+Parts: wolf-icon pommel disc, the paddle's handle (R1 band ring, wood + spiral grip + wood core, R2, tall valknut ring, R3: handle_layout.py,
+grip_tools.py, ring_tools.py), braided thong, flat fall, cracker.
+Bones: 'root' (handle, weight 1) + one chain 'fall_00_0'..'fall_00_31' along the lash (BONES in whip_layout.py; the name pattern FallChains looks for).
 """
 import importlib
 import math
@@ -15,11 +17,19 @@ from mathutils import Vector
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.path.join(os.path.dirname(bpy.data.filepath), "scripts")
 if SCRIPT_DIR not in sys.path:
     sys.path.insert(0, SCRIPT_DIR)
+import handle_layout as HL  # noqa: E402
+import paddle_layout as PL  # noqa: E402
+importlib.reload(HL)        # reload the layouts BEFORE whip_layout imports them (Blender keeps old modules between runs)
+importlib.reload(PL)
 import whip_layout as W  # noqa: E402
 import mesh_tools as T  # noqa: E402
+import ring_tools as R  # noqa: E402
+import grip_tools as G  # noqa: E402
 importlib.reload(W)
 importlib.reload(T)
-from mesh_tools import lerp_rect, build_slab, build_lathe  # noqa: E402
+importlib.reload(R)
+importlib.reload(G)
+from mesh_tools import lerp_rect, build_slab  # noqa: E402
 
 log = T.log
 
@@ -139,13 +149,11 @@ def main():
     cz, r, t = W.POMMEL_DISC
     outline = [(r * math.cos(2 * math.pi * k / 40), cz + r * math.sin(2 * math.pi * k / 40)) for k in range(40)]
     build_slab(bm, uv, outline, t, W.POMMEL_BEVEL, W.UV_POMMEL_FACE, W.UV_POMMEL_FACE, W.UV_METAL, (-r, r), (cz - r, cz + r), "pommel disc")
-    z0, z1, fr = W.FERRULE_BOTTOM
-    build_lathe(bm, uv, [(z0, fr - 0.0015), (z0 + 0.0015, fr), (z1 - 0.0015, fr), (z1, fr - 0.0015)], W.UV_METAL, segments=18)
-    mid, half = (W.GRIP_BOTTOM + W.GRIP_TOP) / 2, (W.GRIP_TOP - W.GRIP_BOTTOM) / 2
-    zs = [W.GRIP_BOTTOM + (W.GRIP_TOP - W.GRIP_BOTTOM) * i / 12 for i in range(13)]
-    build_lathe(bm, uv, [(z, W.GRIP_RADIUS + W.GRIP_SWELL * (1 - ((z - mid) / half) ** 2)) for z in zs], W.UV_GRIP, segments=20)
-    c0, c1, cr = W.COLLAR
-    build_lathe(bm, uv, [(c0, cr - 0.002), (c0 + 0.002, cr), (c1 - 0.002, cr), (c1, cr - 0.002)], W.UV_COLLAR, segments=24)
+    # the paddle's handle (D-064 / D-069): R1, wood + spiral grip, wood core through R2 / V / R3, R2, tall valknut ring, R3
+    grip = HL.grip_spec(W.GRIP_BOTTOM, W.GRIP_TOP, W.GRIP_RADIUS)
+    G.build_grip(bm, uv, grip, HL.GRIP_RECTS)
+    G.build_core(bm, uv, grip, W.RINGS["top"] - HL.CORE_UNDER_TOP, HL.GRIP_RECTS)
+    R.build_handle_rings(bm, uv, W.RINGS, HL.RING_RECTS)
     handle = {v for v in bm.verts}
     lash, end_ring = build_thong(bm, uv)
     lash += build_fall(bm, uv, end_ring)
