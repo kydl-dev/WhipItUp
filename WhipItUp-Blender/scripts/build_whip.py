@@ -2,7 +2,7 @@
 
 Run inside Blender 5.x (exec the file). Layout: whip_layout.py. Re-running replaces both objects.
 Parts: wolf-icon pommel disc, the paddle's handle (R1 band ring, wood + spiral grip + wood core, R2, tall valknut ring, R3: handle_layout.py,
-grip_tools.py, ring_tools.py), braided thong, flat fall, cracker.
+grip_tools.py, ring_tools.py), thong core + modelled plait (2 cords + 2 gold strings, D-071 / D-072), flat fall, cracker.
 Bones: 'root' (handle, weight 1) + one chain 'fall_00_0'..'fall_00_37' along the lash (BONES in whip_layout.py; the name pattern FallChains looks for).
 Rings (D-066): valknut rings on bones 8 / 16 / 24 and a small one at the cracker tip, each rigid and weighted 100 % to its ONE bone.
 """
@@ -36,8 +36,8 @@ log = T.log
 
 
 def build_thong(bm, uv):
-    """Tapering braided tube along +Z. UVs are per face corner, so the braid texture repeats every THONG_UV_REPEAT metres
-    (k rings per repeat) without duplicated vertices."""
+    """The dark core tube along +Z under the plait (radius W.core_radius, tapering). UVs are per face corner, so the core texture repeats
+    every THONG_UV_REPEAT metres (k rings per repeat) without duplicated vertices."""
     n = W.THONG_SIDES
     k = max(1, round(W.THONG_UV_REPEAT * W.THONG_RINGS_PER_M))       # rings per texture repeat
     rings_total = int(round(W.THONG_LENGTH / W.THONG_UV_REPEAT * k))
@@ -45,7 +45,7 @@ def build_thong(bm, uv):
     rings = []
     for i in range(rings_total + 1):
         s = W.THONG_LENGTH * i / rings_total
-        r = W.thong_radius(s)
+        r = W.core_radius(s)
         ring = [bm.verts.new((r * math.cos(2 * math.pi * j / n), r * math.sin(2 * math.pi * j / n), W.THONG_START + s)) for j in range(n)]
         out += [(v, s) for v in ring]
         rings.append((s, ring))
@@ -61,6 +61,50 @@ def build_thong(bm, uv):
                 loop[uv].uv = lerp_rect(W.UV_THONG, u, v0 if loop.vert in (a, b) else v1)
     bm.faces.new(list(reversed(rings[0][1])))
     return out, rings[-1]
+
+
+def build_cord(bm, uv, pts, sides, rect, uv_point):
+    """One tube along a list of (centre Vector, radius, s) with `sides` corners per ring (circle in the XY plane, closed at both ends).
+    Every face gets the same UV point inside `rect` (flat colour). Returns [(vert, s)] for the bone weights."""
+    rings, out = [], []
+    for centre, r, s in pts:
+        ring = [bm.verts.new(centre + Vector((r * math.cos(2 * math.pi * j / sides), r * math.sin(2 * math.pi * j / sides), 0))) for j in range(sides)]
+        rings.append(ring)
+        out += [(v, s) for v in ring]
+    uvc = lerp_rect(rect, uv_point[0], uv_point[1])
+    faces = []
+    for i in range(len(rings) - 1):
+        for j in range(sides):
+            faces.append(bm.faces.new((rings[i][j], rings[i][(j + 1) % sides], rings[i + 1][(j + 1) % sides], rings[i + 1][j])))
+    faces.append(bm.faces.new(list(reversed(rings[0]))))
+    faces.append(bm.faces.new(list(rings[-1])))
+    for f in faces:
+        for loop in f.loops:
+            loop[uv].uv = uvc
+    return out
+
+
+def build_plait(bm, uv):
+    """The modelled plait (D-071 / D-072): cord A winds one way (angle +phi, rank leather colour), cord B the other way (angle -phi, 2nd colour);
+    where they cross (phi = k pi) the one on top alternates (W.cord_radial). A thin gold string runs beside each cord on the same helix."""
+    samples = W.plait_samples()
+    out = []
+    for direction in (1, -1):
+        cord, gold = [], []
+        for s, phi in samples:
+            radial, c = W.cord_radial(s, phi, direction)
+            g = W.gold_radius(s)
+            ang = direction * phi
+            dang = (c + 0.6 * g) / radial
+            z = W.THONG_START + s
+            cord.append((Vector((radial * math.cos(ang), radial * math.sin(ang), z)), c, s))
+            gold.append((Vector((radial * math.cos(ang + dang), radial * math.sin(ang + dang), z)), g, s))
+        out += build_cord(bm, uv, cord, W.CORD_SIDES, W.UV_FALL, W.CORD_UV[direction])
+        out += build_cord(bm, uv, gold, W.GOLD_SIDES, W.UV_GOLD, W.GOLD_UV)
+        log(f"plait cord {'A' if direction > 0 else 'B'}: {len(cord)} rings, radius {cord[0][1]:.4f} -> {cord[-1][1]:.4f} m, gold radius {gold[0][1]:.5f} -> {gold[-1][1]:.5f} m")
+    revs = samples[-1][1] / (2 * math.pi)
+    log(f"plait: {len(samples)} samples, {revs:.1f} turns per cord over {W.THONG_LENGTH:.2f} m (pitch {W.plait_pitch(0):.3f} m at the handle, {W.plait_pitch(W.THONG_LENGTH):.3f} m at the end)")
+    return out
 
 
 def build_fall(bm, uv, end_ring):
@@ -129,6 +173,22 @@ def build_lash_rings(bm, uv):
     return out
 
 
+def smooth_plait_edges(me, plait_idx):
+    """The cords and gold strings are round tubes with few corners: clear the sharp-edge mark on every edge between two plait vertices so they shade smooth."""
+    attr = me.attributes.get("sharp_edge")
+    if attr is None:
+        log("plait smoothing: no sharp_edge attribute (nothing to clear)")
+        return 0
+    cleared = 0
+    for e in me.edges:
+        a, b = e.vertices
+        if a in plait_idx and b in plait_idx and attr.data[e.index].value:
+            attr.data[e.index].value = False
+            cleared += 1
+    log(f"plait smoothing: cleared {cleared} sharp edges of {len(me.edges)}")
+    return cleared
+
+
 def build_armature():
     old = bpy.data.objects.get("WhipRig")
     if old is not None:
@@ -176,11 +236,14 @@ def main():
     R.build_handle_rings(bm, uv, W.RINGS, HL.RING_RECTS)
     handle = {v for v in bm.verts}
     lash, end_ring = build_thong(bm, uv)
+    plait = build_plait(bm, uv)
+    lash += plait
     lash += build_fall(bm, uv, end_ring)
     ring_verts = build_lash_rings(bm, uv)
     bm.to_mesh(me)
     handle_idx = [v.index for v in handle]
     lash_w = [(v.index, s) for v, s in lash]
+    plait_idx = {v.index for v, _ in plait}
     ring_idx = {b: [v.index for v in vs] for b, vs in ring_verts.items()}
     bm.free()
 
@@ -212,6 +275,7 @@ def main():
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
     bpy.ops.object.shade_smooth_by_angle(angle=math.radians(50))
+    smooth_plait_edges(me, plait_idx)
 
     mat = bpy.data.materials.get("whip_mat") or bpy.data.materials.new("whip_mat")
     obj.data.materials.clear()

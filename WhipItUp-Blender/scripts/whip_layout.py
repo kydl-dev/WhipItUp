@@ -2,9 +2,10 @@
 
 Imported by build_whip.py (Blender) and whip_textures.py. Axes: Z = length (thong points +Z at rest), origin = middle of the grip.
 Family look: wolf-icon pommel disc, then the paddle's handle (handle_layout.py: R1 band ring, wood + spiral grip, R2 band ring, tall
-valknut ring, R3 band ring), then a 1.5 m tapering two-tone braided thong, a flat leather fall and a frayed cracker. One bone chain
+valknut ring, R3 band ring), then a 1.6 m tapering thong (dark core + 2 modelled cords crossing over / under + a thin gold string beside each,
+D-071 / D-072), a flat leather fall and a frayed cracker. One bone chain
 (fall_00_0..N-1) so the mod's FallChains drives it; in game it is coiled in the hand while idle and lashes out while attacking (WhipMotion).
-Lash 1.90 m = 38 bones of 0.050 m (D-066): rigid valknut rings on bones 8 / 16 / 24 and a small one at the tip, plaited thong (whip_textures.plait).
+Lash 1.90 m = 38 bones of 0.050 m (D-066): rigid valknut rings on bones 8 / 16 / 24 and a small one at the tip, modelled plait on the thong (build_whip.build_plait).
 """
 import math
 
@@ -54,9 +55,64 @@ def thong_radius(s):
     return THONG_R0 + (THONG_R1 - THONG_R0) * (t ** 0.8)
 
 
+# ---- modelled plait (D-071 / D-072): a dark core tube + 2 cords (one winds each way) over / under at every crossing, a thin gold string beside each ----
+CORE_FRAC = 0.50              # core radius / thong radius (the thong radius is the outer envelope of the cords)
+CORD_FRAC = 0.26              # cord radius / thong radius
+CORD_LIFT = 0.60              # cord centre rides CORD_LIFT * cord radius above the core, +- the same again for over / under
+PLAIT_PITCH0 = 0.090          # metres of thong per full turn of a cord at the handle end (a crossing every half pitch)
+PLAIT_PITCH_EXP = 0.6         # the pitch shrinks with (radius ratio) ** this, so the plait keeps its look while the thong thins
+PLAIT_RINGS_PER_REV = 10      # tube rings per full turn of a cord
+CORD_SIDES = 6
+GOLD_FRAC = 0.07              # gold string radius / thong radius
+GOLD_MIN = 0.00025            # but never thinner than 0.25 mm
+GOLD_SIDES = 3
+
+
+def core_radius(s):
+    """Radius of the dark core tube at s metres along the thong."""
+    return CORE_FRAC * thong_radius(s)
+
+
+def plait_pitch(s):
+    """Metres of thong per full turn of a cord at s."""
+    return PLAIT_PITCH0 * (thong_radius(s) / THONG_R0) ** PLAIT_PITCH_EXP
+
+
+def plait_samples():
+    """[(s, phi)]: s = metres along the thong, phi = angle (radians) a cord has turned by there; one sample per 2 pi / PLAIT_RINGS_PER_REV of phi,
+    the last one exactly at THONG_LENGTH. Cord A is at angle +phi, cord B at -phi: they cross when phi is a multiple of pi."""
+    step = 2 * math.pi / PLAIT_RINGS_PER_REV
+    out = [(0.0, 0.0)]
+    s, phi = 0.0, 0.0
+    while True:
+        ds = plait_pitch(s) / PLAIT_RINGS_PER_REV
+        if s + ds >= THONG_LENGTH:
+            out.append((THONG_LENGTH, phi + step * (THONG_LENGTH - s) / ds))
+            return out
+        s += ds
+        phi += step
+        out.append((s, phi))
+
+
+def cord_radial(s, phi, direction):
+    """(radius of the cord centre from the thong axis, cord radius) at s. direction +1 = cord A (angle +phi), -1 = cord B (angle -phi):
+    A rides high where cos(phi) = +1 and B where it is -1, so at every crossing (phi = k pi) the cord on top alternates."""
+    t = thong_radius(s)
+    c = CORD_FRAC * t
+    return CORE_FRAC * t + CORD_LIFT * c * (1.0 + direction * math.cos(phi)), c
+
+
+def gold_radius(s):
+    """Radius of a gold string at s."""
+    return max(GOLD_MIN, GOLD_FRAC * thong_radius(s))
+
+
 # ---- UV atlas (1024), v up: rows 0 .. 0.34 = the handle parts (handle_layout.py, same as the paddle), thong + fall above ----
-UV_THONG = (0.00, HL.BODY_V0, 0.50, 1.00)       # braid: u around, v along (repeats every THONG_UV_REPEAT m)
-UV_FALL = (0.50, HL.BODY_V0, 0.625, 1.00)       # flat fall + cracker strands
+UV_THONG = (0.00, HL.BODY_V0, 0.50, 1.00)       # dark core tube: u around, v along (repeats every THONG_UV_REPEAT m)
+UV_FALL = (0.50, HL.BODY_V0, 0.625, 1.00)       # flat fall + cracker strands; v 0.30 = rank leather (cord A), v 0.88 = 2nd colour (cord B)
+UV_GOLD = (0.625, HL.BODY_V0, 0.75, 1.00)       # the thin gold strings (one flat metal colour)
+CORD_UV = {1: (0.5, 0.30), -1: (0.5, 0.88)}     # point inside UV_FALL per cord direction
+GOLD_UV = (0.5, 0.5)                            # point inside UV_GOLD
 UV_WOOD, UV_WRAP, UV_METAL, UV_POMMEL_FACE = HL.UV_WOOD, HL.UV_WRAP, HL.UV_METAL, HL.UV_POMMEL_FACE
 UV_RING_BAND, UV_VALK_SQ, UV_RING_METAL = HL.UV_RING_BAND, HL.UV_VALK_SQ, HL.UV_RING_METAL
 

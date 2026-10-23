@@ -1,6 +1,6 @@
 """Writes the whip textures into WhipItUp-Blender/textures/ (numpy + PIL):
   whip_Albedo_V1..V7.png, whip_Normal.png (+Y up), whip_MetalGloss.png (R metallic, A smoothness).
-Colours (D-034): thong = two-tone spiral braid (rank leather + rank 2nd colour), fall = rank leather, cracker = 2nd colour,
+Colours (D-034, D-071): thong core = per-rank contrast colour, plait cord A = rank leather, cord B = 2nd colour, gold strings = flat gold, fall = rank leather, cracker = 2nd colour,
 pommel rim = fitting metal, pommel faces = TrophyWolf icon. Handle (D-064 / D-069) = the paddle's: wood + spiral wrap in the rank accent
 colour (ring_textures.paint_grip), band rings / valknut squares / dark old metal (ring_textures.paint_rings).
 Usage: python whip_textures.py [out_dir]
@@ -28,23 +28,32 @@ def log(msg):
     print("[whip_textures] " + msg)
 
 
-PLAIT_STRINGS = 2     # strings per layer around the thong (D-061 Q15 / D-066: 2 layers x 2 strings)
-PLAIT_ALONG = 10      # string bands per texture repeat along the thong (integer: the plait tiles)
+LABEL_GOLD = 7          # the thin gold strings of the plait (D-071)
+LABEL_CORE = 8          # the core tube under the plait: a per-rank colour picked for contrast with both cords
+GOLD_RGB = np.array([232, 182, 48], np.float32)
+
+def luminance(c):
+    """WCAG relative luminance of an sRGB colour (0..255)."""
+    lin = np.where(np.asarray(c, np.float32) / 255.0 <= 0.03928, np.asarray(c, np.float32) / 255.0 / 12.92, ((np.asarray(c, np.float32) / 255.0 + 0.055) / 1.055) ** 2.4)
+    return float(0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2])
 
 
-def plait(U, V, around, along):
-    """Two layers of strings crossing each other (D-066): layer A winds one way (a), layer B the other way (b); the two colours
-    alternate inside each layer and the layers swap colours, and at every crossing the visible layer alternates (over / under).
-    Returns (colour A mask, height 0..1). Integer around / along make it tile in u and v."""
-    a = U * around + V * along
-    b = U * around - V * along
-    ia, ib = np.floor(a), np.floor(b)
-    top_a = ((ia + ib) % 2) == 0
-    colour_a = np.where(top_a, (ia % 2) == 0, (ib % 2) == 1)
-    f = np.where(top_a, a % 1.0, b % 1.0)
-    h = np.sin(math.pi * f) ** 0.7
-    h = np.where((f < 0.06) | (f > 0.94), 0.0, h)
-    return colour_a, h
+def contrast(a, b):
+    la, lb = luminance(a), luminance(b)
+    return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+
+
+def core_colour(cord_a, cord_b):
+    """Core tube colour (D-071): the mix of the two cord colours, scaled to the brightness that gives the best WCAG contrast against BOTH cords
+    (same idea as the auto contrast pick of D-021), so neither cord disappears into the core on any rank."""
+    base = (np.asarray(cord_a, np.float32) + np.asarray(cord_b, np.float32)) / 2
+    best, best_score = base, -1.0
+    for k in np.linspace(0.25, 1.9, 34):
+        c = np.clip(base * k, 0, 255)
+        score = min(contrast(c, cord_a), contrast(c, cord_b))
+        if score > best_score:
+            best, best_score = c, score
+    return best, best_score
 
 
 def build(out_dir):
@@ -57,15 +66,22 @@ def build(out_dir):
     icon_rgb = np.zeros((N, N, 3), np.float32)
     icon_a = np.zeros((N, N), np.float32)
 
-    # thong: one rect = THONG_UV_REPEAT m of thong; the braid must tile vertically (integer 'along')
+    # thong core (D-071): the tube under the plait cords; fine twisted fibres, tileable (integer frequencies), colour = core_colour per rank
     (x0, y0, x1, y1), U, V = P.rect_grid(W.UV_THONG)
-    fam, h = plait(U, V, PLAIT_STRINGS, PLAIT_ALONG)
-    n = P.noise(*U.shape, scale=6, seed=31)
-    label[y0:y1, x0:x1] = np.where(fam, 1, 3)
-    shade[y0:y1, x0:x1] = (0.5 + 0.55 * h) * (0.95 + 0.1 * n)
-    H[y0:y1, x0:x1] = h
-    smooth[y0:y1, x0:x1] = 0.4
+    along = int(round(W.THONG_UV_REPEAT / 0.015))      # fibre turns per texture repeat
+    fibre = 0.5 + 0.5 * np.sin(2 * math.pi * (10 * U + along * V))
+    label[y0:y1, x0:x1] = LABEL_CORE
+    shade[y0:y1, x0:x1] = 0.92 + 0.10 * fibre
+    H[y0:y1, x0:x1] = 0.4 + 0.2 * fibre
+    smooth[y0:y1, x0:x1] = 0.3
 
+    # gold strings: one flat metal colour
+    (x0, y0, x1, y1), U, V = P.rect_grid(W.UV_GOLD)
+    gn = P.noise(*U.shape, scale=6, seed=37)
+    label[y0:y1, x0:x1] = LABEL_GOLD
+    shade[y0:y1, x0:x1] = 0.95 + 0.1 * gn
+    metal[y0:y1, x0:x1] = 0.9
+    smooth[y0:y1, x0:x1] = 0.7
     # fall (flat leather, v 0..0.7) + cracker strands (v 0.75..1, 2nd colour)
     (x0, y0, x1, y1), U, V = P.rect_grid(W.UV_FALL)
     g = P.noise(*U.shape, scale=4, seed=32)
@@ -125,6 +141,9 @@ def build(out_dir):
         img = np.where((label == 1)[..., None], main_c * s, img)
         img = np.where((label == 3)[..., None], two_c * s, img)
         img = np.where((label == 4)[..., None], fit_c * s, img)
+        core_c, core_score = core_colour(main, two)
+        img = np.where((label == LABEL_CORE)[..., None], core_c * s, img)
+        img = np.where((label == LABEL_GOLD)[..., None], GOLD_RGB * s, img)
         img = RT.grip_albedo(img, label, shade, acc, LABEL_WOOD, LABEL_WRAP)
         m_metal, c_metal, m_emboss, c_emboss = RT.ring_albedo(rank, label, shade)
         img = np.where(m_metal[..., None], c_metal * s, img)
@@ -133,7 +152,7 @@ def build(out_dir):
         img = img * (1 - a) + icon_rgb * a
         Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), "RGB").save(os.path.join(out_dir, f"whip_Albedo_V{rank}.png"))
         written += 1
-        log(f"V{rank}: leather {main}, braid 2nd colour {two}, fittings {fit} ({crop})")
+        log(f"V{rank}: leather {main}, braid 2nd colour {two}, fittings {fit} ({crop}); core {tuple(int(x) for x in core_c)} contrast {core_score:.2f} vs both cords")
     log(f"normal + metalgloss + {written} albedos written to {out_dir}")
     return written == len(PALETTE)
 
