@@ -3,7 +3,8 @@
 Run inside Blender 5.x (exec the file). Layout: whip_layout.py. Re-running replaces both objects.
 Parts: wolf-icon pommel disc, the paddle's handle (R1 band ring, wood + spiral grip + wood core, R2, tall valknut ring, R3: handle_layout.py,
 grip_tools.py, ring_tools.py), braided thong, flat fall, cracker.
-Bones: 'root' (handle, weight 1) + one chain 'fall_00_0'..'fall_00_31' along the lash (BONES in whip_layout.py; the name pattern FallChains looks for).
+Bones: 'root' (handle, weight 1) + one chain 'fall_00_0'..'fall_00_37' along the lash (BONES in whip_layout.py; the name pattern FallChains looks for).
+Rings (D-066): valknut rings on bones 8 / 16 / 24 and a small one at the cracker tip, each rigid and weighted 100 % to its ONE bone.
 """
 import importlib
 import math
@@ -92,7 +93,7 @@ def build_fall(bm, uv, end_ring):
     for k in range(W.CRACKER_STRANDS):
         a = 2 * math.pi * k / W.CRACKER_STRANDS
         off = Vector((math.cos(a), math.sin(a), 0)) * 0.0012
-        spread = Vector((math.cos(a), math.sin(a), 0)) * 0.012
+        spread = Vector((math.cos(a), math.sin(a), 0)) * W.CRACKER_SPREAD
         n = 4
         rr = []
         for i in range(5):
@@ -106,6 +107,25 @@ def build_fall(bm, uv, end_ring):
                 f = bm.faces.new((rr[i][j], rr[i][(j + 1) % n], rr[i + 1][(j + 1) % n], rr[i + 1][j]))
                 for loop in f.loops:
                     loop[uv].uv = lerp_rect(W.UV_FALL, 0.5, 0.75 + 0.25 * i / 4)
+    return out
+
+
+def build_lash_rings(bm, uv):
+    """The valknut rings on the lash (D-066). Returns {bone index: [verts]}. The ring squares are smaller than on the handle (W.RING_SQUARE)."""
+    out = {}
+    saved = HL.SQUARE
+    try:
+        specs = [(b, W.THONG_START + W.BONE_LENGTH * (b + 0.5) - W.RING_HEIGHT / 2, W.RING_HEIGHT, W.RING_RADIUS, W.RING_SQUARE) for b in W.RING_BONES]
+        tip0 = W.THONG_START + W.TOTAL_LASH - W.TIP_RING_HEIGHT
+        specs.append((W.BONES - 1, tip0, W.TIP_RING_HEIGHT, W.TIP_RING_RADIUS, W.TIP_RING_SQUARE))
+        for bone, z0, h, r, sq in specs:
+            HL.SQUARE = sq
+            before = set(bm.verts)
+            R.build_valknut_ring(bm, uv, z0, z0 + h, r, HL.RING_RECTS)
+            out[bone] = [v for v in bm.verts if v not in before]
+            log(f"lash ring on bone {bone + 1}: z {z0:.3f}..{z0 + h:.3f} r {r:.4f} square {sq:.3f} ({len(out[bone])} verts, thong r there {W.thong_radius(max(0.0, z0 + h / 2 - W.THONG_START)):.4f})")
+    finally:
+        HL.SQUARE = saved
     return out
 
 
@@ -123,7 +143,7 @@ def build_armature():
     root = arm.edit_bones.new("root")
     root.head = (0, 0, 0)
     root.tail = (0, 0, W.THONG_START)
-    seg = W.TOTAL_LASH / W.BONES
+    seg = W.BONE_LENGTH
     parent = root
     for b in range(W.BONES):
         eb = arm.edit_bones.new("fall_00_%d" % b)
@@ -157,9 +177,11 @@ def main():
     handle = {v for v in bm.verts}
     lash, end_ring = build_thong(bm, uv)
     lash += build_fall(bm, uv, end_ring)
+    ring_verts = build_lash_rings(bm, uv)
     bm.to_mesh(me)
     handle_idx = [v.index for v in handle]
     lash_w = [(v.index, s) for v, s in lash]
+    ring_idx = {b: [v.index for v in vs] for b, vs in ring_verts.items()}
     bm.free()
 
     obj = bpy.data.objects.new("Whip", me)
@@ -169,7 +191,9 @@ def main():
     for b in range(W.BONES):
         groups["fall_00_%d" % b] = obj.vertex_groups.new(name="fall_00_%d" % b)
     groups["root"].add(handle_idx, 1.0, 'REPLACE')
-    seg = W.TOTAL_LASH / W.BONES
+    for b, idxs in ring_idx.items():
+        groups["fall_00_%d" % b].add(idxs, 1.0, 'REPLACE')      # rigid: 100 % on ONE bone
+    seg = W.BONE_LENGTH
     for idx, s in lash_w:
         x = max(0.0, s / seg - 0.5)
         b0 = min(W.BONES - 1, int(x))

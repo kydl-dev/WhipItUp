@@ -28,6 +28,25 @@ def log(msg):
     print("[whip_textures] " + msg)
 
 
+PLAIT_STRINGS = 2     # strings per layer around the thong (D-061 Q15 / D-066: 2 layers x 2 strings)
+PLAIT_ALONG = 10      # string bands per texture repeat along the thong (integer: the plait tiles)
+
+
+def plait(U, V, around, along):
+    """Two layers of strings crossing each other (D-066): layer A winds one way (a), layer B the other way (b); the two colours
+    alternate inside each layer and the layers swap colours, and at every crossing the visible layer alternates (over / under).
+    Returns (colour A mask, height 0..1). Integer around / along make it tile in u and v."""
+    a = U * around + V * along
+    b = U * around - V * along
+    ia, ib = np.floor(a), np.floor(b)
+    top_a = ((ia + ib) % 2) == 0
+    colour_a = np.where(top_a, (ia % 2) == 0, (ib % 2) == 1)
+    f = np.where(top_a, a % 1.0, b % 1.0)
+    h = np.sin(math.pi * f) ** 0.7
+    h = np.where((f < 0.06) | (f > 0.94), 0.0, h)
+    return colour_a, h
+
+
 def build(out_dir):
     os.makedirs(out_dir, exist_ok=True)
     H = np.full((N, N), 0.5, np.float32)
@@ -40,7 +59,7 @@ def build(out_dir):
 
     # thong: one rect = THONG_UV_REPEAT m of thong; the braid must tile vertically (integer 'along')
     (x0, y0, x1, y1), U, V = P.rect_grid(W.UV_THONG)
-    fam, h = FT.spiral_braid(U, V, 4, 10, 2.0)
+    fam, h = plait(U, V, PLAIT_STRINGS, PLAIT_ALONG)
     n = P.noise(*U.shape, scale=6, seed=31)
     label[y0:y1, x0:x1] = np.where(fam, 1, 3)
     shade[y0:y1, x0:x1] = (0.5 + 0.55 * h) * (0.95 + 0.1 * n)

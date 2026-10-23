@@ -4,7 +4,7 @@ Imported by build_whip.py (Blender) and whip_textures.py. Axes: Z = length (thon
 Family look: wolf-icon pommel disc, then the paddle's handle (handle_layout.py: R1 band ring, wood + spiral grip, R2 band ring, tall
 valknut ring, R3 band ring), then a 1.5 m tapering two-tone braided thong, a flat leather fall and a frayed cracker. One bone chain
 (fall_00_0..N-1) so the mod's FallChains drives it; in game it is coiled in the hand while idle and lashes out while attacking (WhipMotion).
-NOT done yet (T-016 S3 body, D-064 / D-066): lash 1.90 m with 38 bones, valknut rings on bones 8 / 16 / 24 and at the tip, plait.
+Lash 1.90 m = 38 bones of 0.050 m (D-066): rigid valknut rings on bones 8 / 16 / 24 and a small one at the tip, plaited thong (whip_textures.plait).
 """
 import math
 
@@ -21,7 +21,7 @@ POMMEL_BEVEL = 0.0016
 POMMEL_FACE_RADIUS = 0.0215
 
 THONG_START = RINGS["r3"][0]   # bottom of R3, 10 mm inside it (D-064: 0.150 -> 0.170); the thong leaves through the top of R3
-THONG_LENGTH = 1.50            # braided part
+THONG_LENGTH = 1.60            # braided plait part (D-064 / D-066: 32 bones of 0.050 m)
 THONG_R0 = 0.0110             # radius at the handle
 THONG_R1 = 0.0032             # radius at the end of the braid
 THONG_SIDES = 8
@@ -33,8 +33,19 @@ FALL_THICK = 0.0015
 CRACKER_LENGTH = 0.08         # frayed tip
 CRACKER_STRANDS = 5
 CRACKER_RADIUS = 0.0009
-TOTAL_LASH = THONG_LENGTH + FALL_LENGTH + CRACKER_LENGTH    # 1.80 m (D-034)
-BONES = 32
+TOTAL_LASH = THONG_LENGTH + FALL_LENGTH + CRACKER_LENGTH    # 1.90 m (D-064)
+BONE_LENGTH = 0.050           # D-066: 32 bones over the plait + 6 over fall and cracker
+BONES = round(TOTAL_LASH / BONE_LENGTH)    # 38
+
+# ---- valknut rings on the lash (D-066): rigid, each weighted 100 % to ONE bone ----
+RING_BONES = (7, 15, 23)      # 0-based = bones 8 / 16 / 24, the ring is centred on the middle of the bone (0.375 / 0.775 / 1.175 m)
+RING_RADIUS = 0.011
+RING_HEIGHT = 0.030
+RING_SQUARE = 0.016           # valknut square on these smaller rings (handle ring: 0.025 at radius 0.019, D-070): same arc angle about 75 deg
+TIP_RING_RADIUS = 0.0055      # 50 %: the last thing seen at the tip end, flush with the cracker tip
+TIP_RING_HEIGHT = 0.015
+TIP_RING_SQUARE = 0.008
+CRACKER_SPREAD = 0.0025       # the cracker strands end inside the tip ring (body radius 0.0047 m; was 0.012)
 
 
 def thong_radius(s):
