@@ -31,7 +31,18 @@ namespace WhipItUp.Weapons
         float _grabTime = -99f;
         string _mode = "";
 
-        void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; }
+        void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; Live.Add(this); }
+        void OnDisable() { Live.Remove(this); }
+
+        // ---- read by the in-game tests (Testing/InGameTests, run by the user's GameProbe) ----------------------------------------------
+        /// Every enabled whip visual (held, dropped, in the viewer).
+        internal static readonly List<WhipMotion> Live = new List<WhipMotion>();
+        internal string Mode { get { return _mode; } }
+        internal Character Holder { get { return _holder; } }
+        /// Result of the last coil health check (every 3 s while coiled); null = not checked yet.
+        internal bool? LastCoilOk { get; private set; }
+        internal string LastCoilDetail { get; private set; }
+        internal float LastCoilAt { get; private set; } = -99f;
 
         /// Attack 2 hit on the attacker's client: wrap the target's neck (visual).
         public void StartGrab(Character target)
@@ -104,6 +115,10 @@ namespace WhipItUp.Weapons
                 + _coilLongest.ToString("0.000") + " m)", chains.LastMaxTurn, expectedTurn, CoilTurnToleranceDeg, "deg");
             ModLog.Verbose("WhipMotion: coil - radius setting " + ModSettings.WhipCoilRadius.Value + " m, used " + _coilRadiusUsed.ToString("0.000")
                 + " m, bone 0-1 " + chains.SegmentLength(0, 1).ToString("0.000") + " m, lossyScale " + transform.lossyScale.ToString("F2") + " (info only, not used for sizing)");
+            LastCoilOk = mismatchOk && turnOk;
+            LastCoilAt = Time.time;
+            LastCoilDetail = "mismatch " + chains.LastMismatch.ToString("0.000") + " m (expected 0 +- " + CoilMismatchTolerance + "), max bone turn "
+                + chains.LastMaxTurn.ToString("0.0") + " deg (expected " + expectedTurn.ToString("0.0") + " +- " + CoilTurnToleranceDeg + "), radius " + _coilRadiusUsed.ToString("0.000") + " m";
             return mismatchOk && turnOk;
         }
 
