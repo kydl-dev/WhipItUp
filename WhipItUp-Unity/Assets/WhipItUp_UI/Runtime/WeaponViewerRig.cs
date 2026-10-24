@@ -14,8 +14,11 @@ namespace WhipItUp.Ui
     /// </summary>
     internal sealed class WeaponViewerRig : IWeaponScene
     {
-        /// Where the rig stands: outside the playable world (radius 10500 m), so no world light or object is near it.
-        internal static readonly Vector3 Park = new Vector3(-15000f, 300f, -15000f);
+        /// Where the rig stands: straight BELOW the world origin, under the sea floor (D-079). It used to stand 21 km away (-15000, 300, -15000); a float32 position that far from
+        /// the origin is only exact to ~1 mm (2 mm at 20 km), the grip wrap lies only 1.6 mm over the wood core, so the two surfaces z-fought and the wood showed
+        /// through the black wrap (user test 2026-10-24, F-3). At |y| = 1500 m the step is 0.12 mm. The game's main camera (deferred, far clip 20000 m) can see the layer,
+        /// but a 1 m weapon 1500 m under the sea floor is hidden by the terrain and smaller than a pixel.
+        internal static readonly Vector3 Park = new Vector3(0f, -1500f, 0f);
         internal const float FieldOfView = 30f;
         const float LogEverySeconds = 0.5f;
         static readonly Color Ambient = new Color(0.38f, 0.36f, 0.34f);
