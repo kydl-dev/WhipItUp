@@ -52,6 +52,16 @@ namespace WhipItUp.Tests.Unit
         }
 
         [Test]
+        public void Parse_ReadsTheCrackFrame_AndItsNormalizedTime()
+        {
+            var f = WhipLashFrames.Parse("clip A 3 2\ncrack 2\n0 0 0 0 0 0\n0 0 0 0 0 0\n0 0 0 0 0 0\nclip B 2 2\n0 0 0 0 0 0\n0 0 0 0 0 0\n", null);
+            Assert.That(f.Get("A").Crack, Is.EqualTo(2));
+            Assert.That(f.Get("A").CrackTime, Is.EqualTo(1f).Within(1e-5));
+            Assert.That(f.Get("B").Crack, Is.EqualTo(-1));
+            Assert.That(f.Get("B").CrackTime, Is.LessThan(0f));
+        }
+
+        [Test]
         public void EmbeddedFile_HasTheFourWhipClips_With39Nodes()
         {
             var path = Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "..", "WhipItUp-Mod", "src", "Weapons", "whip_lash_frames.txt");
@@ -63,6 +73,7 @@ namespace WhipItUp.Tests.Unit
                 Assert.That(c, Is.Not.Null, name);
                 Assert.That(c.Frames, Is.EqualTo(frames), name);
                 Assert.That(c.Nodes, Is.EqualTo(39), name);
+                Assert.That(c.Crack, Is.InRange(0, frames - 1), name + " crack frame");
             }
         }
     }

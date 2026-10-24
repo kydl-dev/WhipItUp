@@ -175,10 +175,10 @@ def main():
         m0, m1 = PIN["move"]
         a = min(1.0, max(0.0, (t - m0) / max(1e-6, m1 - m0)))
         c = c0.lerp(c1, a)
-        k = min(PIN["wrap"], 1 + int((t - PIN["from"]) * 1.5))
+        k = min(PIN["wrap"], 1 + int((t - PIN["from"]) * 4))
         out = {"weight": min(1.0, 0.15 + (t - PIN["from"]) / 3.0)}   # the tip is drawn to the neck over 3 frames, not snapped
         for j in range(k):
-            ang = 2 * math.pi * j / max(1, PIN["wrap"]) * 1.2
+            ang = j * lengths[-1] / PIN["radius"]        # one bone length of arc per point: the wound part keeps its length
             out[n - 1 - j] = c + Vector((math.cos(ang) * PIN["radius"], math.sin(ang) * PIN["radius"], -0.02 * j))
         return out
     last_q = [None] * len(bones)

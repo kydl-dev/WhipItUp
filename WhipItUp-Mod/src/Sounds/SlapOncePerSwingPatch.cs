@@ -15,6 +15,17 @@ namespace WhipItUp.Sounds
         const float SameSwingSeconds = 0.25f;
         static float _lastSlap = -100f;
 
+        /// The keyed lash's crack (D-086) uses the same gate: true = no slap played within SameSwingSeconds, so it may play now (and a hit
+        /// slap of the same swing right after it is dropped).
+        internal static bool TryClaim(string why)
+        {
+            float now = Time.time;
+            bool duplicate = now >= _lastSlap && now - _lastSlap < SameSwingSeconds;
+            if (!duplicate) _lastSlap = now;
+            ModLog.Verbose("Sound: frame " + Time.frameCount + " " + why + (duplicate ? " - a slap played " + (now - _lastSlap).ToString("0.00") + " s ago, not doubled" : " - plays"));
+            return !duplicate;
+        }
+
         [HarmonyPrefix]
         static void Prefix(EffectList __instance)
         {

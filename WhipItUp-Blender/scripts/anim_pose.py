@@ -134,9 +134,11 @@ def apply_body(rig, p):
     rotate_world(rig, "Hips", (0, 0, 1), p.get("hips", twist * 0.35))
     for n, f in (("Spine", 0.3), ("Spine1", 0.35), ("Spine2", 0.35)):
         rotate_world(rig, n, (0, 0, 1), twist * 0.65 * f / 1.0)
-        rotate_world(rig, n, (1, 0, 0), -bend * f)          # + bend = lean forward (toward -Y)
+        rotate_world(rig, n, (1, 0, 0), bend * f)           # + bend = lean forward (toward -Y): +X rotation tips +Z toward -Y (the
+                                                             # first drafts had -bend: every 'forward' lean leaned BACK, user D-086)
         rotate_world(rig, n, (0, 1, 0), lean * f)           # + lean = toward the character's left (+X)
     rotate_world(rig, "Head", (0, 0, 1), -twist * 0.4)        # the head keeps looking ahead
+    rotate_world(rig, "Head", (1, 0, 0), -bend * 0.5)         # and level: it does not tip down with the leaning spine
     # left arm relaxed: down from the T-pose, a little forward, elbow bent
     la = p.get("larm", (68, 15, 25))
     rotate_world(rig, "LeftArm", (0, 1, 0), la[0])

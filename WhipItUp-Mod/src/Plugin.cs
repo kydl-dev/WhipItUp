@@ -85,6 +85,7 @@ namespace WhipItUp
         void Update()
         {
             if (_cfgWatcher != null) _cfgWatcher.Tick();
+            Weapons.WhipAnimations.Tick();     // T-013: put the game's controller back one frame after a whip visual went away (also when off)
             if (!ModSettings.On) return;
             MainMenu.Tick();
         }

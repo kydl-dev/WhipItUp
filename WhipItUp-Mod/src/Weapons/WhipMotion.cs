@@ -8,7 +8,7 @@ namespace WhipItUp.Weapons
     /// <summary>
     /// Drives the whip's lash (one FallChains chain) by what its holder does (D-034), on every client from the holder's animator:
     ///  * idle (held, not attacking): the lash is gathered in coils at the hand (coil targets in the whip's own space, strong pull);
-    ///  * grab (attack 2 hit, attacker's client only): the lash runs to the target and wraps its neck (helix) for GrabSeconds;
+    ///  * grab (attack 2 hit, attacker's client only): the lash runs to the target and wraps its body (helix, D-086) for GrabSeconds;
     ///  * attacking (club combo, attack 2): the lash snaps straight along the swing (pull toward the straight rest shape, little gravity),
     ///    then winds back into the coil over CoilReturnSeconds;
     ///  * dropped: plain hanging physics on the ground (FallChains defaults).
@@ -46,13 +46,37 @@ namespace WhipItUp.Weapons
         string _keyedClip;
         float _nextKeyedLog;
 
+        float _lastKeyedT = -1f;
+        string _lastKeyedClip;
+
+        /// D-086: the crack sound when the keyed lash reaches its fully extended frame (whips crack on every swing, not only on a hit),
+        /// at the tip. Shares the hit slap's once-per-swing gate, so a hit right after the crack does not play a second slap.
+        /// Expected outcome: true when the crack played this frame.
+        bool Crack(WhipLashFrames lash, string clip, float t)
+        {
+            var c = lash.Get(clip);
+            float prev = clip == _lastKeyedClip ? _lastKeyedT : -1f;
+            _lastKeyedClip = clip;
+            _lastKeyedT = t;
+            if (c == null || c.CrackTime < 0f || !(prev < c.CrackTime && t >= c.CrackTime)) return false;
+            var prefab = Sounds.WeaponSounds.WhipSlapPrefab;
+            float x, y, z;
+            lash.Sample(clip, c.CrackTime, c.Nodes - 1, out x, out y, out z);
+            var tip = transform.TransformPoint(new Vector3(x, y, z));
+            if (prefab == null) { ModLog.Verbose("WhipMotion: crack of " + clip + " at frame " + c.Crack + " - no whip slap sound loaded"); return false; }
+            if (!Sounds.SlapOncePerSwingPatch.TryClaim("whip crack " + clip + " frame " + c.Crack + " (t " + prev.ToString("0.00") + " -> " + t.ToString("0.00") + ")")) return false;
+            Instantiate(prefab, tip, Quaternion.identity);
+            ModLog.Verbose("WhipMotion: crack " + clip + " at the tip " + tip.ToString("F2") + " (" + (_holder != null ? _holder.name : "?") + ")");
+            return true;
+        }
+
         /// The keyed lash of the custom clip that plays now (WhipAnimations / whip_lash_frames.txt): every node on its keyed position in this
         /// visual's space (the model data is in Whip.fbx model units, the visual's scale makes it game size). Expected outcome: true when it drives.
         bool DriveKeyed(FallChains chains)
         {
             string clip;
             float t;
-            if (!WhipAnimations.CurrentLash(_attached, out clip, out t)) { _keyedClip = null; return false; }
+            if (!WhipAnimations.CurrentLash(_attached, out clip, out t)) { _keyedClip = null; _lastKeyedClip = null; return false; }
             var lash = WhipAnimations.Lash;
             var self = transform;
             chains.Override = (c, i) =>
@@ -63,6 +87,7 @@ namespace WhipItUp.Weapons
             chains.Pull = 60f;
             chains.GravityScale = 0f;
             chains.Snap = 1f;                          // exactly on the keys: the lash shape is the animation, not physics
+            Crack(lash, clip, t);
             SetMode("keyed lash " + clip);
             if (clip != _keyedClip || Time.time >= _nextKeyedLog)
             {
@@ -90,7 +115,7 @@ namespace WhipItUp.Weapons
         internal string LastCoilDetail { get; private set; }
         internal float LastCoilAt { get; private set; } = -99f;
 
-        /// Attack 2 hit on the attacker's client: wrap the target's neck (visual).
+        /// Attack 2 hit on the attacker's client: wrap the target's body (visual).
         public void StartGrab(Character target)
         {
             _grabTarget = target;
@@ -113,10 +138,18 @@ namespace WhipItUp.Weapons
             _sinceAttack = attacking ? 0f : _sinceAttack + dt;
             if (_grabTarget != null && Time.time - _grabTime < ModSettings.WhipGrabSeconds.Value && !_grabTarget.IsDead())
             {
-                var head = _grabTarget.GetHeadPoint();
+                // D-086: the lash wraps the target's BODY (centre point, its collider radius); GetHeadPoint threw for a Seeker (no head)
+                var centre = _grabTarget.GetCenterPoint();
+                float radius = Mathf.Max(ModSettings.WhipGrabRadius.Value, _grabTarget.GetRadius() * 1.05f);
                 var start = transform.position;
                 float seg = chains.ChainCount > 0 ? chains.SegmentLength(0, 1) : 0.1f;
-                chains.Override = (c, i) => GrabTarget(start, head, i * seg);
+                if (_grabLogged != _grabTarget)
+                {
+                    _grabLogged = _grabTarget;
+                    ModLog.Verbose("WhipMotion: grab wraps " + _grabTarget.name + " at its centre " + centre.ToString("F2") + ", radius " + radius.ToString("0.00") + " m (collider "
+                        + _grabTarget.GetRadius().ToString("0.00") + " m, setting " + ModSettings.WhipGrabRadius.Value + " m), " + (centre - start).magnitude.ToString("0.00") + " m away");
+                }
+                chains.Override = (c, i) => GrabTarget(start, centre, i * seg, radius);
                 chains.Pull = ModSettings.WhipGrabPull.Value;
                 chains.GravityScale = 0f;
                 SetMode("grab");
@@ -138,6 +171,8 @@ namespace WhipItUp.Weapons
             chains.Pull = Mathf.Lerp(ModSettings.WhipLashStiffness.Value, ModSettings.WhipCoilPull.Value, back);
             chains.GravityScale = 1f - back;
             chains.Snap = back * back;                 // ends fully kinematic: the settled coil does not wobble or spin
+            // first health check 1 s after the coil settled: the very first coiled frame still has the un-primed chain (false CHECK OFF, TEST-020)
+            if (back >= 1f && _mode != "coiled") _nextDiag = Time.time + 1f;
             SetMode(back < 1f ? "coiling" : "coiled");
             if (back >= 1f && _coil != null && !_coilLogged)
             {
@@ -246,17 +281,18 @@ namespace WhipItUp.Weapons
             return _coil.Length == n;
         }
 
-        /// Distance s (m) along the lash: first straight to the target's head, then a helix around the neck.
-        static Vector3 GrabTarget(Vector3 start, Vector3 head, float s)
+        Character _grabLogged;
+
+        /// Distance s (m) along the lash: first straight to the target's body, then a helix around it (radius r, slowly going down).
+        static Vector3 GrabTarget(Vector3 start, Vector3 head, float s, float r)
         {
             var toHead = head - start;
-            float r = ModSettings.WhipGrabRadius.Value;
             float reach = Mathf.Max(0.01f, toHead.magnitude - r);
             if (s <= reach) return start + toHead.normalized * s;
             float a = (s - reach) / r;
             var side = Vector3.Cross(Vector3.up, toHead.normalized).normalized;
             var back = Vector3.Cross(side, Vector3.up);
-            return head + Vector3.down * 0.12f + (side * Mathf.Cos(a) - back * Mathf.Sin(a)) * r + Vector3.up * (0.015f * a);
+            return head + (side * Mathf.Cos(a) - back * Mathf.Sin(a)) * r + Vector3.down * (0.02f * a);
         }
 
         bool IsAttacking()

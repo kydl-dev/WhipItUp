@@ -2,13 +2,17 @@
 WhipItUp-Mod/src/Weapons/whip_lash_frames.txt (embedded resource). Per clip and frame: the 39 lash nodes (head of every fall_ bone
 + the tip of the last one) in the whip MODEL space as Unity sees Whip.fbx (Unity = (-bx, bz, -by) of the Blender armature space,
 metres before the in-game item scale). The mod puts these on the live whip (WhipMotion: keyed lash) by the attack state's time.
-Format: '# ...' comments, 'clip <name> <frames> <nodes>', then one line per frame with nodes x 3 floats.
+Format: '# ...' comments, 'clip <name> <frames> <nodes>', 'crack <frame>' (the frame the lash is fully extended: the crack sound),
+then one line per frame with nodes x 3 floats.
 """
 import os
 
 import bpy
 
 CLIPS = ("W1_SideFlick", "W2_Backhand", "W3_Overhand", "G_LashGrab")
+# the frame of the game's hit event per clip (PLAN T-013 S2); the crack (D-086: the sound when the lash is fully extended) is the
+# frame of the longest reach in [hit, hit + 5]
+HIT = {"W1_SideFlick": 14, "W2_Backhand": 8, "W3_Overhand": 8, "G_LashGrab": 22}
 OUT = globals().get("OUT", r"E:\Projects\Valheim\WhipItUp\WhipItUp-Mod\src\Weapons\whip_lash_frames.txt")
 
 
@@ -32,6 +36,8 @@ def main():
         frames = int(round(body.frame_range[1])) + 1
         lines.append("clip %s %d %d" % (clip, frames, len(bones) + 1))
         tip_far = 0.0
+        rows, reach = [], []
+        length = sum(b.length for b in bones)
         for f in range(frames):
             scn.frame_set(f)
             pts = [pb.head for pb in bones] + [bones[-1].tail]
@@ -39,8 +45,14 @@ def main():
             for p in pts:
                 vals += [-p.x, p.z, -p.y]
             tip_far = max(tip_far, (pts[-1] - pts[0]).length)
-            lines.append(" ".join("%.4f" % v for v in vals))
-        summary.append("%s %d frames, tip up to %.3f m from the lash start (model units, x1.5 in game)" % (clip, frames, tip_far))
+            reach.append((pts[-1] - pts[0]).length / length)
+            rows.append(" ".join("%.4f" % v for v in vals))
+        h = HIT[clip]
+        crack = max(range(h, min(frames, h + 6)), key=lambda i: reach[i])
+        lines.append("crack %d" % crack)
+        lines += rows
+        summary.append("%s %d frames, tip up to %.3f m from the lash start (model units, x1.5 in game), crack frame %d (reach %.2f, hit %d)" % (
+            clip, frames, tip_far, crack, reach[crack], h))
     for c in muted:
         c.mute = False
     with open(OUT, "w", newline="\n") as fh:

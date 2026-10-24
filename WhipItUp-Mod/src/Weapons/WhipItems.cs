@@ -7,7 +7,7 @@ namespace WhipItUp.Weapons
 {
     /// <summary>
     /// The Whip family (T-010, T-011, D-034): Whip_V1..V7, clones of the Club (club combo), Whips skill, slash + bleed like the flogger,
-    /// longer reach. Lash coiled in the hand while idle / snapping out while attacking (WhipMotion). Attack 2 = lash around the neck of a near enemy + pull (D-036).
+    /// longer reach. Lash coiled in the hand while idle / snapping out while attacking (WhipMotion). Attack 2 = lash wrapped around the body of a near enemy + pull (D-036, body wrap D-086).
     /// Hit sound = the user's whip_slap (as is, synced). Whip_V1's icon becomes the Whips skill icon (D-028).
     /// </summary>
     internal sealed class WhipItems : WeaponFamily
@@ -56,7 +56,7 @@ namespace WhipItUp.Weapons
         protected override void ApplyExtras(ItemDrop.ItemData.SharedData shared, int rank, string name) { shared.m_skillType = WhipSkill.ForItems; }
 
         /// Attack 2 (user 2026-10-21, back with whip scale 1.5): SpearBronze's secondary (spear_throw clip) turned into a long narrow melee hit;
-        /// an enemy it hits gets the lash around its neck and is pulled toward the player (GrabPullPatch).
+        /// an enemy it hits gets the lash wrapped around its body and is pulled toward the player (GrabPullPatch).
         protected override bool ConfigureSecondary(ItemDrop.ItemData.SharedData shared, int rank, float main, string name)
         {
             var spear = PrefabManager.Instance.GetPrefab(GrabSource);
@@ -81,7 +81,7 @@ namespace WhipItUp.Weapons
 
     /// <summary>
     /// Attack 2 of a whip: before the hit is sent to the target's owner, turn its push into a pull toward the attacker and start the
-    /// neck wrap on the attacker's whip visual. Runs where the attack happens (the attacker's client); the pull travels with the hit.
+    /// body wrap on the attacker's whip visual. Runs where the attack happens (the attacker's client); the pull travels with the hit.
     /// </summary>
     [HarmonyPatch(typeof(Character), nameof(Character.Damage))]
     internal static class GrabPullPatch

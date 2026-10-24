@@ -37,16 +37,19 @@ CLIPS = {
         (24, READY),
     ]},
     "G_LashGrab": {"frames": 34, "speed": [(15, 1.5), (24, 1.0)],
-                   # the tip winds around the neck from frame 21, the neck is pulled toward the player on frames 25-33
-                   "pin": {"from": 21, "center": (-0.20, -3.15, 1.45), "to": (-0.30, -1.90, 1.30), "move": (25, 33), "wrap": 6, "radius": 0.12},
+                   # D-086: the 'wrap-around' (horizontal swing, YouTube oadsRsIZHUQ) but the lash wraps the ENEMY's body: hand a bit above
+                   # the hip, drawn back to the right, swung level forward and across so the lash rolls out flat and winds round the
+                   # body (centre 3 m ahead, waist / chest height), then a hard pull back (the body is pulled toward the player on 25-33)
+                   "pin": {"from": 21, "center": (-0.10, -3.00, 1.05), "to": (-0.25, -1.80, 1.00), "move": (25, 33), "wrap": 24, "radius": 0.32},
                    "keys": [
-        (0, READY),
-        (8, {"hand": (-0.40, 0.25, 1.90), "dir": (-0.2, 0.7, 0.65), "roll": 0, "twist": -35, "bend": -10, "lean": -4}),
-        (13, {"hand": (-0.25, -0.45, 1.65), "dir": (0.0, -0.95, 0.3), "roll": 0, "twist": 0, "bend": 10}),
-        (16, {"hand": (-0.20, -0.60, 1.45), "dir": (0.0, -1.0, 0.05), "roll": 0, "twist": 10, "bend": 15}),
-        (22, {"hand": (-0.20, -0.55, 1.45), "dir": (0.0, -1.0, 0.1), "roll": 0, "twist": 8, "bend": 12}),
-        (25, {"hand": (-0.25, -0.40, 1.40), "dir": (0.0, -1.0, 0.1), "roll": 0, "twist": 0, "bend": 5}),
-        (30, {"hand": (-0.45, 0.05, 1.10), "dir": (-0.2, -0.9, 0.2), "roll": 0, "twist": -30, "bend": -10, "lean": -3}),
-        (33, {"hand": (-0.35, -0.15, 1.15), "dir": (-0.15, -0.85, -0.3), "roll": 0, "twist": -15, "bend": -2}),
+        (0, {"hand": (-0.30, -0.25, 1.20), "dir": (-0.1, -0.8, -0.55), "roll": 0, "twist": 0, "bend": 4}),
+        (6, {"hand": (-0.50, 0.15, 1.18), "dir": (-0.6, 0.75, -0.1), "roll": -10, "twist": -35, "bend": 2}),
+        (11, {"hand": (-0.42, -0.42, 1.22), "dir": (-0.35, -0.94, 0.0), "roll": 0, "twist": -10, "bend": 8}),
+        (14, {"hand": (-0.15, -0.60, 1.22), "dir": (0.25, -0.97, 0.0), "roll": 5, "twist": 10, "bend": 12}),
+        (18, {"hand": (0.08, -0.52, 1.20), "dir": (0.55, -0.83, 0.0), "roll": 10, "twist": 22, "bend": 12}),
+        (22, {"hand": (0.05, -0.50, 1.20), "dir": (0.45, -0.89, 0.0), "roll": 10, "twist": 18, "bend": 10}),
+        (25, {"hand": (-0.15, -0.42, 1.18), "dir": (0.1, -0.99, 0.0), "roll": 5, "twist": 5, "bend": 6}),
+        (30, {"hand": (-0.45, 0.05, 1.05), "dir": (-0.2, -0.95, 0.1), "roll": 0, "twist": -25, "bend": -5, "lean": -3}),
+        (33, {"hand": (-0.32, -0.22, 1.15), "dir": (-0.15, -0.85, -0.3), "roll": 0, "twist": -12, "bend": 2}),
     ]},
 }

@@ -31,7 +31,7 @@ namespace WhipItUp.Weapons
 
         static readonly Dictionary<string, AnimationClip> Clips = new Dictionary<string, AnimationClip>();
         static readonly Dictionary<RuntimeAnimatorController, AnimatorOverrideController> Overrides = new Dictionary<RuntimeAnimatorController, AnimatorOverrideController>();
-        sealed class Holder { public RuntimeAnimatorController Original; public int Count; }
+        sealed class Holder { public RuntimeAnimatorController Original; public int Count; public int ReleaseFrame = -1; }
         static readonly Dictionary<Animator, Holder> Attached = new Dictionary<Animator, Holder>();
 
         internal static WhipLashFrames Lash { get; private set; }
@@ -80,27 +80,103 @@ namespace WhipItUp.Weapons
             if (animator == null) { ModLog.Verbose("WhipAnimations: attach for " + who + " - no animator"); return false; }
             if (!ModSettings.WhipCustomAnimations.Value || Clips.Count == 0) { ModLog.Verbose("WhipAnimations: attach for " + who + " skipped (enabled " + ModSettings.WhipCustomAnimations.Value + ", clips " + Clips.Count + ")"); return false; }
             Holder h;
-            if (Attached.TryGetValue(animator, out h)) { h.Count++; ModLog.Verbose("WhipAnimations: " + who + " already uses the whip clips (holders " + h.Count + ")"); return true; }
+            if (Attached.TryGetValue(animator, out h))
+            {
+                bool wasReleasing = h.ReleaseFrame >= 0;
+                h.Count++;
+                h.ReleaseFrame = -1;
+                ModLog.Verbose("WhipAnimations: " + who + (wasReleasing ? " got a new whip visual before the old one's release ran - controller kept, no swap" : " already uses the whip clips") + " (holders " + h.Count + ")");
+                return true;
+            }
             var original = animator.runtimeAnimatorController;
             if (original == null) { ModLog.Verbose("WhipAnimations: " + who + " has no controller - not attached"); return false; }
             var aoc = OverrideFor(original);
             if (aoc == null) return false;
-            animator.runtimeAnimatorController = aoc;
+            Swap(animator, aoc, who);
             Attached[animator] = new Holder { Original = original, Count = 1 };
             ModLog.Verbose("WhipAnimations: " + who + " now plays the whip clips (controller '" + original.name + "' -> override, " + Attached.Count + " character(s) attached)");
             return true;
         }
 
-        /// The whip visual of this character went away. Expected outcome: true when the original controller is back (or nothing was attached).
+        /// The whip visual of this character went away. The original controller comes back on the NEXT frame (Tick) unless a new whip
+        /// visual attaches first: the game rebuilds the visual now and then (fights, re-equips), and a controller swap restarts the animator
+        /// (TEST-020: the player lay on the floor / sat). Expected outcome: true when a release is scheduled (or nothing was attached).
         internal static bool Detach(Animator animator, string who)
         {
             Holder h;
             if (animator == null || !Attached.TryGetValue(animator, out h)) { CleanDead(); return true; }
             if (--h.Count > 0) { ModLog.Verbose("WhipAnimations: " + who + " still holds a whip (holders " + h.Count + ")"); return false; }
-            Attached.Remove(animator);
-            if (animator.runtimeAnimatorController is AnimatorOverrideController) animator.runtimeAnimatorController = h.Original;
-            ModLog.Verbose("WhipAnimations: " + who + " back to '" + (h.Original != null ? h.Original.name : "null") + "' (" + Attached.Count + " character(s) still attached)");
-            return animator.runtimeAnimatorController == h.Original;
+            h.Count = 0;
+            h.ReleaseFrame = Time.frameCount;
+            ModLog.Verbose("WhipAnimations: " + who + " let go of the whip visual (frame " + h.ReleaseFrame + ") - original controller back next frame unless a new whip visual attaches");
+            return true;
+        }
+
+        /// Every frame (Plugin.Update): puts the original controller back on characters whose whip release is at least one frame old.
+        /// Expected outcome: the number of characters restored this frame.
+        internal static int Tick()
+        {
+            if (Attached.Count == 0) return 0;
+            List<Animator> done = null;
+            foreach (var kv in Attached)
+            {
+                var h = kv.Value;
+                if (h.ReleaseFrame < 0 || Time.frameCount <= h.ReleaseFrame) continue;
+                if (done == null) done = new List<Animator>();
+                done.Add(kv.Key);
+            }
+            if (done == null) return 0;
+            foreach (var a in done)
+            {
+                var h = Attached[a];
+                Attached.Remove(a);
+                if (a == null) { ModLog.Verbose("WhipAnimations: released animator was destroyed - nothing to put back"); continue; }
+                string who = a.transform.root != null ? a.transform.root.name : a.name;
+                if (a.runtimeAnimatorController is AnimatorOverrideController) Swap(a, h.Original, who);
+                ModLog.Verbose("WhipAnimations: " + who + " back to '" + (h.Original != null ? h.Original.name : "null") + "' (" + Attached.Count + " character(s) still attached)");
+            }
+            return done.Count;
+        }
+
+        static readonly Dictionary<int, float> FloatParams = new Dictionary<int, float>();
+        static readonly Dictionary<int, int> IntParams = new Dictionary<int, int>();
+        static readonly Dictionary<int, bool> BoolParams = new Dictionary<int, bool>();
+
+        /// Sets another controller WITHOUT restarting the animator in its default state: the state of every layer (with its time) and
+        /// every float / int / bool parameter are carried over. Expected outcome: true when the controller was set.
+        static bool Swap(Animator a, RuntimeAnimatorController controller, string who)
+        {
+            if (a == null || controller == null) return false;
+            int layers = a.isInitialized ? a.layerCount : 0;
+            var hashes = new int[layers];
+            var times = new float[layers];
+            for (int l = 0; l < layers; l++)
+            {
+                var st = a.IsInTransition(l) ? a.GetNextAnimatorStateInfo(l) : a.GetCurrentAnimatorStateInfo(l);
+                hashes[l] = st.fullPathHash;
+                times[l] = st.normalizedTime;
+            }
+            FloatParams.Clear(); IntParams.Clear(); BoolParams.Clear();
+            if (a.isInitialized)
+                foreach (var p in a.parameters)
+                {
+                    if (p.type == AnimatorControllerParameterType.Float) FloatParams[p.nameHash] = a.GetFloat(p.nameHash);
+                    else if (p.type == AnimatorControllerParameterType.Int) IntParams[p.nameHash] = a.GetInteger(p.nameHash);
+                    else if (p.type == AnimatorControllerParameterType.Bool) BoolParams[p.nameHash] = a.GetBool(p.nameHash);
+                }
+            float speed = a.speed;
+            a.runtimeAnimatorController = controller;
+            foreach (var kv in FloatParams) a.SetFloat(kv.Key, kv.Value);
+            foreach (var kv in IntParams) a.SetInteger(kv.Key, kv.Value);
+            foreach (var kv in BoolParams) a.SetBool(kv.Key, kv.Value);
+            int restored = 0;
+            for (int l = 0; l < layers && l < a.layerCount; l++)
+                if (a.HasState(l, hashes[l])) { a.Play(hashes[l], l, times[l] - (float)System.Math.Floor(times[l])); restored++; }
+            a.speed = speed;
+            a.Update(0f);
+            ModLog.Verbose("WhipAnimations: " + who + " controller -> '" + controller.name + "', " + restored + " of " + layers + " layer state(s) and "
+                + (FloatParams.Count + IntParams.Count + BoolParams.Count) + " parameter(s) carried over (layer 0 state " + (layers > 0 ? hashes[0].ToString() : "-") + ")");
+            return a.runtimeAnimatorController == controller;
         }
 
         static void CleanDead()

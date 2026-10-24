@@ -79,9 +79,9 @@ namespace WhipItUp
         public static readonly Tunable<float> WhipGrabRange = new Tunable<float>("Whip", "GrabRange", 5f, 1f, 10f, "Attack 2 range in metres: an enemy within it gets the lash around the neck and is pulled in. Game restart.");
         public static readonly Tunable<float> WhipGrabAngle = new Tunable<float>("Whip", "GrabAngle", 25f, 5f, 90f, "Attack 2 cone in degrees. Game restart.");
         public static readonly Tunable<float> WhipPullForce = new Tunable<float>("Whip", "PullForce", 80f, 0f, 300f, "How hard attack 2 pulls the enemy toward you (push force; heavy enemies move less).");
-        public static readonly Tunable<float> WhipGrabSeconds = new Tunable<float>("Whip", "GrabSeconds", 0.9f, 0.1f, 3f, "How long the lash stays around the neck (visual).");
-        public static readonly Tunable<float> WhipGrabPull = new Tunable<float>("Whip", "GrabPull", 25f, 1f, 60f, "How fast the lash snaps to the neck (1/s).");
-        public static readonly Tunable<float> WhipGrabRadius = new Tunable<float>("Whip", "GrabRadius", 0.14f, 0.05f, 0.5f, "Radius of the wrap around the neck (m).");
+        public static readonly Tunable<float> WhipGrabSeconds = new Tunable<float>("Whip", "GrabSeconds", 0.9f, 0.1f, 3f, "How long the lash stays wrapped around the body (visual).");
+        public static readonly Tunable<float> WhipGrabPull = new Tunable<float>("Whip", "GrabPull", 25f, 1f, 60f, "How fast the lash snaps around the body (1/s).");
+        public static readonly Tunable<float> WhipGrabRadius = new Tunable<float>("Whip", "GrabRadius", 0.14f, 0.05f, 0.5f, "Least radius of the wrap around the grabbed body (m); bigger creatures use their own body radius.");
         public static readonly Tunable<float> WhipLashStiffness = new Tunable<float>("Whip", "LashStiffness", 6f, 0f, 20f, "While attacking: pull toward the straight lash (1/s; higher = snappier).");
         public static readonly Tunable<float> WhipLashGravity = new Tunable<float>("Whip", "LashGravity", 2f, 0f, 5f, "While attacking: gravity on the lash (x Falls Gravity).");
         public static readonly Tunable<float> WhipCoilPull = new Tunable<float>("Whip", "CoilPull", 40f, 1f, 80f, "While idle: pull into the coil (1/s; 40+ = it snaps into the coil).");

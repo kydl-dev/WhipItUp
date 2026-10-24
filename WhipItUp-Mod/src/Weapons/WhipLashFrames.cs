@@ -17,6 +17,10 @@ namespace WhipItUp.Weapons
             internal string Name;
             internal int Frames;
             internal int Nodes;
+            /// Frame the lash is fully extended: the crack sound plays there (D-086); -1 = none.
+            internal int Crack = -1;
+            /// Crack as normalized clip time (0..1), -1 = none.
+            internal float CrackTime { get { return Crack >= 0 && Frames > 1 ? (float)Crack / (Frames - 1) : -1f; } }
             /// [frame][node * 3 + axis]
             internal float[][] Data;
         }
@@ -37,7 +41,7 @@ namespace WhipItUp.Weapons
             {
                 if (cur == null) return;
                 if (rows.Count != cur.Frames) { if (log != null) log("WhipLashFrames: clip " + cur.Name + " has " + rows.Count + " frame line(s), expected " + cur.Frames + " - dropped"); }
-                else { cur.Data = rows.ToArray(); f._clips[cur.Name] = cur; if (log != null) log("WhipLashFrames: clip " + cur.Name + ": " + cur.Frames + " frames x " + cur.Nodes + " nodes"); }
+                else { cur.Data = rows.ToArray(); f._clips[cur.Name] = cur; if (log != null) log("WhipLashFrames: clip " + cur.Name + ": " + cur.Frames + " frames x " + cur.Nodes + " nodes, crack frame " + cur.Crack); }
                 rows = new List<float[]>();
                 cur = null;
             };
@@ -54,6 +58,13 @@ namespace WhipItUp.Weapons
                     if (p.Length != 4 || !int.TryParse(p[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out frames) || !int.TryParse(p[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out nodes) || frames < 1 || nodes < 2)
                     { skipped++; if (log != null) log("WhipLashFrames: line " + lineNo + " is not 'clip <name> <frames> <nodes>': " + line); continue; }
                     cur = new Clip { Name = p[1], Frames = frames, Nodes = nodes };
+                    continue;
+                }
+                if (line.StartsWith("crack ", StringComparison.Ordinal) && cur != null)
+                {
+                    int crack;
+                    if (int.TryParse(line.Substring(6).Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out crack) && crack >= 0 && crack < cur.Frames) cur.Crack = crack;
+                    else { skipped++; if (log != null) log("WhipLashFrames: line " + lineNo + " of " + cur.Name + " is not 'crack <frame 0.." + (cur.Frames - 1) + ">': " + line); }
                     continue;
                 }
                 if (cur == null) { skipped++; continue; }
