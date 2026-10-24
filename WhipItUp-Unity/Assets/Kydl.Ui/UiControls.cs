@@ -211,6 +211,7 @@ namespace Kydl.Ui
         {
             Button b = null;
             string cur = current;
+            VisualElement openList = null;   // the list of this field while it is open
             b = Field(label(current) + "  ▾", () =>
             {
                 // the list goes into UiKit.Root (it carries the font); the panel's own visualTree has none (T-56R: empty lines in game)
@@ -250,9 +251,20 @@ namespace Kydl.Ui
                 shade.RegisterCallback<PointerDownEvent>(e => { if (e.target == shade) { shade.RemoveFromHierarchy(); UiLog.Verbose("Ui: drop-down closed without a choice"); } });
                 shade.Add(box);
                 root.Add(shade);
+                openList = shade;
                 int at = options.IndexOf(cur);
                 if (at > 3) scroll.ScrollTo((at - 3) * ItemHeight);
                 UiLog.Verbose("Ui: drop-down opened with " + options.Count + " option(s), current '" + cur + "'");
+            });
+            // A list is a sibling of the window in UiKit.Root, not a child of it: when the window that owns this field is removed (Escape, X, a game menu
+            // took over) the list must go with it, or it stays on screen over the world (user test 2026-10-24, WhipItUp D-077 F-4). Fixed here, for every mod.
+            b.RegisterCallback<DetachFromPanelEvent>(e =>
+            {
+                var left = openList;
+                openList = null;
+                if (left == null || left.parent == null) return;
+                left.RemoveFromHierarchy();
+                UiLog.Verbose("Ui: drop-down closed because its field left the panel");
             });
             return b;
         }
