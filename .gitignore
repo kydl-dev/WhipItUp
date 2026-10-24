@@ -84,6 +84,7 @@ WhipItUp-Unity/Assets/Screenshots.meta
 # release-gate output (report + zip): rebuilt by _agent/tools/release-gate.ps1
 /*-Mod/release/*/release-gate.*
 /*-Mod/release/*/_stage/
+/*-Mod/release/*/*.zip
 
 # T-013 per-frame animation renders (the joined *_review.png sheets are tracked)
 WhipItUp-Blender/previews/anim/*/
