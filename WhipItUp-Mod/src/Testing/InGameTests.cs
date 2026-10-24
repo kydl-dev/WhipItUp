@@ -146,9 +146,12 @@ namespace WhipItUp.Testing
             foreach (var r in ObjectDB.instance.m_recipes)
             {
                 if (r == null || r.m_item == null || !Expected().Contains(r.m_item.name)) continue;
+                int rank;
+                if (!int.TryParse(r.m_item.name.Substring(r.m_item.name.LastIndexOf('V') + 1), out rank)) continue;
+                var metals = Weapons.Ladder.MetalIds[Weapons.Ladder.Index(rank)];   // the rank's OWN metal (V2 also uses 2 Bronze as a normal ingredient)
                 foreach (var req in r.m_resources)
                 {
-                    if (req == null || req.m_resItem == null || !Weapons.Ladder.MetalIds.Any(ids => ids.Contains(req.m_resItem.name))) continue;
+                    if (req == null || req.m_resItem == null || !metals.Contains(req.m_resItem.name)) continue;
                     checkedN++;
                     string got = req.GetAmount(1) + "/" + req.GetAmount(2) + "/" + req.GetAmount(3) + "/" + req.GetAmount(4);
                     string want = Weapons.Ladder.MetalBaseAmount + "/" + Weapons.Ladder.MetalAmountPerLevel + "/" + Weapons.Ladder.MetalAmountPerLevel + "/" + Weapons.Ladder.MetalAmountPerLevel;
