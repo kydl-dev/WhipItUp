@@ -21,7 +21,7 @@ namespace WhipItUp
         // ModGuid never changes after the first release. ModVersion = manifest.json version_number = newest CHANGELOG heading (tests check it).
         public const string ModGuid = "com.kydldev.WhipItUp";
         public const string ModName = "WhipItUp";
-        public const string ModVersion = "0.1.0";
+        public const string ModVersion = "1.0.0";
         public const string BundleName = "whipitup";
 
         internal static Plugin Instance;
