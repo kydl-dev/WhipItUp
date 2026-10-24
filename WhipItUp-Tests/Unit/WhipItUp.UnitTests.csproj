@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="..\..\WhipItUp-Mod\src\Weapons\Ladder.cs" Link="Mod\Ladder.cs" />
     <Compile Include="..\..\WhipItUp-Mod\src\Weapons\WeaponNames.cs" Link="Mod\WeaponNames.cs" />
+    <Compile Include="..\..\WhipItUp-Mod\src\Weapons\WhipLashFrames.cs" Link="Mod\WhipLashFrames.cs" />
     <!-- the menu's pure logic: no Unity / Valheim types (the Runtime folder of the Unity project is also compiled into the mod) -->
     <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponInfo.cs" Link="Mod\WeaponInfo.cs" />
     <Compile Include="..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponSelection.cs" Link="Mod\WeaponSelection.cs" />

@@ -31,8 +31,54 @@ namespace WhipItUp.Weapons
         float _grabTime = -99f;
         string _mode = "";
 
-        void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; Live.Add(this); }
-        void OnDisable() { Live.Remove(this); }
+        void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; _attachTried = false; Live.Add(this); }
+        void OnDisable()
+        {
+            Live.Remove(this);
+            if (_attachTried) WhipAnimations.Detach(_attached, _holder != null ? _holder.name : "a whip holder");
+            _attachTried = false;
+            _attached = null;
+        }
+
+        // ---- custom whip clips (T-013): attached to the holder's animator while this visual exists ---------------------------------
+        Animator _attached;
+        bool _attachTried;
+        string _keyedClip;
+        float _nextKeyedLog;
+
+        /// The keyed lash of the custom clip that plays now (WhipAnimations / whip_lash_frames.txt): every node on its keyed position in this
+        /// visual's space (the model data is in Whip.fbx model units, the visual's scale makes it game size). Expected outcome: true when it drives.
+        bool DriveKeyed(FallChains chains)
+        {
+            string clip;
+            float t;
+            if (!WhipAnimations.CurrentLash(_attached, out clip, out t)) { _keyedClip = null; return false; }
+            var lash = WhipAnimations.Lash;
+            var self = transform;
+            chains.Override = (c, i) =>
+            {
+                float x, y, z;
+                return lash.Sample(clip, t, i, out x, out y, out z) ? self.TransformPoint(new Vector3(x, y, z)) : chains.NodePosition(c, i);
+            };
+            chains.Pull = 60f;
+            chains.GravityScale = 0f;
+            chains.Snap = 1f;                          // exactly on the keys: the lash shape is the animation, not physics
+            SetMode("keyed lash " + clip);
+            if (clip != _keyedClip || Time.time >= _nextKeyedLog)
+            {
+                float x, y, z;
+                lash.Sample(clip, t, 0, out x, out y, out z);
+                var start = self.TransformPoint(new Vector3(x, y, z));
+                if (clip != _keyedClip && chains.ChainCount > 0)
+                    ModLog.Check("WhipMotion: keyed lash start vs the real lash start (" + clip + ")", (start - chains.RootPosition(0)).magnitude, 0.0, 0.03, "m");
+                lash.Sample(clip, t, chains.ChainCount > 0 ? chains.NodeCount(0) - 1 : 0, out x, out y, out z);
+                ModLog.Verbose("WhipMotion: keyed lash " + clip + " t " + t.ToString("0.00") + ", tip " + self.TransformPoint(new Vector3(x, y, z)).ToString("F2") + ", lash start " + start.ToString("F2")
+                    + ", visual scale " + self.lossyScale.x.ToString("0.00"));
+                _nextKeyedLog = Time.time + 0.25f;
+                _keyedClip = clip;
+            }
+            return true;
+        }
 
         // ---- read by the in-game tests (Testing/InGameTests, run by the user's GameProbe) ----------------------------------------------
         /// Every enabled whip visual (held, dropped, in the viewer).
@@ -57,6 +103,12 @@ namespace WhipItUp.Weapons
             // the game instantiates the equipped visual first and parents it to the hand afterwards: look the holder up until found
             if (_holder == null) _holder = GetComponentInParent<Character>();
             if (_holder == null) { SetMode("free (dropped)"); return; }
+            if (!_attachTried)
+            {
+                _attachTried = true;
+                _attached = AnimatorRef(_holder);
+                WhipAnimations.Attach(_attached, _holder.name);
+            }
             bool attacking = IsAttacking();
             _sinceAttack = attacking ? 0f : _sinceAttack + dt;
             if (_grabTarget != null && Time.time - _grabTime < ModSettings.WhipGrabSeconds.Value && !_grabTarget.IsDead())
@@ -71,6 +123,7 @@ namespace WhipItUp.Weapons
                 return;
             }
             _grabTarget = null;
+            if (DriveKeyed(chains)) { _sinceAttack = 0f; return; }
             if (attacking)
             {
                 chains.Pull = ModSettings.WhipLashStiffness.Value;

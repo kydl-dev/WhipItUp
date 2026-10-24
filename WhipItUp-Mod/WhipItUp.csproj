@@ -18,6 +18,8 @@
   <ItemGroup>
     <!-- the mod's menu views live in the Unity project (previewed there) and are compiled into the mod from there -->
     <Compile Include="..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\*.cs" Link="UiViews\%(Filename)%(Extension)" />
+    <!-- T-013: the keyed whip lash (made in Blender: WhipItUp-Blender/scripts/anim_lash_frames.py) -->
+    <EmbeddedResource Include="src\Weapons\whip_lash_frames.txt" LogicalName="whip_lash_frames.txt" />
   </ItemGroup>
 
   <Import Project="..\..\Claude\shared\Kydl.Mod.targets" />

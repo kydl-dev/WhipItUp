@@ -70,6 +70,7 @@ namespace WhipItUp
         public static readonly Tunable<float> WhipRotX = new Tunable<float>("Whip", "RotationX", 270f, -360f, 360f, "Whip model rotation X (degrees) in the hand.");
         public static readonly Tunable<float> WhipRotY = new Tunable<float>("Whip", "RotationY", 180f, -360f, 360f, "Whip model rotation Y (degrees) in the hand.");
         public static readonly Tunable<float> WhipRotZ = new Tunable<float>("Whip", "RotationZ", 0f, -360f, 360f, "Whip model rotation Z (degrees) in the hand.");
+        public static readonly Tunable<bool> WhipCustomAnimations = new Tunable<bool>("Whip", "CustomAnimations", true, "Whip attacks play the whip's own clips with the keyed lash (T-013); off = the club / spear clips with the physics lash. Applies the next time a whip is equipped.");
         public static readonly Tunable<float> WhipGrip = new Tunable<float>("Whip", "GripOffset", 0.11f, -0.3f, 0.3f, "Metres the hand sits from the middle of the grip (+ = toward the lash).");
         public static readonly Tunable<float> WhipScale = new Tunable<float>("Whip", "Scale", 1.5f, 0.5f, 2.5f, "Whip model scale (user default 1.5 = 2.7 m lash; 1 = 1.8 m as modelled).");
         public static Vector3 WhipRotation { get { return new Vector3(WhipRotX.Value, WhipRotY.Value, WhipRotZ.Value); } }
