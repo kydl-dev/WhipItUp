@@ -13,17 +13,17 @@ namespace WhipItUp.Testing
             return body == bodyExpected && lash == lashExpected ? "PASS: " + nums : "FAIL: " + nums + " - rebuild the bundle / check whip_lash_frames.txt";
         }
 
-        /// Controller: holding a whip = our override with every slot replaced; not holding one = the game's own controller.
+        /// Controller: a whip visual on the player (hand or back) = our override with every slot replaced; none = the game's own controller.
         internal static string Controller(bool enabled, bool holdsWhip, bool attached, bool overrideActive, int replaced, int expected)
         {
             if (!enabled) return "SKIP: [Whip] CustomAnimations is off";
             if (holdsWhip)
                 return attached && overrideActive && replaced == expected
-                    ? "PASS: whip in hand, whip clips active (" + replaced + " of " + expected + " slot(s) replaced)"
-                    : "FAIL: whip in hand but attached " + attached + ", override " + overrideActive + ", " + replaced + " of " + expected + " slot(s) replaced";
+                    ? "PASS: whip on the player (hand or back), whip clips active (" + replaced + " of " + expected + " slot(s) replaced)"
+                    : "FAIL: whip on the player but attached " + attached + ", override " + overrideActive + ", " + replaced + " of " + expected + " slot(s) replaced";
             return !attached && !overrideActive
-                ? "PASS: no whip in hand, the game's own controller (no whip slots)"
-                : "FAIL: no whip in hand but attached " + attached + ", override " + overrideActive + " (" + replaced + " whip slot(s)) - the original controller did not come back";
+                ? "PASS: no whip on the player, the game's own controller (no whip slots)"
+                : "FAIL: no whip on the player but attached " + attached + ", override " + overrideActive + " (" + replaced + " whip slot(s)) - the original controller did not come back";
         }
 
         /// Swaps: every controller swap this session put every animator layer back in its state (TEST-020: lying / sitting player).

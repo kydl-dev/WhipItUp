@@ -118,8 +118,9 @@ namespace WhipItUp.Testing
             else
             {
                 var a = AnimatorRef(player);
-                var w = player.GetCurrentWeapon();
-                bool holds = w != null && w.m_dropPrefab != null && w.m_dropPrefab.name.StartsWith(Weapons.WhipItems.FamilyName + "_V");
+                // a whip VISUAL on the player (in the hand, or sheathed on the back while at a crafting station / weapons hidden): the clips stay
+                // on while it exists (TEST-034: E at a workbench hid the whip, GetCurrentWeapon was null but the visual was still on the back)
+                bool holds = Weapons.WhipMotion.Live.Any(m => m != null && m.Holder == player);
                 r = a == null ? "SKIP: the player has no animator yet"
                     : WhipAnimChecks.Controller(ModSettings.WhipCustomAnimations.Value, holds, Weapons.WhipAnimations.IsAttached(a), a.runtimeAnimatorController is AnimatorOverrideController,
                         Weapons.WhipAnimations.ReplacedSlots(a), Weapons.WhipAnimations.BodyClipsExpected);
