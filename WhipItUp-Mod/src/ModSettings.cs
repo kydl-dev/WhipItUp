@@ -76,7 +76,8 @@ namespace WhipItUp
         public static Vector3 WhipRotation { get { return new Vector3(WhipRotX.Value, WhipRotY.Value, WhipRotZ.Value); } }
         public static event System.Action WhipAlignmentChanged;
         public static readonly Tunable<float> WhipReach = new Tunable<float>("Whip", "Reach", 4.8f, 1f, 8f, "Attack 1 range in metres (club: 2.4). Game restart.");
-        public static readonly Tunable<float> WhipGrabRange = new Tunable<float>("Whip", "GrabRange", 5f, 1f, 10f, "Attack 2 range in metres: an enemy within it gets the lash around the neck and is pulled in. Game restart.");
+        public static readonly Tunable<float> WhipGrabRange = new Tunable<float>("Whip", "GrabRange", 5f, 1f, 10f, "Attack 2 range in metres: an enemy within it gets the lash around the body and is pulled in. Game restart.");
+        public static readonly Tunable<float> WhipGrabDamage = new Tunable<float>("Whip", "GrabDamage", 2f, 0.5f, 5f, "Attack 2 damage as a multiple of attack 1 (2 = twice the damage of a normal hit; T-017 / D-061). Game restart.");
         public static readonly Tunable<float> WhipGrabAngle = new Tunable<float>("Whip", "GrabAngle", 25f, 5f, 90f, "Attack 2 cone in degrees. Game restart.");
         public static readonly Tunable<float> WhipPullForce = new Tunable<float>("Whip", "PullForce", 80f, 0f, 300f, "How hard attack 2 pulls the enemy toward you (push force; heavy enemies move less).");
         public static readonly Tunable<float> WhipGrabSeconds = new Tunable<float>("Whip", "GrabSeconds", 0.9f, 0.1f, 3f, "How long the lash stays wrapped around the body (visual).");

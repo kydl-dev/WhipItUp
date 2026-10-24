@@ -75,6 +75,29 @@ namespace WhipItUp.Testing
             return r;
         }
 
+        /// T-017 (D-061): every whip's attack 2 does Whip.GrabDamage (default 2) x the damage of attack 1 (attack 1 multiplier 1).
+        static string World_WhipAttack2Damage()
+        {
+            if (ObjectDB.instance == null) return "SKIP: ObjectDB not ready";
+            float want = ModSettings.WhipGrabDamage.Value;
+            var bad = new List<string>();
+            int n = 0;
+            for (int rank = 1; rank <= 7; rank++)
+            {
+                string name = Weapons.WhipItems.FamilyName + "_V" + rank;
+                var go = ObjectDB.instance.GetItemPrefab(name);
+                var sh = go != null && go.GetComponent<ItemDrop>() != null ? go.GetComponent<ItemDrop>().m_itemData.m_shared : null;
+                if (sh == null || sh.m_attack == null || sh.m_secondaryAttack == null) { bad.Add(name + " missing"); continue; }
+                n++;
+                float ratio = sh.m_secondaryAttack.m_damageMultiplier / Mathf.Max(0.0001f, sh.m_attack.m_damageMultiplier);
+                if (Mathf.Abs(ratio - want) > 0.01f) bad.Add(name + " x" + ratio.ToString("0.##"));
+            }
+            string r = bad.Count == 0 ? "PASS: " + n + " whip(s), attack 2 = x" + want.ToString("0.##") + " of attack 1 (Whip.GrabDamage)"
+                : "FAIL: attack 2 / attack 1 damage should be x" + want.ToString("0.##") + ": " + string.Join(", ", bad.ToArray());
+            ModLog.Verbose("InGameTests: World_WhipAttack2Damage -> " + r);
+            return r;
+        }
+
         static IEnumerable<string> Expected()
         {
             foreach (var f in Families)

@@ -69,13 +69,14 @@ namespace WhipItUp.Weapons
             a.m_attackRange = ModSettings.WhipGrabRange.Value;
             a.m_attackAngle = ModSettings.WhipGrabAngle.Value;
             a.m_attackStamina = Ladder.Stamina[Ladder.Index(rank)] * ModSettings.BackhandStaminaFactor.Value;
-            a.m_damageMultiplier = 0.5f;                         // the pull is the point, not the damage
+            a.m_damageMultiplier = ModSettings.WhipGrabDamage.Value;   // T-017 / D-061: 2x attack 1, so the risk of pulling the enemy close pays
             a.m_staggerMultiplier = Ladder.StaggerMultiplier(rank, main);
             a.m_consumeItem = false;
             shared.m_secondaryAttack = a;
             ModLog.Verbose("WhipItems: " + name + " attack 2 = " + GrabSource + " '" + a.m_attackAnimation + "' as melee grab, range " + a.m_attackRange + ", angle " + a.m_attackAngle
-                + ", stamina " + a.m_attackStamina.ToString("0.#"));
-            return shared.m_secondaryAttack.m_attackType == Attack.AttackType.Horizontal;
+                + ", damage x" + a.m_damageMultiplier.ToString("0.##") + ", stamina " + a.m_attackStamina.ToString("0.#"));
+            return shared.m_secondaryAttack.m_attackType == Attack.AttackType.Horizontal
+                && Mathf.Approximately(shared.m_secondaryAttack.m_damageMultiplier, ModSettings.WhipGrabDamage.Value);
         }
     }
 
