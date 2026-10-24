@@ -76,3 +76,11 @@ WhipItUp-Unity/Assets/Screenshots.meta
 
 # Full-size screenshots of the user's in-game tests (8-9 MB each; the small _s_*.jpg copies are tracked)
 /test-photos/2026-*.png
+
+# --- GameProbe test sessions: reports, errors, timelines are tracked; big raw files are not ---
+/_testruns/**/LogOutput.log
+/_testruns/**/log-live.log
+/_testruns/**/*.png
+# release-gate output (report + zip): rebuilt by _agent/tools/release-gate.ps1
+/*-Mod/release/*/release-gate.*
+/*-Mod/release/*/_stage/

@@ -112,5 +112,41 @@ namespace WhipItUp.Tests.Unit
             Assert.DoesNotThrow(() => ModAssembly.Call(LogType, "Info", new object[] { null }));
             Assert.That(_listener.Lines[1], Does.EndWith(" - (null)"));
         }
+
+        // ---- expected-value checks (user, 2026-10-24): off = WARNING always written, inside = debug line only
+
+        [Test]
+        public void Check_ValueInsideTolerance_ReturnsInsideAndWritesNothingWithDebugOff()
+        {
+            var inside = (bool)ModAssembly.Call(LogType, "Check", "bone turn", 24.0, 24.05, 2.0, "deg");
+
+            Assert.That(inside, Is.True);
+            Assert.That(_listener.Lines, Has.Count.EqualTo(1), "only the session line");
+        }
+
+        [Test]
+        public void Check_ValueOutsideTolerance_WritesWarningWithExpectedValueEvenWithDebugOff()
+        {
+            var inside = (bool)ModAssembly.Call(LogType, "Check", "coil mismatch", 0.5, 0.0, 0.01, "m");
+
+            Assert.That(inside, Is.False);
+            Assert.That(_listener.Lines, Has.Count.EqualTo(2));
+            Assert.That(Msg(_listener.Lines[1]), Is.EqualTo("CHECK OFF: coil mismatch = 0.5 m (expected 0 +- 0.01 m), off by 0.5 m"));
+        }
+
+        [Test]
+        public void CheckRange_ValueAboveMax_WritesWarning()
+        {
+            var inside = (bool)ModAssembly.Call(LogType, "CheckRange", "scale", 1.5, 0.9, 1.1, "");
+
+            Assert.That(inside, Is.False);
+            Assert.That(Msg(_listener.Lines[1]), Is.EqualTo("CHECK OFF: scale = 1.5 (expected 0.9 .. 1.1)"));
+        }
+
+        [Test]
+        public void Check_NaN_CountsAsOff()
+        {
+            Assert.That((bool)ModAssembly.Call(LogType, "Check", "x", double.NaN, 1.0, 1.0, "m"), Is.False);
+        }
     }
 }

@@ -85,11 +85,31 @@ namespace WhipItUp.Weapons
             if (back < 1f) _coilLogged = false;
             if (back >= 1f && Time.time >= _nextDiag)
             {
-                _nextDiag = Time.time + 3f;     // coil health every 3 s while coiled (debug log only)
-                ModLog.Verbose("WhipMotion: coil - bone/node mismatch " + chains.LastMismatch.ToString("0.000") + " m, max bone turn " + chains.LastMaxTurn.ToString("0")
-                    + " deg, radius " + ModSettings.WhipCoilRadius.Value + " m, bone " + chains.SegmentLength(0, 1).ToString("0.000") + " m, lossyScale " + transform.lossyScale.ToString("F2"));
+                _nextDiag = Time.time + 3f;     // coil health every 3 s while coiled
+                LogCoilHealth(chains);
             }
         }
+
+        /// Coil health with the values the code expects (user, 2026-10-24: a value that is not what the code expects is a WARNING, not info).
+        /// mismatch: bones vs simulated nodes, expected 0 (the targets keep the bone lengths). max bone turn: the bend between two bones on a
+        /// circle of radius r is the chord angle 2 asin(L / 2r) of the longest bone L. A CHECK OFF warning is written by ModLog when either is off.
+        /// lossyScale is the item's attach-chain scale: only informative (the coil is sized in world metres, not by it).
+        /// Expected outcome: returns whether both checks were inside their tolerance.
+        bool LogCoilHealth(FallChains chains)
+        {
+            float expectedTurn = _coilLongest > 1e-5f && _coilRadiusUsed > 1e-5f
+                ? 2f * Mathf.Asin(Mathf.Clamp01(_coilLongest / (2f * _coilRadiusUsed))) * Mathf.Rad2Deg : 0f;
+            bool mismatchOk = ModLog.Check("WhipMotion: coil bone/node mismatch", chains.LastMismatch, 0.0, CoilMismatchTolerance, "m");
+            bool turnOk = ModLog.Check("WhipMotion: coil max bone turn (radius " + _coilRadiusUsed.ToString("0.000") + " m, longest bone "
+                + _coilLongest.ToString("0.000") + " m)", chains.LastMaxTurn, expectedTurn, CoilTurnToleranceDeg, "deg");
+            ModLog.Verbose("WhipMotion: coil - radius setting " + ModSettings.WhipCoilRadius.Value + " m, used " + _coilRadiusUsed.ToString("0.000")
+                + " m, bone 0-1 " + chains.SegmentLength(0, 1).ToString("0.000") + " m, lossyScale " + transform.lossyScale.ToString("F2") + " (info only, not used for sizing)");
+            return mismatchOk && turnOk;
+        }
+
+        const double CoilMismatchTolerance = 0.01;    // m: more than 1 cm between a bone and its node = the bones do not follow the coil
+        const double CoilTurnToleranceDeg = 3.0;      // deg: the side shift and the radius ease bend a bone a little more than the pure chord angle
+        float _coilRadiusUsed, _coilLongest;
 
         Vector3[] _coil;
         float _nextDiag;
@@ -139,6 +159,8 @@ namespace WhipItUp.Weapons
                 r0 = d0.magnitude;
                 a0 = Mathf.Atan2(Vector3.Dot(d0, down), Vector3.Dot(d0, axis));
             }
+            _coilRadiusUsed = r;
+            _coilLongest = longest;
             float a = a0, turned = 0f;
             for (int i = 1; i < n; i++)
             {
