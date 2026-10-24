@@ -68,6 +68,7 @@ namespace WhipItUp.Weapons
             a.m_attackProjectile = null;
             a.m_attackRange = ModSettings.WhipGrabRange.Value;
             a.m_attackAngle = ModSettings.WhipGrabAngle.Value;
+            CopyHitShape(a, shared.m_attack, name);            // T-020: the spear throw's rays were thin lines 1.5 m up
             a.m_attackStamina = Ladder.Stamina[Ladder.Index(rank)] * ModSettings.BackhandStaminaFactor.Value;
             a.m_damageMultiplier = ModSettings.WhipGrabDamage.Value;   // T-017 / D-061: 2x attack 1, so the risk of pulling the enemy close pays
             a.m_staggerMultiplier = Ladder.StaggerMultiplier(rank, main);
@@ -77,6 +78,29 @@ namespace WhipItUp.Weapons
                 + ", damage x" + a.m_damageMultiplier.ToString("0.##") + ", stamina " + a.m_attackStamina.ToString("0.#"));
             return shared.m_secondaryAttack.m_attackType == Attack.AttackType.Horizontal
                 && Mathf.Approximately(shared.m_secondaryAttack.m_damageMultiplier, ModSettings.WhipGrabDamage.Value);
+        }
+
+        /// T-020 (D-101): the melee hit check (Attack.DoMeleeAttack) casts rays every 4 deg across the attack angle from
+        /// origin + up x m_attackHeight, as spheres of m_attackRayWidth (0 = thin lines), plus extra character casts at
+        /// m_attackHeightChar1 / Char2 above that (only when the width is > 0). The cloned spear throw had height 1.5 and width 0, so it
+        /// cast only thin lines 1.5 m above the ground and only met creatures taller than that (boars, wolves, necks, deer, greylings
+        /// slipped under it; skeletons / greydwarfs were hit). Attack 2 now uses attack 1's
+        /// (club) hit shape: height 0.8, width 0.3, char casts -0.66 / +0.8, no side offset; range and angle stay the whip's own.
+        /// Expected outcome: the secondary attack has attack 1's ray height / width / char heights (returns that check).
+        static bool CopyHitShape(Attack a, Attack from, string name)
+        {
+            if (a == null || from == null) { ModLog.Error("WhipItems: " + name + " attack 2 hit shape not copied (attack " + (a == null ? "2" : "1") + " missing)"); return false; }
+            string before = "height " + a.m_attackHeight + ", width " + a.m_attackRayWidth + " (+" + a.m_attackRayWidthCharExtra + " for characters), char heights " + a.m_attackHeightChar1 + " / " + a.m_attackHeightChar2 + ", offset " + a.m_attackOffset + ", max pitch " + a.m_maxYAngle;
+            a.m_attackHeight = from.m_attackHeight;
+            a.m_attackRayWidth = from.m_attackRayWidth;
+            a.m_attackRayWidthCharExtra = from.m_attackRayWidthCharExtra;
+            a.m_attackHeightChar1 = from.m_attackHeightChar1;
+            a.m_attackHeightChar2 = from.m_attackHeightChar2;
+            a.m_attackOffset = from.m_attackOffset;
+            a.m_maxYAngle = from.m_maxYAngle;
+            ModLog.Verbose("WhipItems: " + name + " attack 2 hit shape: " + before + " -> height " + a.m_attackHeight + ", width " + a.m_attackRayWidth + " (+" + a.m_attackRayWidthCharExtra
+                + "), char heights " + a.m_attackHeightChar1 + " / " + a.m_attackHeightChar2 + ", offset " + a.m_attackOffset + ", max pitch " + a.m_maxYAngle + " (= attack 1)");
+            return Mathf.Approximately(a.m_attackHeight, from.m_attackHeight) && Mathf.Approximately(a.m_attackRayWidth, from.m_attackRayWidth);
         }
     }
 

@@ -49,6 +49,28 @@ namespace WhipItUp.Weapons
 
         internal static WhipLashFrames Lash { get; private set; }
 
+        // --- read-only state for the in-game tests (T-023, Testing/InGameTests + WhipAnimChecks) ---
+        internal static int BodyClipsLoaded { get { return Clips.Count; } }
+        internal static int BodyClipsExpected { get { return ClipMap.Length; } }
+        internal static int LashClipsExpected { get { return StateToLash.Count; } }
+        /// Controller swaps this session and how many of them could NOT put every layer back in its state (the lying / sitting bug).
+        internal static int Swaps { get; private set; }
+        internal static int SwapsLosingState { get; private set; }
+        internal static string LastSwapLoss { get; private set; }
+        /// True while this animator plays the whip clips (attached and not waiting for its release).
+        internal static bool IsAttached(Animator a) { Holder h; return a != null && Attached.TryGetValue(a, out h) && h.ReleaseFrame < 0; }
+        /// Number of the game's clip slots on this animator's current controller that play one of our Body_* clips (0 = vanilla controller).
+        internal static int ReplacedSlots(Animator a)
+        {
+            var aoc = a != null ? a.runtimeAnimatorController as AnimatorOverrideController : null;
+            if (aoc == null) return 0;
+            var list = new List<KeyValuePair<AnimationClip, AnimationClip>>(aoc.overridesCount);
+            aoc.GetOverrides(list);
+            int n = 0;
+            foreach (var kv in list) if (kv.Value != null && kv.Value.name.StartsWith("Body_")) n++;
+            return n;
+        }
+
         /// Plugin.Awake. Expected outcome: all 4 body clips and all 4 lash clips are loaded (returns that check).
         internal static bool Load(AssetBundle bundle)
         {
@@ -187,6 +209,8 @@ namespace WhipItUp.Weapons
                 if (a.HasState(l, hashes[l])) { a.Play(hashes[l], l, times[l] - (float)System.Math.Floor(times[l])); restored++; }
             a.speed = speed;
             a.Update(0f);
+            Swaps++;
+            if (restored < layers) { SwapsLosingState++; LastSwapLoss = who + " -> '" + controller.name + "': " + restored + " of " + layers + " layer state(s)"; }
             ModLog.Verbose("WhipAnimations: " + who + " controller -> '" + controller.name + "', " + restored + " of " + layers + " layer state(s) and "
                 + (FloatParams.Count + IntParams.Count + BoolParams.Count) + " parameter(s) carried over (layer 0 state " + (layers > 0 ? hashes[0].ToString() : "-") + ")");
             return a.runtimeAnimatorController == controller;

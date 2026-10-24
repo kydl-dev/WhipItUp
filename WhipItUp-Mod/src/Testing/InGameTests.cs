@@ -98,6 +98,44 @@ namespace WhipItUp.Testing
             return r;
         }
 
+        static readonly HarmonyLib.AccessTools.FieldRef<Character, Animator> AnimatorRef = HarmonyLib.AccessTools.FieldRefAccess<Character, Animator>("m_animator");
+
+        /// T-023: the 4 body clips (bundle) and the 4 keyed lash clips are loaded.
+        static string World_WhipClipsLoaded()
+        {
+            var lash = Weapons.WhipAnimations.Lash;
+            string r = WhipAnimChecks.Clips(Weapons.WhipAnimations.BodyClipsLoaded, Weapons.WhipAnimations.BodyClipsExpected, lash != null ? lash.Count : 0, Weapons.WhipAnimations.LashClipsExpected);
+            ModLog.Verbose("InGameTests: World_WhipClipsLoaded -> " + r);
+            return r;
+        }
+
+        /// T-023: with a whip in hand the local player's animator plays the whip clips (all slots); without one it has the game's controller back.
+        static string World_WhipControllerState()
+        {
+            var player = Player.m_localPlayer;
+            string r;
+            if (player == null) r = "SKIP: no local player";
+            else
+            {
+                var a = AnimatorRef(player);
+                var w = player.GetCurrentWeapon();
+                bool holds = w != null && w.m_dropPrefab != null && w.m_dropPrefab.name.StartsWith(Weapons.WhipItems.FamilyName + "_V");
+                r = a == null ? "SKIP: the player has no animator yet"
+                    : WhipAnimChecks.Controller(ModSettings.WhipCustomAnimations.Value, holds, Weapons.WhipAnimations.IsAttached(a), a.runtimeAnimatorController is AnimatorOverrideController,
+                        Weapons.WhipAnimations.ReplacedSlots(a), Weapons.WhipAnimations.BodyClipsExpected);
+            }
+            ModLog.Verbose("InGameTests: World_WhipControllerState -> " + r);
+            return r;
+        }
+
+        /// T-023: no controller swap this session lost an animator layer state (TEST-020: lying on the floor after a weapon switch).
+        static string World_WhipSwapsKeptState()
+        {
+            string r = WhipAnimChecks.Swaps(Weapons.WhipAnimations.Swaps, Weapons.WhipAnimations.SwapsLosingState, Weapons.WhipAnimations.LastSwapLoss);
+            ModLog.Verbose("InGameTests: World_WhipSwapsKeptState -> " + r);
+            return r;
+        }
+
         static IEnumerable<string> Expected()
         {
             foreach (var f in Families)
