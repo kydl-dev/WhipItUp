@@ -128,7 +128,10 @@ def apply_body(rig, p):
     hips = rig.pose.bones["Hips"]
     hips.location = Vector((0, 0, 0))
     bpy.context.view_layer.update()
-    drop = p.get("drop", 0.04)
+    # crouch (D-093: lean into the attack like the Frostner / vanilla sword combo, whose hips sink 0.1-0.4 m): the hips go down by
+    # 'crouch' m and both legs fold so the feet stay at their height: thigh forward phi, knee 2 phi, foot back phi, 2 L (1 - cos phi) = crouch
+    crouch = p.get("crouch", 0.0)
+    drop = p.get("drop", 0.04) + crouch
     hips.matrix = Matrix.Translation((0, 0, -drop)) @ hips.matrix
     bpy.context.view_layer.update()
     rotate_world(rig, "Hips", (0, 0, 1), p.get("hips", twist * 0.35))
@@ -138,7 +141,7 @@ def apply_body(rig, p):
                                                              # first drafts had -bend: every 'forward' lean leaned BACK, user D-086)
         rotate_world(rig, n, (0, 1, 0), lean * f)           # + lean = toward the character's left (+X)
     rotate_world(rig, "Head", (0, 0, 1), -twist * 0.4)        # the head keeps looking ahead
-    rotate_world(rig, "Head", (1, 0, 0), -bend * 0.5)         # and level: it does not tip down with the leaning spine
+    rotate_world(rig, "Head", (1, 0, 0), -bend * 0.25)        # and half level: looks ahead, not down (not arched back either: D-086)
     # left arm relaxed: down from the T-pose, a little forward, elbow bent
     la = p.get("larm", (68, 15, 25))
     rotate_world(rig, "LeftArm", (0, 1, 0), la[0])
@@ -153,18 +156,32 @@ def apply_body(rig, p):
     rotate_world(rig, "RightUpLeg", (1, 0, 0), 12 * st)
     rotate_world(rig, "RightLeg", (1, 0, 0), 14 * st)
     rotate_world(rig, "RightFoot", (1, 0, 0), -20 * st)
+    if crouch > 0:
+        leg = (rig.data.bones["LeftUpLeg"].length + rig.data.bones["LeftLeg"].length)
+        phi = math.degrees(math.acos(max(-1.0, min(1.0, 1.0 - crouch / (2 * leg)))))
+        for side in ("Left", "Right"):
+            rotate_world(rig, side + "UpLeg", (1, 0, 0), -phi)
+            rotate_world(rig, side + "Leg", (1, 0, 0), 2 * phi)
+            rotate_world(rig, side + "Foot", (1, 0, 0), -phi)
 
 
 def key_pose(rig, tgt, pole, rest, frame, p):
     h0, d0, s0 = rest
+    # the hand target is written for an upright body: when the body leans / crouches (D-093) the shoulder moves, and the hand moves with
+    # it (same offset), so the arm keeps its shape instead of being pulled back by a fixed target
+    upright = dict(p, bend=0.0, crouch=0.0, lean=0.0)
+    reset_pose(rig)
+    apply_body(rig, upright)
+    sh0 = rig.matrix_world @ rig.pose.bones["RightArm"].head
     reset_pose(rig)
     apply_body(rig, p)
+    shift = (rig.matrix_world @ rig.pose.bones["RightArm"].head) - sh0
     d = Vector(p["dir"]).normalized()
     s = side_for(d, p.get("roll", 0.0))
     q = (frame_of(d, s) @ frame_of(d0, s0).inverted()).to_quaternion()
-    tgt.location = Vector(p["hand"])
+    tgt.location = Vector(p["hand"]) + shift
     tgt.rotation_quaternion = q @ h0
-    pole.location = Vector(p.get("elbow", (p["hand"][0] - 0.35, p["hand"][1] + 0.45, p["hand"][2] - 0.35)))
+    pole.location = Vector(p.get("elbow", (p["hand"][0] - 0.35, p["hand"][1] + 0.45, p["hand"][2] - 0.35))) + shift
     bpy.context.view_layer.update()
     for o in (tgt, pole):
         o.keyframe_insert("location", frame=frame)
@@ -177,8 +194,9 @@ def key_pose(rig, tgt, pole, rest, frame, p):
     got = rig.matrix_world @ rig.pose.bones["RightHand"].matrix
     whip = bpy.data.objects["WhipRig"].matrix_world
     wd = (whip.to_3x3() @ Vector((0, 0, 1))).normalized()
-    log("key f%d: hand %s (got %s, error %.3f m), handle dir %s (got %s, %.1f deg off), roll %.0f, twist %.0f, bend %.0f" % (
-        frame, fmt(p["hand"]), fmt(got.to_translation()), (got.to_translation() - Vector(p["hand"])).length, fmt(d), fmt(wd),
+    want = Vector(p["hand"]) + shift
+    log("key f%d: shoulder shift %s by bend %.0f / crouch %.2f; hand %s (got %s, error %.3f m), handle dir %s (got %s, %.1f deg off), roll %.0f, twist %.0f, bend %.0f" % (
+        frame, fmt(shift), p.get("bend", 0.0), p.get("crouch", 0.0), fmt(want), fmt(got.to_translation()), (got.to_translation() - want).length, fmt(d), fmt(wd),
         math.degrees(wd.angle(d)) if wd.length > 0 else -1, p.get("roll", 0.0), p.get("twist", 0.0), p.get("bend", 0.0)))
 
 
