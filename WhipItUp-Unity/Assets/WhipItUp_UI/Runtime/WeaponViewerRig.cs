@@ -26,10 +26,11 @@ namespace WhipItUp.Ui
         readonly int _layer;
         GameObject _root, _pivot, _model;
         Camera _camera;
+        readonly System.Collections.Generic.List<Light> _lights = new System.Collections.Generic.List<Light>();   // switched on only while the viewer camera renders (F-1 / F-2, D-077)
         RenderTexture _texture;
         WeaponInfo _weapon;
         float _halfWidth, _halfHeight, _radius;
-        float _lastLog = -100f;
+        float _lastLog = -100f, _lastLightLog = -100f;
         int _renders;
 
         public Texture Texture { get { return _texture; } }
@@ -79,6 +80,8 @@ namespace WhipItUp.Ui
             light.shadows = LightShadows.None;
             light.cullingMask = 1 << _layer;                          // lights the weapon only, never the world
             light.renderMode = LightRenderMode.ForcePixel;
+            light.enabled = false;                                    // D-077 F-1 / F-2: a light that stays on can light the WORLD (the game's main camera does not honour the mask); RenderLit switches it on for one render only
+            _lights.Add(light);
         }
 
         public bool Show(WeaponInfo weapon, bool coiled)
@@ -201,6 +204,7 @@ namespace WhipItUp.Ui
             bool fog = RenderSettings.fog;
             try
             {
+                for (int i = 0; i < _lights.Count; i++) { if (_lights[i] != null) _lights[i].enabled = true; }
                 RenderSettings.ambientMode = AmbientMode.Flat;
                 RenderSettings.ambientLight = Ambient;
                 RenderSettings.ambientIntensity = 1f;
@@ -209,6 +213,14 @@ namespace WhipItUp.Ui
             }
             finally
             {
+                int stillOn = 0;
+                for (int i = 0; i < _lights.Count; i++) { if (_lights[i] != null) { _lights[i].enabled = false; if (_lights[i].enabled) stillOn++; } }
+                float now = Time.realtimeSinceStartup;
+                if (now - _lastLightLog >= 2f)
+                {
+                    _lastLightLog = now;
+                    Log("WeaponViewerRig: lights " + _lights.Count + " switched on for this render only, " + stillOn + " still on after it (expect 0); ambient put back to " + mode + " / " + ambient + " x" + intensity + ", fog " + fog);
+                }
                 RenderSettings.ambientMode = mode;
                 RenderSettings.ambientLight = ambient;
                 RenderSettings.ambientIntensity = intensity;
