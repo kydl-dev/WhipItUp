@@ -17,6 +17,9 @@ namespace WhipItUp.Sounds
 
         /// The keyed lash's crack (D-086) uses the same gate: true = no slap played within SameSwingSeconds, so it may play now (and a hit
         /// slap of the same swing right after it is dropped).
+        /// Time.time of the last slap / crack that played (-100 = none yet).
+        internal static float LastSlapTime { get { return _lastSlap; } }
+
         internal static bool TryClaim(string why)
         {
             float now = Time.time;

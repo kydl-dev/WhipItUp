@@ -47,6 +47,7 @@ namespace WhipItUp.Weapons
         float _nextKeyedLog;
 
         float _lastKeyedT = -1f;
+        float _swingStart = -100f;
         string _lastKeyedClip;
 
         /// D-086: the crack sound when the keyed lash reaches its fully extended frame (whips crack on every swing, not only on a hit),
@@ -55,10 +56,19 @@ namespace WhipItUp.Weapons
         bool Crack(WhipLashFrames lash, string clip, float t)
         {
             var c = lash.Get(clip);
-            float prev = clip == _lastKeyedClip ? _lastKeyedT : -1f;
+            bool newSwing = clip != _lastKeyedClip || t < _lastKeyedT;
+            if (newSwing) _swingStart = Time.time;
+            float prev = newSwing ? -1f : _lastKeyedT;
             _lastKeyedClip = clip;
             _lastKeyedT = t;
             if (c == null || c.CrackTime < 0f || !(prev < c.CrackTime && t >= c.CrackTime)) return false;
+            // one crack per swing: a hit of THIS swing already played its slap (TEST-021: hit 2's slap + its crack 0.26 s later = a double sound)
+            float slap = Sounds.SlapOncePerSwingPatch.LastSlapTime;
+            if (slap >= _swingStart)
+            {
+                ModLog.Verbose("WhipMotion: crack " + clip + " frame " + c.Crack + " skipped - this swing's hit played its slap " + (Time.time - slap).ToString("0.00") + " s ago");
+                return false;
+            }
             var prefab = Sounds.WeaponSounds.WhipSlapPrefab;
             float x, y, z;
             lash.Sample(clip, c.CrackTime, c.Nodes - 1, out x, out y, out z);

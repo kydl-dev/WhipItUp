@@ -16,11 +16,24 @@ namespace WhipItUp.Weapons
     /// </summary>
     internal static class WhipAnimations
     {
-        /// vanilla clip name -> our clip name
-        static readonly Dictionary<string, string> ClipMap = new Dictionary<string, string>
+        /// vanilla clip (runtime name + length in s) -> our clip name. The game has several clips with the same name ("Attack1" x3,
+        /// "Attack2" x3: the rip calls them Attack1_2, Attack2_0, ...), so the length picks the one the state plays (TEST-021: matching
+        /// the rip name "Attack1_2" found nothing and hit 1 stayed vanilla).
+        sealed class Slot { public string Name; public float Length; public string Ours; public string Key { get { return Name + " " + Length.ToString("0.000"); } } }
+        static readonly Slot[] ClipMap =
         {
-            { "Attack1_2", "Body_W1_SideFlick" }, { "Attack2", "Body_W2_Backhand" }, { "Attack3", "Body_W3_Overhand" }, { "throw_spear", "Body_G_LashGrab" },
+            new Slot { Name = "Attack1", Length = 1.1333f, Ours = "Body_W1_SideFlick" }, new Slot { Name = "Attack2", Length = 0.8333f, Ours = "Body_W2_Backhand" },
+            new Slot { Name = "Attack3", Length = 0.8333f, Ours = "Body_W3_Overhand" }, new Slot { Name = "throw_spear", Length = 1.1333f, Ours = "Body_G_LashGrab" },
         };
+        const float LengthTolerance = 0.02f;
+
+        static Slot SlotFor(AnimationClip c)
+        {
+            if (c == null) return null;
+            foreach (var s in ClipMap)
+                if (c.name == s.Name && Mathf.Abs(c.length - s.Length) <= LengthTolerance) return s;
+            return null;
+        }
         /// animator state (short name hash) -> lash clip name in whip_lash_frames.txt
         static readonly Dictionary<int, string> StateToLash = new Dictionary<int, string>
         {
@@ -43,17 +56,17 @@ namespace WhipItUp.Weapons
             if (bundle != null)
                 foreach (var c in bundle.LoadAllAssets<AnimationClip>())
                     if (c != null && c.name.StartsWith("Body_")) Clips[c.name] = c;
-            foreach (var kv in ClipMap)
+            foreach (var slot in ClipMap)
             {
                 AnimationClip c;
-                if (Clips.TryGetValue(kv.Value, out c))
-                    ModLog.Verbose("WhipAnimations: clip " + kv.Value + " (replaces " + kv.Key + "): " + c.length.ToString("0.000") + " s, " + c.frameRate + " fps, humanMotion " + c.humanMotion
+                if (Clips.TryGetValue(slot.Ours, out c))
+                    ModLog.Verbose("WhipAnimations: clip " + slot.Ours + " (replaces " + slot.Key + " s): " + c.length.ToString("0.000") + " s, " + c.frameRate + " fps, humanMotion " + c.humanMotion
                         + ", " + c.events.Length + " event(s) [" + string.Join(", ", System.Array.ConvertAll(c.events, e => e.functionName + "@" + e.time.ToString("0.000"))) + "]");
-                else ModLog.Warn("WhipAnimations: clip " + kv.Value + " is not in the bundle (" + (bundle != null ? "rebuild it in Unity: Valheim > Set up WhipItUp animations, then Build AssetBundles" : "no bundle") + ") - " + kv.Key + " stays vanilla for the whip");
+                else ModLog.Warn("WhipAnimations: clip " + slot.Ours + " is not in the bundle (" + (bundle != null ? "rebuild it in Unity: Valheim > Set up WhipItUp animations, then Build AssetBundles" : "no bundle") + ") - " + slot.Key + " stays vanilla for the whip");
             }
             Lash = WhipLashFrames.Parse(ReadResource(LashResource), s => ModLog.Verbose(s));
-            ModLog.Verbose("WhipAnimations: loaded " + Clips.Count + " body clip(s) of " + ClipMap.Count + ", " + Lash.Count + " lash clip(s) of " + StateToLash.Count + ", enabled " + ModSettings.WhipCustomAnimations.Value);
-            return Clips.Count == ClipMap.Count && Lash.Count == StateToLash.Count;
+            ModLog.Verbose("WhipAnimations: loaded " + Clips.Count + " body clip(s) of " + ClipMap.Length + ", " + Lash.Count + " lash clip(s) of " + StateToLash.Count + ", enabled " + ModSettings.WhipCustomAnimations.Value);
+            return Clips.Count == ClipMap.Length && Lash.Count == StateToLash.Count;
         }
 
         static string ReadResource(string name)
@@ -196,19 +209,27 @@ namespace WhipItUp.Weapons
             aoc.GetOverrides(list);
             int replaced = 0;
             var found = new HashSet<string>();
+            var sameName = new List<string>();
             for (int i = 0; i < list.Count; i++)
             {
                 var key = list[i].Key;
-                string ours;
+                var slot = SlotFor(key);
                 AnimationClip clip;
-                if (key == null || !ClipMap.TryGetValue(key.name, out ours) || !Clips.TryGetValue(ours, out clip)) continue;
+                if (slot == null)
+                {
+                    if (key != null) foreach (var s in ClipMap) if (key.name == s.Name) sameName.Add(key.name + " " + key.length.ToString("0.000") + " s");
+                    continue;
+                }
+                if (!Clips.TryGetValue(slot.Ours, out clip)) continue;
                 list[i] = new KeyValuePair<AnimationClip, AnimationClip>(key, clip);
-                found.Add(key.name);
+                found.Add(slot.Key);
                 replaced++;
+                ModLog.Verbose("WhipAnimations: slot " + key.name + " (" + key.length.ToString("0.000") + " s) -> " + clip.name);
             }
             aoc.ApplyOverrides(list);
-            foreach (var k in ClipMap.Keys)
-                if (!found.Contains(k)) ModLog.Warn("WhipAnimations: the game's controller '" + original.name + "' has no clip '" + k + "' - its whip clip is not used (game update?)");
+            if (sameName.Count > 0) ModLog.Verbose("WhipAnimations: kept " + sameName.Count + " other clip(s) with a whip clip's name but another length: " + string.Join(", ", sameName.ToArray()));
+            foreach (var slot in ClipMap)
+                if (!found.Contains(slot.Key)) ModLog.Warn("WhipAnimations: the game's controller '" + original.name + "' has no clip '" + slot.Name + "' of " + slot.Length.ToString("0.000") + " s - its whip clip is not used (game update?)");
             ModLog.Verbose("WhipAnimations: override of '" + original.name + "' made: " + replaced + " clip slot(s) replaced of " + list.Count);
             Overrides[original] = aoc;
             return aoc;
