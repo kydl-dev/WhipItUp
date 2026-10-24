@@ -73,3 +73,6 @@ Desktop.ini
 # Unity MCP screenshots (agent checks, not project assets)
 WhipItUp-Unity/Assets/Screenshots/
 WhipItUp-Unity/Assets/Screenshots.meta
+
+# Full-size screenshots of the user's in-game tests (8-9 MB each; the small _s_*.jpg copies are tracked)
+/test-photos/2026-*.png
