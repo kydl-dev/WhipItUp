@@ -27,10 +27,11 @@ def main():
         pb.rotation_mode = 'XYZ'
         pb.rotation_euler = (0, 0, math.radians(52 * 16 / max(1, n) * (1 - 0.35 * i / max(1, n - 1))))
     p = bpy.data.objects['Paddle']
-    p.scale = (1.3, 1.3, 1.3); p.rotation_euler = (0, math.radians(-32), 0); p.location = (-0.11, 0.08, 0.03)
+    # user 2026-10-24: the weapons side by side (not from one point), the whip barely overlapping the others
+    p.scale = (1.3, 1.3, 1.3); p.rotation_euler = (0, math.radians(-14), 0); p.location = (-0.36, 0.08, 0.16)
     f = bpy.data.objects['FloggerRig']
-    f.rotation_euler = (0, math.radians(30), 0); f.location = (0.09, 0.08, 0.0)
-    rig.location = (-0.01, -0.12, 0.02)
+    f.rotation_euler = (0, math.radians(14), 0); f.location = (0.30, 0.08, -0.02)
+    rig.location = (0.04, -0.12, 0.10)
     bpy.context.view_layer.update()
     dg = bpy.context.evaluated_depsgraph_get()
     pts = []
