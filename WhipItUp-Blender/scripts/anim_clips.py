@@ -30,12 +30,12 @@ CLIPS = {
         (24, READY),
     ]},
     "W3_Overhand": {"frames": 25, "speed": [(1, 0.5), (4, 1.5), (16, 1.0)], "keys": [
-        # OnAttackTrigger on frame 8: arm up and back (slow, speed 0.5), overhead forward-down snap, the lash cracks in front at chest height
+        # D-095 (user): hit 3 leans like hit 2 (bend 49 / crouch 0.15 at the hit), not deeper. OnAttackTrigger on frame 8: arm up and back (slow, speed 0.5), overhead forward-down snap, the lash cracks in front at chest height
         (0, READY),
         (2, {"hand": (-0.32, 0.18, 1.95), "dir": (-0.1, 0.6, 0.8), "roll": 0, "twist": -25, "bend": -10, "lean": -5, "crouch": 0.05}),
-        (4, {"hand": (-0.25, -0.38, 1.72), "dir": (0.0, -0.9, 0.4), "roll": 0, "twist": -5, "bend": 38, "crouch": 0.20}),
-        (5, {"hand": (-0.15, -0.55, 1.30), "dir": (0.0, -0.9, -0.4), "roll": 0, "twist": 5, "bend": 82, "crouch": 0.35}),
-        (10, {"hand": (-0.12, -0.38, 1.00), "dir": (0.0, -0.5, -0.85), "roll": 0, "twist": 5, "bend": 90, "crouch": 0.40}),
+        (4, {"hand": (-0.25, -0.38, 1.72), "dir": (0.0, -0.9, 0.4), "roll": 0, "twist": -5, "bend": 35, "crouch": 0.12}),
+        (5, {"hand": (-0.15, -0.55, 1.30), "dir": (0.0, -0.9, -0.4), "roll": 0, "twist": 5, "bend": 49, "crouch": 0.15}),
+        (10, {"hand": (-0.12, -0.38, 1.00), "dir": (0.0, -0.5, -0.85), "roll": 0, "twist": 5, "bend": 49, "crouch": 0.15}),
         (24, READY),
     ]},
     "G_LashGrab": {"frames": 34, "speed": [(15, 1.5), (24, 1.0)],
