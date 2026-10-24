@@ -66,15 +66,16 @@ namespace WhipItUp.Tests.Unit
         }
 
         [Test]
-        public void EveryRecipe_EndsWithItsRankMetal_15BaseAnd5PerLevel()
+        public void EveryRecipe_EndsWithItsRankMetal_6BaseAndFlat2PerUpgrade()
         {
             var expected = new[] { "Tin", "Copper", "Bronze", "Iron", "BlackMetal", "Flametal_New", "Gold" };
             for (int i = 0; i < Ladder.Ranks; i++)
             {
                 var metal = Ladder.Ingredients[i].Last();
                 Assert.That(metal.Item, Is.EqualTo(expected[i]), "rank " + (i + 1));
-                Assert.That(metal.Amount, Is.EqualTo(15));
-                Assert.That(metal.AmountPerLevel, Is.EqualTo(5));
+                Assert.That(metal.Amount, Is.EqualTo(6));
+                Assert.That(metal.AmountPerLevel, Is.EqualTo(2));
+                Assert.That(metal.FlatUpgrade, Is.True, "D-105: a flat 2 for every upgrade");
                 Assert.That(Ladder.Ingredients[i].Length, Is.EqualTo(4), "the three crop ingredients stay (D-062: added, nothing removed)");
             }
         }
@@ -87,14 +88,24 @@ namespace WhipItUp.Tests.Unit
                     Assert.That(g.AmountPerLevel, Is.EqualTo(System.Math.Max(1, (g.Amount + 1) / 2)), g.Item);
         }
 
-        [TestCase(1, 15)]
+        [TestCase(1, 10)]
         [TestCase(2, 5)]
         [TestCase(3, 10)]
         [TestCase(4, 20)]
         public void UpgradeAmount_MirrorsTheGamesRequirementMath(int quality, int expected)
         {
-            // Piece.Requirement.GetAmount in assembly_valheim.dll 1.0.20: q1 = amount, q2 = 1x, q3 = 2x, q4 = 4x amountPerLevel (D-065)
-            Assert.That(Ladder.UpgradeAmount(Ladder.Ingredients[0].Last(), quality), Is.EqualTo(expected));
+            // Piece.Requirement.GetAmount in assembly_valheim.dll 1.0.20: q1 = amount, q2 = 1x, q3 = 2x, q4 = 4x amountPerLevel (D-065); V1 leather scraps 10 (+5)
+            Assert.That(Ladder.UpgradeAmount(Ladder.Ingredients[0][0], quality), Is.EqualTo(expected));
+        }
+
+        [TestCase(1, 6)]
+        [TestCase(2, 2)]
+        [TestCase(3, 2)]
+        [TestCase(4, 2)]
+        public void UpgradeAmount_RankMetalIsFlatPerUpgrade(int quality, int expected)
+        {
+            // D-105: the rank metal costs 6 to craft, then 2 for every upgrade (FlatUpgradePatch overrides the game's 1x / 2x / 4x)
+            for (int i = 0; i < Ladder.Ranks; i++) Assert.That(Ladder.UpgradeAmount(Ladder.Ingredients[i].Last(), quality), Is.EqualTo(expected), "rank " + (i + 1));
         }
 
         [Test]

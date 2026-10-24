@@ -5,7 +5,8 @@
 
 ## 1.0.0
 - First release.
-- Paddle, Flogger and Whip in seven ranks each (21 weapons), crafted at the workbench, forge and black forge.
+- Paddle, Flogger and Whip in seven ranks each (21 weapons), crafted at the workbench, forge and black forge; the rank metal
+  costs 6 to craft and a flat 2 for every upgrade.
 - New Whips skill (flogger and whip).
 - Whip: own attack animations (side flick, backhand, overhand finisher), keyed lash, coiled in the hand while idle, crack sound
   at full extension, one hit sound per swing, attack 2 wraps the enemy's body and pulls it in (x2 damage), shorter hit pause.

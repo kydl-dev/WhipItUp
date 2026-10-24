@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 SRC = os.path.join(HERE, "..", "renders", "_icon_weapons.png")
-FONT = os.path.join(ROOT, "WhipItUp-Unity", "Assets", "Kydl.Ui", "Preview", "GameAssets", "Norsebold.otf")
+FONT = os.path.join(ROOT, "WhipItUp-Unity", "Assets", "Kydl.Ui", "Preview", "GameAssets", "AveriaSerifLibre-Bold.ttf")   # the game's UI font; Norse has no lower case (user: only the W capital)
 OUT = os.path.join(ROOT, "WhipItUp-Mod", "icon.png")
 S = 4 * 256                      # draw at 4x, scale down at the end (smooth edges)
 BG_TOP, BG_BOTTOM = (38, 30, 24), (14, 11, 9)
@@ -18,32 +18,35 @@ ARCH_DEG = 30.0
 
 
 def draw_arched(img, text, font, bottom):
-    """Text on a concave arch (ends up, middle down) spanning ARCH_DEG degrees; every letter turned to follow the curve.
-    The letters sit on a circle whose centre is above the text; 'bottom' = lowest pixel of the middle letters."""
-    d = ImageDraw.Draw(img)
-    widths = [d.textlength(c, font=font) for c in text]
-    total = sum(widths)
-    radius = total / math.radians(ARCH_DEG)
-    asc = font.getbbox("W")[3]
-    cx, cy = S / 2, bottom - asc - radius            # circle centre above the text
-    pos = -total / 2
-    for c, w in zip(text, widths):
-        mid = pos + w / 2
-        pos += w
-        if c == " ":
-            continue
-        theta = mid / radius                           # radians, 0 = straight down from the centre
-        size = int(max(w, asc) * 2.2)
-        layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-        ld = ImageDraw.Draw(layer)
-        ox, oy = (size - w) / 2, size / 2 - asc / 2  # letter centred on the layer (rotation centre)
-        ld.text((ox + 5, oy + 6), c, font=font, fill=(0, 0, 0, 200))
-        ld.text((ox, oy), c, font=font, fill=GOLD, stroke_width=4, stroke_fill=GOLD_DARK)
-        layer = layer.rotate(-math.degrees(theta), resample=Image.BICUBIC)   # PIL turns counter-clockwise on screen; left letters lean right
-        bx = cx + (radius + asc / 2) * math.sin(theta)    # centre of the letter (half a cap height inside the circle)
-        by = cy + (radius + asc / 2) * math.cos(theta)
-        img.alpha_composite(layer, (int(bx - size / 2), int(by - size / 2)))
-
+    """The whole name bent as ONE piece onto a concave arch (smile: ends up, middle down) spanning ARCH_DEG degrees.
+    The text is drawn straight on its own layer, then every pixel is mapped onto a circle whose centre is above the text
+    (column = angle along the arc, row = distance from the centre), so the letters, spaces and shadow all follow one curve.
+    'bottom' = lowest pixel of the middle of the name."""
+    import numpy as np
+    pad = 20
+    l, t, r, b = font.getbbox(text, stroke_width=4)
+    tw, th = r - l + 2 * pad, b - t + 2 * pad
+    flat = Image.new("RGBA", (tw, th), (0, 0, 0, 0))
+    fd = ImageDraw.Draw(flat)
+    fd.text((pad - l + 5, pad - t + 6), text, font=font, fill=(0, 0, 0, 200))                  # drop shadow
+    fd.text((pad - l, pad - t), text, font=font, fill=GOLD, stroke_width=4, stroke_fill=GOLD_DARK)
+    src = np.asarray(flat).astype(np.float32)
+    radius = tw / math.radians(ARCH_DEG)               # radius of the text's top edge: the full width spans ARCH_DEG
+    cx, cy = S / 2.0, bottom - th - radius             # circle centre above the name
+    ys, xs = np.mgrid[0:S, 0:S].astype(np.float32)
+    dx, dy = xs - cx, ys - cy
+    rr = np.sqrt(dx * dx + dy * dy)
+    theta = np.arctan2(dx, dy)                         # 0 = straight down from the centre, positive = to the right
+    u = theta * radius + tw / 2.0                      # column in the flat text
+    v = rr - radius                                    # row in the flat text (0 = top edge)
+    ok = (u >= 0) & (u < tw - 1) & (v >= 0) & (v < th - 1) & (dy > 0)
+    u0, v0 = np.floor(u).astype(int), np.floor(v).astype(int)
+    fu, fv = (u - u0)[..., None], (v - v0)[..., None]
+    u0, v0 = np.clip(u0, 0, tw - 2), np.clip(v0, 0, th - 2)
+    out = (src[v0, u0] * (1 - fu) * (1 - fv) + src[v0, u0 + 1] * fu * (1 - fv)
+           + src[v0 + 1, u0] * (1 - fu) * fv + src[v0 + 1, u0 + 1] * fu * fv)      # bilinear
+    out[~ok] = 0
+    img.alpha_composite(Image.fromarray(out.clip(0, 255).astype(np.uint8), "RGBA"))
 
 def main():
     img = Image.new("RGBA", (S, S))
@@ -66,7 +69,7 @@ def main():
     img.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(10)), (x + 10, y + 14))
     img.alpha_composite(w, (x, y))
 
-    font = ImageFont.truetype(FONT, int(S * 0.185))
+    font = ImageFont.truetype(FONT, int(S * 0.17))
     draw_arched(img, NAME, font, bottom=int(S * 0.955))
     d = ImageDraw.Draw(img)
     d.rectangle([6, 6, S - 7, S - 7], outline=GOLD_DARK + (255,), width=10)   # thin frame

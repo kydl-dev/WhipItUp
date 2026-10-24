@@ -120,7 +120,7 @@ namespace WhipItUp.Weapons
                     continue;
                 }
                 if (id != g.Item) ModLog.Verbose(Family + "Items: " + name + ": ingredient '" + g.Item + "' is not in the game, using '" + id + "'");
-                result.Add(new Ladder.Ingredient(id, g.Amount, g.AmountPerLevel, null));
+                result.Add(new Ladder.Ingredient(id, g.Amount, g.AmountPerLevel, null, g.FlatUpgrade));
             }
             ModLog.Verbose(Family + "Items: " + name + ": recipe " + result.Count + " of " + Ladder.Ingredients[index].Length + " ingredients: " + string.Join(", ", result.Select(g => g.ToString())));
             return result;

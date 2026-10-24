@@ -136,6 +136,32 @@ namespace WhipItUp.Testing
             return r;
         }
 
+        /// D-105: every weapon's rank metal costs Ladder.MetalBaseAmount to craft and a flat Ladder.MetalAmountPerLevel for each upgrade
+        /// (asked through the game's own Piece.Requirement.GetAmount, so FlatUpgradePatch is part of the check).
+        static string World_MetalCostFlat()
+        {
+            if (ObjectDB.instance == null) return "SKIP: ObjectDB not ready";
+            int found = Weapons.FlatUpgradePatch.Scan(), checkedN = 0;
+            var bad = new List<string>();
+            foreach (var r in ObjectDB.instance.m_recipes)
+            {
+                if (r == null || r.m_item == null || !Expected().Contains(r.m_item.name)) continue;
+                foreach (var req in r.m_resources)
+                {
+                    if (req == null || req.m_resItem == null || !Weapons.Ladder.MetalIds.Any(ids => ids.Contains(req.m_resItem.name))) continue;
+                    checkedN++;
+                    string got = req.GetAmount(1) + "/" + req.GetAmount(2) + "/" + req.GetAmount(3) + "/" + req.GetAmount(4);
+                    string want = Weapons.Ladder.MetalBaseAmount + "/" + Weapons.Ladder.MetalAmountPerLevel + "/" + Weapons.Ladder.MetalAmountPerLevel + "/" + Weapons.Ladder.MetalAmountPerLevel;
+                    if (got != want) bad.Add(r.m_item.name + " " + req.m_resItem.name + " " + got);
+                }
+            }
+            string r2 = checkedN == 0 ? "FAIL: no rank metal found in the WhipItUp recipes"
+                : bad.Count == 0 ? "PASS: " + checkedN + " recipe(s), metal q1..q4 = " + Weapons.Ladder.MetalBaseAmount + "/" + Weapons.Ladder.MetalAmountPerLevel + "/" + Weapons.Ladder.MetalAmountPerLevel + "/" + Weapons.Ladder.MetalAmountPerLevel + " (" + found + " flat requirement(s))"
+                : "FAIL: " + bad.Count + " of " + checkedN + " wrong (q1/q2/q3/q4): " + string.Join(", ", bad.Take(5).ToArray());
+            ModLog.Verbose("InGameTests: World_MetalCostFlat -> " + r2);
+            return r2;
+        }
+
         static IEnumerable<string> Expected()
         {
             foreach (var f in Families)

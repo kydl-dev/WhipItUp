@@ -19,15 +19,15 @@ out when you attack, and a second attack that wraps the lash around an enemy and
 ## Weapons
 All weapons: max quality 4, +6 damage per level, durability 200 to 500 (+40 per level).
 
-| Rank | Station | Paddle (blunt) | Flogger / Whip (slash + bleed per s) | Materials (upgrade adds) |
+| Rank | Station | Paddle (blunt) | Flogger / Whip (slash + bleed per s) | Materials to craft (upgrade to quality 2 / 3 / 4) |
 |------|---------|----------------|--------------------------------------|--------------------------|
-| V1 | Workbench 1 | 30 | 20 + 10 | 10 Leather scraps (+5), 2 Resin (+1), 5 Wood (+3), 15 Tin (+5) |
-| V2 | Workbench 2 | 40.5 | 28 + 12.5 | 10 Deer hide (+5), 2 Bronze (+1), 5 Fine wood (+3), 15 Copper (+5) |
-| V3 | Forge 1 | 54.8 | 39.2 + 15.6 | 10 Bear hide (+5), 2 Surtling core (+1), 5 Core wood (+3), 15 Bronze (+5) |
-| V4 | Forge 2 | 74.4 | 54.9 + 19.5 | 10 Wolf pelt (+5), 2 Obsidian (+1), 5 Fine wood (+3), 15 Iron (+5) |
-| V5 | Forge 3 | 101.3 | 76.8 + 24.4 | 10 Lox pelt (+5), 2 Tar (+1), 5 Ancient bark (+3), 15 Black metal (+5) |
-| V6 | Black forge 1 | 138.1 | 107.6 + 30.5 | 10 Asksvin hide (+5), 2 Charred bone (+1), 5 Blackwood (+3), 15 Flametal (+5) |
-| V7 | Black forge 2 | 188.7 | 150.6 + 38.2 | 10 Moose hide (+5), 2 Seal hide (+1), 5 Frostwood (+3), 15 Gold (+5) |
+| V1 | Workbench 1 | 30 | 20 + 10 | 10 Leather scraps (5/10/20), 2 Resin (1/2/4), 5 Wood (3/6/12), 6 Tin (2/2/2) |
+| V2 | Workbench 2 | 40.5 | 28 + 12.5 | 10 Deer hide (5/10/20), 2 Bronze (1/2/4), 5 Fine wood (3/6/12), 6 Copper (2/2/2) |
+| V3 | Forge 1 | 54.8 | 39.2 + 15.6 | 10 Bear hide (5/10/20), 2 Surtling core (1/2/4), 5 Core wood (3/6/12), 6 Bronze (2/2/2) |
+| V4 | Forge 2 | 74.4 | 54.9 + 19.5 | 10 Wolf pelt (5/10/20), 2 Obsidian (1/2/4), 5 Fine wood (3/6/12), 6 Iron (2/2/2) |
+| V5 | Forge 3 | 101.3 | 76.8 + 24.4 | 10 Lox pelt (5/10/20), 2 Tar (1/2/4), 5 Ancient bark (3/6/12), 6 Black metal (2/2/2) |
+| V6 | Black forge 1 | 138.1 | 107.6 + 30.5 | 10 Asksvin hide (5/10/20), 2 Charred bone (1/2/4), 5 Blackwood (3/6/12), 6 Flametal (2/2/2) |
+| V7 | Black forge 2 | 188.7 | 150.6 + 38.2 | 10 Moose hide (5/10/20), 2 Seal hide (1/2/4), 5 Frostwood (3/6/12), 6 Gold (2/2/2) |
 
 The F6 menu shows the exact numbers of every weapon at every quality level.
 
