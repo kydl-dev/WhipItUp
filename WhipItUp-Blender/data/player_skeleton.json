@@ -1,0 +1,1483 @@
+{
+ "source": "Valheim-Unity-AssetRipper Assets/Avatar/player_maleAvatar.asset (m_HumanDescription.m_Skeleton), Player.prefab, Club.prefab - Unity space, T-pose",
+ "skeleton": [
+  {
+   "name": "player_male(Clone)",
+   "parent": "",
+   "pos": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "Armature",
+   "parent": "player_male(Clone)",
+   "pos": [
+    -0.0,
+    0.0,
+    0.0
+   ],
+   "rot": [
+    -0.7071068,
+    0.0,
+    -0.0,
+    0.7071068
+   ],
+   "scale": [
+    100.0,
+    100.0,
+    100.0
+   ]
+  },
+  {
+   "name": "Hips",
+   "parent": "Armature",
+   "pos": [
+    0.00010090403,
+    0.00013691901,
+    0.009866979
+   ],
+   "rot": [
+    0.7071068,
+    -6.1738565e-09,
+    -1.0289758e-08,
+    0.7071068
+   ],
+   "scale": [
+    0.9999999,
+    1.0000004,
+    1.0000004
+   ]
+  },
+  {
+   "name": "Spine",
+   "parent": "Hips",
+   "pos": [
+    -8.381903e-11,
+    0.0012021612,
+    -7.52043e-10
+   ],
+   "rot": [
+    -0.0392265,
+    1.7220533e-08,
+    6.501269e-09,
+    0.9992304
+   ],
+   "scale": [
+    1.0,
+    0.99999976,
+    0.99999976
+   ]
+  },
+  {
+   "name": "Spine1",
+   "parent": "Spine",
+   "pos": [
+    -9.313225e-11,
+    0.0030143592,
+    -4.598405e-11
+   ],
+   "rot": [
+    -0.010170664,
+    -2.9053968e-08,
+    -1.8517599e-09,
+    0.99994826
+   ],
+   "scale": [
+    1.0000001,
+    0.99999994,
+    1.0000002
+   ]
+  },
+  {
+   "name": "Spine2",
+   "parent": "Spine1",
+   "pos": [
+    2.2351741e-10,
+    0.0015082223,
+    -2.5145708e-10
+   ],
+   "rot": [
+    -0.0,
+    3.741009e-08,
+    -2.3344265e-08,
+    1.0
+   ],
+   "scale": [
+    0.9999998,
+    1.0000002,
+    0.9999999
+   ]
+  },
+  {
+   "name": "Neck",
+   "parent": "Spine2",
+   "pos": [
+    -0.0,
+    0.0016489358,
+    7.4505804e-11
+   ],
+   "rot": [
+    0.2911169,
+    -0.008053749,
+    0.02112157,
+    0.9564205
+   ],
+   "scale": [
+    0.99999994,
+    0.9999999,
+    1.0
+   ]
+  },
+  {
+   "name": "Head",
+   "parent": "Neck",
+   "pos": [
+    5.2154064e-10,
+    0.0007881573,
+    -3.7252902e-11
+   ],
+   "rot": [
+    -0.059805155,
+    0.7036074,
+    -0.098383,
+    0.7011996
+   ],
+   "scale": [
+    1.0000005,
+    1.0000004,
+    1.0000008
+   ]
+  },
+  {
+   "name": "Jaw",
+   "parent": "Head",
+   "pos": [
+    -0.0005369454,
+    0.00068349804,
+    -8.0093737e-10
+   ],
+   "rot": [
+    0.5269493,
+    -0.47151312,
+    0.5269496,
+    0.47151235
+   ],
+   "scale": [
+    0.9999994,
+    1.0000001,
+    1.0000006
+   ]
+  },
+  {
+   "name": "Jaw_end",
+   "parent": "Jaw",
+   "pos": [
+    -0.0,
+    0.00096869154,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "LeftShoulder",
+   "parent": "Spine2",
+   "pos": [
+    -0.00076516566,
+    0.0014336536,
+    -2.8954073e-05
+   ],
+   "rot": [
+    0.5642891,
+    -0.41886634,
+    0.5860067,
+    0.40339184
+   ],
+   "scale": [
+    1.0,
+    1.0000008,
+    1.0000006
+   ]
+  },
+  {
+   "name": "LeftArm",
+   "parent": "LeftShoulder",
+   "pos": [
+    7.4505804e-11,
+    0.001607737,
+    -4.4703483e-10
+   ],
+   "rot": [
+    -0.14678259,
+    -0.0488278,
+    -0.010012207,
+    0.9879122
+   ],
+   "scale": [
+    1.0000008,
+    1.0000017,
+    1.0000011
+   ]
+  },
+  {
+   "name": "LeftForeArm",
+   "parent": "LeftArm",
+   "pos": [
+    -7.4505804e-11,
+    0.0033469393,
+    -5.5879353e-11
+   ],
+   "rot": [
+    -0.006965696,
+    2.9470768e-05,
+    -0.0042490414,
+    0.99996674
+   ],
+   "scale": [
+    1.0000007,
+    0.9999985,
+    1.0000002
+   ]
+  },
+  {
+   "name": "LeftHand",
+   "parent": "LeftForeArm",
+   "pos": [
+    3.7252902e-11,
+    0.0027371305,
+    -1.11758706e-10
+   ],
+   "rot": [
+    -0.0645542,
+    0.028323505,
+    0.012622981,
+    0.9974323
+   ],
+   "scale": [
+    0.99999976,
+    1.0000004,
+    0.99999934
+   ]
+  },
+  {
+   "name": "LeftHandThumb1",
+   "parent": "LeftHand",
+   "pos": [
+    0.0004962918,
+    0.00041495016,
+    0.00015192367
+   ],
+   "rot": [
+    0.047498085,
+    -0.006302345,
+    -0.36067697,
+    0.93145925
+   ],
+   "scale": [
+    1.0,
+    1.0000001,
+    1.0000001
+   ]
+  },
+  {
+   "name": "LeftHandThumb2",
+   "parent": "LeftHandThumb1",
+   "pos": [
+    4.0978193e-10,
+    0.000567857,
+    -1.7695129e-10
+   ],
+   "rot": [
+    -0.013928442,
+    0.19235261,
+    0.033555433,
+    0.98065305
+   ],
+   "scale": [
+    0.99999946,
+    1.0000001,
+    0.9999995
+   ]
+  },
+  {
+   "name": "LeftHandThumb3",
+   "parent": "LeftHandThumb2",
+   "pos": [
+    -0.0,
+    0.0004628981,
+    -4.842877e-10
+   ],
+   "rot": [
+    0.019731522,
+    -0.23875377,
+    0.032477394,
+    0.9703363
+   ],
+   "scale": [
+    1.0000004,
+    1.0000011,
+    1.000001
+   ]
+  },
+  {
+   "name": "LeftHandThumb3_end",
+   "parent": "LeftHandThumb3",
+   "pos": [
+    -0.0,
+    0.00038184325,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "LeftHandIndex1",
+   "parent": "LeftHand",
+   "pos": [
+    0.00039592403,
+    0.0011101284,
+    -4.8722857e-05
+   ],
+   "rot": [
+    0.032827668,
+    -0.0014564394,
+    -0.10970098,
+    0.9934214
+   ],
+   "scale": [
+    0.9999999,
+    1.0000004,
+    1.0000005
+   ]
+  },
+  {
+   "name": "LeftHandIndex2",
+   "parent": "LeftHandIndex1",
+   "pos": [
+    -2.2351741e-10,
+    0.0005313427,
+    -1.15484e-09
+   ],
+   "rot": [
+    0.03912124,
+    0.061061814,
+    0.00877451,
+    0.99732846
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0000001
+   ]
+  },
+  {
+   "name": "LeftHandIndex3",
+   "parent": "LeftHandIndex2",
+   "pos": [
+    -5.5879353e-11,
+    0.0003363429,
+    -4.4703483e-10
+   ],
+   "rot": [
+    0.0048238034,
+    -0.056533735,
+    0.005756668,
+    0.9983725
+   ],
+   "scale": [
+    1.0000001,
+    1.0000007,
+    1.0000005
+   ]
+  },
+  {
+   "name": "LeftHandIndex3_end",
+   "parent": "LeftHandIndex3",
+   "pos": [
+    -0.0,
+    0.00033579947,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "LeftHandMiddle1",
+   "parent": "LeftHand",
+   "pos": [
+    0.000116713214,
+    0.0011935522,
+    -4.549059e-05
+   ],
+   "rot": [
+    -0.024671288,
+    -0.0010622272,
+    -0.06158491,
+    0.99779636
+   ],
+   "scale": [
+    1.0000002,
+    1.0000008,
+    1.0000007
+   ]
+  },
+  {
+   "name": "LeftHandMiddle2",
+   "parent": "LeftHandMiddle1",
+   "pos": [
+    4.6566126e-11,
+    0.00053211127,
+    3.786408e-10
+   ],
+   "rot": [
+    0.036842402,
+    0.0028117711,
+    0.00021415569,
+    0.9993171
+   ],
+   "scale": [
+    0.9999996,
+    1.0000004,
+    1.0000002
+   ]
+  },
+  {
+   "name": "LeftHandMiddle3",
+   "parent": "LeftHandMiddle2",
+   "pos": [
+    -1.4901161e-10,
+    0.00036083884,
+    -3.7252902e-11
+   ],
+   "rot": [
+    0.010870335,
+    0.006479813,
+    0.0051906635,
+    0.99990654
+   ],
+   "scale": [
+    1.0000002,
+    1.0000005,
+    1.0000007
+   ]
+  },
+  {
+   "name": "LeftHandMiddle3_end",
+   "parent": "LeftHandMiddle3",
+   "pos": [
+    -0.0,
+    0.00043568373,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "LeftHandRing1",
+   "parent": "LeftHand",
+   "pos": [
+    -0.00017548035,
+    0.0012459002,
+    -3.304205e-05
+   ],
+   "rot": [
+    -0.020099925,
+    0.00026894355,
+    -0.016456967,
+    0.9996625
+   ],
+   "scale": [
+    0.9999998,
+    1.0000007,
+    1.0000006
+   ]
+  },
+  {
+   "name": "LeftHandRing2",
+   "parent": "LeftHandRing1",
+   "pos": [
+    5.704351e-10,
+    0.0004996685,
+    7.45058e-10
+   ],
+   "rot": [
+    0.037163977,
+    -0.0062478953,
+    0.0024550967,
+    0.9992866
+   ],
+   "scale": [
+    1.0000007,
+    1.0000018,
+    1.0000017
+   ]
+  },
+  {
+   "name": "LeftHandRing3",
+   "parent": "LeftHandRing2",
+   "pos": [
+    1.8626451e-11,
+    0.00032183758,
+    3.72529e-10
+   ],
+   "rot": [
+    0.03992168,
+    0.003498747,
+    -0.0036790362,
+    0.99919
+   ],
+   "scale": [
+    0.9999996,
+    1.0000001,
+    1.0000004
+   ]
+  },
+  {
+   "name": "LeftHandRing3_end",
+   "parent": "LeftHandRing3",
+   "pos": [
+    -0.0,
+    0.0003628631,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "LeftHandPinky1",
+   "parent": "LeftHand",
+   "pos": [
+    -0.00048480052,
+    0.0011259163,
+    -7.299292e-05
+   ],
+   "rot": [
+    0.021951929,
+    0.006639561,
+    0.021221194,
+    0.9995117
+   ],
+   "scale": [
+    0.99999964,
+    0.9999999,
+    1.0000004
+   ]
+  },
+  {
+   "name": "LeftHandPinky2",
+   "parent": "LeftHandPinky1",
+   "pos": [
+    1.2572854e-10,
+    0.00039625715,
+    -1.3783574e-09
+   ],
+   "rot": [
+    0.031321947,
+    0.008380293,
+    -0.024010457,
+    0.9991858
+   ],
+   "scale": [
+    1.0,
+    1.0000007,
+    0.99999994
+   ]
+  },
+  {
+   "name": "LeftHandPinky3",
+   "parent": "LeftHandPinky2",
+   "pos": [
+    -5.2154064e-10,
+    0.00024451702,
+    7.4505804e-11
+   ],
+   "rot": [
+    0.010997547,
+    0.0013389218,
+    0.038970158,
+    0.99917895
+   ],
+   "scale": [
+    1.0000001,
+    1.000001,
+    1.0000004
+   ]
+  },
+  {
+   "name": "LeftHandPinky3_end",
+   "parent": "LeftHandPinky3",
+   "pos": [
+    -0.0,
+    0.00030665763,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "RightShoulder",
+   "parent": "Spine2",
+   "pos": [
+    0.0007651656,
+    0.0014336535,
+    -2.8953626e-05
+   ],
+   "rot": [
+    -0.5642891,
+    -0.41886628,
+    0.58600676,
+    -0.40339187
+   ],
+   "scale": [
+    1.0,
+    1.0000006,
+    1.0000001
+   ]
+  },
+  {
+   "name": "RightArm",
+   "parent": "RightShoulder",
+   "pos": [
+    5.9604643e-10,
+    0.0016077372,
+    -5.494803e-10
+   ],
+   "rot": [
+    -0.14678256,
+    0.04882794,
+    0.010012205,
+    0.9879122
+   ],
+   "scale": [
+    0.99999994,
+    0.9999999,
+    1.0000001
+   ]
+  },
+  {
+   "name": "RightForeArm",
+   "parent": "RightArm",
+   "pos": [
+    -0.0,
+    0.0033469398,
+    -7.0780515e-10
+   ],
+   "rot": [
+    -0.0069656647,
+    -2.955272e-05,
+    0.0042490507,
+    0.9999668
+   ],
+   "scale": [
+    1.0000005,
+    1.0000007,
+    1.0000002
+   ]
+  },
+  {
+   "name": "RightHand",
+   "parent": "RightForeArm",
+   "pos": [
+    7.4505804e-11,
+    0.0027371317,
+    4.842877e-10
+   ],
+   "rot": [
+    -0.0645542,
+    -0.028323459,
+    -0.01262308,
+    0.99743235
+   ],
+   "scale": [
+    0.9999998,
+    0.9999993,
+    0.99999964
+   ]
+  },
+  {
+   "name": "RightHandThumb1",
+   "parent": "RightHand",
+   "pos": [
+    -0.00049629225,
+    0.00041495057,
+    0.00015192576
+   ],
+   "rot": [
+    -0.0474992,
+    -0.0063026575,
+    -0.36067545,
+    -0.9314599
+   ],
+   "scale": [
+    1.0000002,
+    1.0,
+    0.9999998
+   ]
+  },
+  {
+   "name": "RightHandThumb2",
+   "parent": "RightHandThumb1",
+   "pos": [
+    -1.3597309e-09,
+    0.0005678569,
+    -2.7939677e-11
+   ],
+   "rot": [
+    0.013926951,
+    0.19235282,
+    0.03355461,
+    -0.98065317
+   ],
+   "scale": [
+    0.99999964,
+    1.0,
+    0.9999999
+   ]
+  },
+  {
+   "name": "RightHandThumb3",
+   "parent": "RightHandThumb2",
+   "pos": [
+    -2.2351741e-10,
+    0.00046290012,
+    -2.2351741e-10
+   ],
+   "rot": [
+    -0.019730018,
+    -0.23875394,
+    0.03247606,
+    -0.9703363
+   ],
+   "scale": [
+    1.0000001,
+    1.0000011,
+    1.0000006
+   ]
+  },
+  {
+   "name": "RightHandThumb3_end",
+   "parent": "RightHandThumb3",
+   "pos": [
+    -0.0,
+    0.00038184325,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "RightHandIndex1",
+   "parent": "RightHand",
+   "pos": [
+    -0.0003959243,
+    0.0011101301,
+    -4.872086e-05
+   ],
+   "rot": [
+    -0.03282775,
+    -0.0014563963,
+    -0.109701015,
+    -0.9934214
+   ],
+   "scale": [
+    0.9999998,
+    1.0000005,
+    1.0000001
+   ]
+  },
+  {
+   "name": "RightHandIndex2",
+   "parent": "RightHandIndex1",
+   "pos": [
+    -8.1490724e-11,
+    0.00053134235,
+    1.2945384e-09
+   ],
+   "rot": [
+    -0.039123096,
+    0.06106172,
+    0.008775041,
+    -0.9973284
+   ],
+   "scale": [
+    1.0000002,
+    1.0000004,
+    1.0000007
+   ]
+  },
+  {
+   "name": "RightHandIndex3",
+   "parent": "RightHandIndex2",
+   "pos": [
+    1.6763806e-10,
+    0.0003363464,
+    -1.1920929e-09
+   ],
+   "rot": [
+    -0.004823779,
+    -0.05653375,
+    0.0057567623,
+    -0.9983725
+   ],
+   "scale": [
+    0.9999998,
+    1.0000011,
+    1.0000011
+   ]
+  },
+  {
+   "name": "RightHandIndex3_end",
+   "parent": "RightHandIndex3",
+   "pos": [
+    -0.0,
+    0.00033579947,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "RightHandMiddle1",
+   "parent": "RightHand",
+   "pos": [
+    -0.00011671403,
+    0.0011935553,
+    -4.548902e-05
+   ],
+   "rot": [
+    -0.024671165,
+    0.0010622437,
+    0.06158501,
+    0.9977963
+   ],
+   "scale": [
+    1.0000007,
+    1.0000011,
+    1.0000008
+   ]
+  },
+  {
+   "name": "RightHandMiddle2",
+   "parent": "RightHandMiddle1",
+   "pos": [
+    -4.656613e-10,
+    0.0005321109,
+    -2.3655593e-09
+   ],
+   "rot": [
+    0.036839366,
+    -0.0028119246,
+    -0.00021285156,
+    0.9993173
+   ],
+   "scale": [
+    0.9999995,
+    0.9999991,
+    0.9999988
+   ]
+  },
+  {
+   "name": "RightHandMiddle3",
+   "parent": "RightHandMiddle2",
+   "pos": [
+    -1.4901161e-10,
+    0.00036083919,
+    1.15484e-09
+   ],
+   "rot": [
+    0.010870436,
+    -0.0064798654,
+    -0.005190762,
+    0.9999065
+   ],
+   "scale": [
+    0.99999964,
+    0.99999946,
+    0.9999999
+   ]
+  },
+  {
+   "name": "RightHandMiddle3_end",
+   "parent": "RightHandMiddle3",
+   "pos": [
+    -0.0,
+    0.00043568373,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "RightHandRing1",
+   "parent": "RightHand",
+   "pos": [
+    0.00017547996,
+    0.0012459023,
+    -3.3041164e-05
+   ],
+   "rot": [
+    -0.020099854,
+    -0.00026889134,
+    0.016457044,
+    0.9996625
+   ],
+   "scale": [
+    1.0000002,
+    1.0000007,
+    1.0000002
+   ]
+  },
+  {
+   "name": "RightHandRing2",
+   "parent": "RightHandRing1",
+   "pos": [
+    -3.329478e-10,
+    0.0004996683,
+    -1.5366822e-09
+   ],
+   "rot": [
+    0.03716361,
+    0.0062477835,
+    -0.0024542809,
+    0.9992867
+   ],
+   "scale": [
+    0.99999976,
+    1.0000001,
+    1.0000001
+   ]
+  },
+  {
+   "name": "RightHandRing3",
+   "parent": "RightHandRing2",
+   "pos": [
+    1.6763806e-10,
+    0.00032183708,
+    2.30968e-09
+   ],
+   "rot": [
+    0.03992673,
+    -0.0034988024,
+    0.0036791174,
+    0.99918973
+   ],
+   "scale": [
+    0.99999994,
+    0.9999992,
+    0.9999999
+   ]
+  },
+  {
+   "name": "RightHandRing3_end",
+   "parent": "RightHandRing3",
+   "pos": [
+    -0.0,
+    0.0003628631,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "RightHandPinky1",
+   "parent": "RightHand",
+   "pos": [
+    0.00048480023,
+    0.0011259194,
+    -7.2991104e-05
+   ],
+   "rot": [
+    0.021948766,
+    -0.006640053,
+    -0.021219416,
+    0.9995119
+   ],
+   "scale": [
+    0.9999993,
+    1.0000001,
+    1.0000002
+   ]
+  },
+  {
+   "name": "RightHandPinky2",
+   "parent": "RightHandPinky1",
+   "pos": [
+    -2.764864e-10,
+    0.00039625753,
+    6.3562766e-10
+   ],
+   "rot": [
+    0.03131993,
+    -0.008380083,
+    0.02400953,
+    0.99918586
+   ],
+   "scale": [
+    1.0000001,
+    0.99999976,
+    0.9999999
+   ]
+  },
+  {
+   "name": "RightHandPinky3",
+   "parent": "RightHandPinky2",
+   "pos": [
+    2.2351741e-10,
+    0.00024451732,
+    2.1979212e-09
+   ],
+   "rot": [
+    0.011000488,
+    -0.0013389923,
+    -0.03897503,
+    0.99917877
+   ],
+   "scale": [
+    0.99999994,
+    1.0000006,
+    1.0000005
+   ]
+  },
+  {
+   "name": "RightHandPinky3_end",
+   "parent": "RightHandPinky3",
+   "pos": [
+    -0.0,
+    0.00030665763,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "LeftUpLeg",
+   "parent": "Hips",
+   "pos": [
+    -0.0010281947,
+    0.0011446909,
+    -5.2993837e-05
+   ],
+   "rot": [
+    0.00026793053,
+    -0.03361803,
+    0.99940425,
+    0.0078062774
+   ],
+   "scale": [
+    1.0000156,
+    1.0000558,
+    1.0000007
+   ]
+  },
+  {
+   "name": "LeftLeg",
+   "parent": "LeftUpLeg",
+   "pos": [
+    -2.2351741e-10,
+    0.0047386778,
+    1.2293457e-09
+   ],
+   "rot": [
+    -0.003857621,
+    -2.0648391e-05,
+    0.0031373168,
+    0.9999876
+   ],
+   "scale": [
+    1.000007,
+    0.9999773,
+    1.000017
+   ]
+  },
+  {
+   "name": "LeftFoot",
+   "parent": "LeftLeg",
+   "pos": [
+    -1.4115357e-10,
+    0.004699666,
+    7.4505804e-11
+   ],
+   "rot": [
+    0.4849177,
+    -0.0323821,
+    0.017971683,
+    0.8737753
+   ],
+   "scale": [
+    1.0000002,
+    0.9999971,
+    1.0000042
+   ]
+  },
+  {
+   "name": "LeftToeBase",
+   "parent": "LeftFoot",
+   "pos": [
+    -2.0489097e-10,
+    0.0021587827,
+    2.4214386e-10
+   ],
+   "rot": [
+    0.2955291,
+    0.10773133,
+    -0.06653597,
+    0.9469052
+   ],
+   "scale": [
+    1.000001,
+    1.0000068,
+    0.999995
+   ]
+  },
+  {
+   "name": "LeftToeBase_end",
+   "parent": "LeftToeBase",
+   "pos": [
+    -0.0,
+    0.00080403034,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "RightUpLeg",
+   "parent": "Hips",
+   "pos": [
+    0.0010281949,
+    0.0011446911,
+    -5.2993557e-05
+   ],
+   "rot": [
+    -0.00026790748,
+    -0.03361803,
+    0.99940425,
+    -0.007806293
+   ],
+   "scale": [
+    1.0000025,
+    1.0000019,
+    1.0000672
+   ]
+  },
+  {
+   "name": "RightLeg",
+   "parent": "RightUpLeg",
+   "pos": [
+    -1.6298145e-10,
+    0.0047386773,
+    -3.1664968e-10
+   ],
+   "rot": [
+    -0.0038576212,
+    2.0647663e-05,
+    -0.0031373217,
+    0.9999876
+   ],
+   "scale": [
+    1.0000042,
+    1.0000261,
+    0.9999727
+   ]
+  },
+  {
+   "name": "RightFoot",
+   "parent": "RightLeg",
+   "pos": [
+    8.731149e-11,
+    0.004699664,
+    -2.0954757e-11
+   ],
+   "rot": [
+    0.4849177,
+    0.03238212,
+    -0.017971674,
+    0.8737753
+   ],
+   "scale": [
+    1.0000001,
+    1.0000044,
+    0.9999965
+   ]
+  },
+  {
+   "name": "RightToeBase",
+   "parent": "RightFoot",
+   "pos": [
+    2.7939677e-11,
+    0.0021587824,
+    -6.286427e-11
+   ],
+   "rot": [
+    0.2955291,
+    -0.10773136,
+    0.06653599,
+    0.9469052
+   ],
+   "scale": [
+    1.0000014,
+    0.9999949,
+    1.0000063
+   ]
+  },
+  {
+   "name": "RightToeBase_end",
+   "parent": "RightToeBase",
+   "pos": [
+    -0.0,
+    0.00080403034,
+    0.0
+   ],
+   "rot": [
+    0.0,
+    -0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "name": "body",
+   "parent": "player_male(Clone)",
+   "pos": [
+    -0.0,
+    0.0,
+    0.0
+   ],
+   "rot": [
+    -0.7071068,
+    0.0,
+    -0.0,
+    0.7071068
+   ],
+   "scale": [
+    100.0,
+    100.0,
+    100.0
+   ]
+  }
+ ],
+ "human": {
+  "Hips": "Hips",
+  "LeftUpLeg": "LeftUpperLeg",
+  "RightUpLeg": "RightUpperLeg",
+  "LeftLeg": "LeftLowerLeg",
+  "RightLeg": "RightLowerLeg",
+  "LeftFoot": "LeftFoot",
+  "RightFoot": "RightFoot",
+  "Spine": "Spine",
+  "Spine1": "Chest",
+  "Neck": "Neck",
+  "Head": "Head",
+  "LeftShoulder": "LeftShoulder",
+  "RightShoulder": "RightShoulder",
+  "LeftArm": "LeftUpperArm",
+  "RightArm": "RightUpperArm",
+  "LeftForeArm": "LeftLowerArm",
+  "RightForeArm": "RightLowerArm",
+  "LeftHand": "LeftHand",
+  "RightHand": "RightHand",
+  "LeftToeBase": "LeftToes",
+  "RightToeBase": "RightToes",
+  "Jaw": "Jaw",
+  "LeftHandThumb1": "Left Thumb Proximal",
+  "LeftHandThumb2": "Left Thumb Intermediate",
+  "LeftHandThumb3": "Left Thumb Distal",
+  "LeftHandIndex1": "Left Index Proximal",
+  "LeftHandIndex2": "Left Index Intermediate",
+  "LeftHandIndex3": "Left Index Distal",
+  "LeftHandMiddle1": "Left Middle Proximal",
+  "LeftHandMiddle2": "Left Middle Intermediate",
+  "LeftHandMiddle3": "Left Middle Distal",
+  "LeftHandRing1": "Left Ring Proximal",
+  "LeftHandRing2": "Left Ring Intermediate",
+  "LeftHandRing3": "Left Ring Distal",
+  "LeftHandPinky1": "Left Little Proximal",
+  "LeftHandPinky2": "Left Little Intermediate",
+  "LeftHandPinky3": "Left Little Distal",
+  "RightHandThumb1": "Right Thumb Proximal",
+  "RightHandThumb2": "Right Thumb Intermediate",
+  "RightHandThumb3": "Right Thumb Distal",
+  "RightHandIndex1": "Right Index Proximal",
+  "RightHandIndex2": "Right Index Intermediate",
+  "RightHandIndex3": "Right Index Distal",
+  "RightHandMiddle1": "Right Middle Proximal",
+  "RightHandMiddle2": "Right Middle Intermediate",
+  "RightHandMiddle3": "Right Middle Distal",
+  "RightHandRing1": "Right Ring Proximal",
+  "RightHandRing2": "Right Ring Intermediate",
+  "RightHandRing3": "Right Ring Distal",
+  "RightHandPinky1": "Right Little Proximal",
+  "RightHandPinky2": "Right Little Intermediate",
+  "RightHandPinky3": "Right Little Distal",
+  "Spine2": "UpperChest"
+ },
+ "rightHandAttach": {
+  "parent": "RightHand",
+  "pos": [
+   0,
+   0.00105,
+   0.0003
+  ],
+  "rot": [
+   -0.5,
+   -0.5,
+   0.5,
+   0.5
+  ],
+  "scale": [
+   0.010000022,
+   0.010000009,
+   0.010000026
+  ]
+ },
+ "clubModel": {
+  "comment": "item 'attach' instance sits on RightHand_Attach at identity; its child 'model' (mesh holder, parent of WhipItUpVisual)",
+  "pos": [
+   0,
+   0,
+   0.157
+  ],
+  "rot": [
+   0,
+   0,
+   0,
+   1
+  ]
+ },
+ "whipAlign": {
+  "comment": "WeaponArt.Align with ModSettings WhipRot 270/180/0, WhipGrip 0.11, WhipScale 1.5 (defaults 2026-10-24)",
+  "eulerDeg": [
+   270,
+   180,
+   0
+  ],
+  "grip": 0.11,
+  "scale": 1.5
+ }
+}

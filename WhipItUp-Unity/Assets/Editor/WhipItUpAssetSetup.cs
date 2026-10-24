@@ -29,7 +29,8 @@ namespace WhipItUp.EditorTools
             }
 
             var guids = AssetDatabase.FindAssets("", new[] { Root });
-            var paths = guids.Select(AssetDatabase.GUIDToAssetPath).Where(p => !AssetDatabase.IsValidFolder(p)).Distinct().ToArray();
+            // Assets/WhipItUp/Anim (T-013 whip animation clips) has its own import rules: WhipAnimSetup
+            var paths = guids.Select(AssetDatabase.GUIDToAssetPath).Where(p => !AssetDatabase.IsValidFolder(p) && !p.StartsWith(WhipAnimSetup.Folder + "/")).Distinct().ToArray();
             int textures = 0, models = 0, sounds = 0, skipped = 0;
             foreach (var path in paths)
             {
