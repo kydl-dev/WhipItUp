@@ -82,6 +82,21 @@ def build(out_dir):
     shade[y0:y1, x0:x1] = 0.95 + 0.1 * gn
     metal[y0:y1, x0:x1] = 0.9
     smooth[y0:y1, x0:x1] = 0.7
+    # checkered braid ribbons (D-075): diagonal checker of colour A (label 1, rank leather) / B (label 3, 2nd colour). Colour = floor(w - 2 f) % 2 with w = position
+    # across the ribbon and f = position in the colour period, both undone from the inset margins of whip_layout.braid_uv; the -1 ribbons run the rect backwards
+    (x0, y0, x1, y1), U, V = P.rect_grid(W.UV_BRAID)
+    mu, mv = W.BRAID_UV_MARGIN
+    wr = (U - mu) / (1 - 2 * mu)
+    fr = (V - mv) / (1 - 2 * mv)
+    check = np.floor(wr - 2 * fr).astype(np.int64) % 2
+    bn = P.noise(*U.shape, scale=5, seed=38)
+    rib_edge = np.clip(1 - np.minimum(wr, 1 - wr) / 0.12, 0, 1)
+    label[y0:y1, x0:x1] = np.where(check == 0, 1, 3)
+    shade[y0:y1, x0:x1] = (0.92 + 0.12 * bn) * (1 - 0.25 * rib_edge)
+    H[y0:y1, x0:x1] = 0.5 + 0.04 * bn
+    smooth[y0:y1, x0:x1] = 0.35
+    log(f"braid checker rect: {x1 - x0} x {y1 - y0} px, colour period {W.BRAID_CHECK_PERIOD:.3f} m, A share {float((check == 0).mean()):.2f}")
+
     # fall (flat leather, v 0..0.7) + cracker strands (v 0.75..1, 2nd colour)
     (x0, y0, x1, y1), U, V = P.rect_grid(W.UV_FALL)
     g = P.noise(*U.shape, scale=4, seed=32)

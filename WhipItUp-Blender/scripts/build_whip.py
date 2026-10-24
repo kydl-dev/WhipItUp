@@ -68,8 +68,9 @@ def _grid(bm, pts):
     return [[bm.verts.new(p) for p in row] for row in pts]
 
 
-def _quads(bm, uv, grid, uv_point):
-    """Quad faces between neighbouring rows / columns of a vertex grid, wound so the normals point away from the thong axis, one flat UV point."""
+def _quads(bm, uv, grid, uv_point, uv_fn=None):
+    """Quad faces between neighbouring rows / columns of a vertex grid, wound so the normals point away from the thong axis.
+    UVs: one flat `uv_point`, or per face corner `uv_fn(face_row, row, col)` (face_row = lower row of the quad) when given."""
     r0, r1 = len(grid) // 2, len(grid) // 2 + 1
     a, b, d = grid[r0][0].co, grid[r0][1].co, grid[r1][0].co
     radial = Vector((a.x, a.y, 0.0))
@@ -77,11 +78,13 @@ def _quads(bm, uv, grid, uv_point):
     faces = []
     for i in range(len(grid) - 1):
         for j in range(len(grid[0]) - 1):
-            quad = (grid[i][j], grid[i][j + 1], grid[i + 1][j + 1], grid[i + 1][j])
+            cells = ((i, j), (i, j + 1), (i + 1, j + 1), (i + 1, j))
+            quad = tuple(grid[r][c] for r, c in cells)
             f = bm.faces.new(tuple(reversed(quad)) if flip else quad)
             faces.append(f)
+            at = {grid[r][c]: (r, c) for r, c in cells}
             for loop in f.loops:
-                loop[uv].uv = uv_point
+                loop[uv].uv = uv_fn(i, *at[loop.vert]) if uv_fn else uv_point
     return faces, flip
 
 
@@ -94,7 +97,6 @@ def build_braid(bm, uv):
     ribbons = edges = 0
     for direction in (1, -1):
         for strand in range(W.BRAID_STRANDS):
-            colour = W.ribbon_colour(direction, strand)
             pts = []
             for s in ss:
                 row = []
@@ -105,7 +107,13 @@ def build_braid(bm, uv):
                     row.append(Vector((r * math.cos(ang), r * math.sin(ang), W.THONG_START + s)))
                 pts.append(row)
             grid = _grid(bm, pts)
-            _quads(bm, uv, grid, lerp_rect(W.UV_FALL, *W.CORD_UV[colour]))
+            K = W.BRAID_CHECK_RINGS
+
+            def checker_uv(face_row, row, col, direction=direction):
+                """Per-corner UV into the checker rect: ring index counted from the start of the colour period this face lies in."""
+                return W.braid_uv(direction, col / W.BRAID_COLS, row - (face_row // K) * K)
+
+            _quads(bm, uv, grid, None, uv_fn=checker_uv)
             out += [(v, ss[i]) for i, row in enumerate(grid) for v in row]
             ribbons += 1
             for w in (0.0, 1.0):

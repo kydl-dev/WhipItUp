@@ -103,16 +103,37 @@ def ribbon_radius(direction, w, s):
     return thong_radius(s) * (BRAID_MID + BRAID_LIFT * ribbon_height(direction, w, s) + BRAID_BULGE * math.sin(math.pi * w))
 
 
-def ribbon_colour(direction, strand):
-    """0 = colour A (rank leather), 1 = colour B (2nd colour): direction +1 has A on the even strands, direction -1 on the odd ones."""
-    return 0 if (strand % 2 == 0) == (direction > 0) else 1
+# ---- checkered colours (D-075): the colour changes per weave diamond, the geometry above is untouched ----
+# A diamond is where one +1 ribbon (index i) crosses one -1 ribbon (index j); colour = (i + j) % 2 (0 = A rank leather, 1 = B 2nd colour).
+# That reduces to a function of (w, s) alone: floor(w - 2 q s) % 2 on a +1 ribbon, floor(w + 2 q s) % 2 on a -1 ribbon (q = braid_rate()),
+# so both ribbons agree on the colour of a diamond and neighbouring diamonds alternate. Period along the thong: one colour cycle = BRAID_CHECK_PERIOD.
+BRAID_CHECK_PERIOD = BRAID_TURN / BRAID_STRANDS         # 0.030 m: 2 q s = 2
+BRAID_CHECK_RINGS = round(BRAID_CHECK_PERIOD / BRAID_STEP)    # sample rings per period (10)
+assert abs(BRAID_CHECK_RINGS * BRAID_STEP - BRAID_CHECK_PERIOD) < 1e-9, "BRAID_STEP must divide the checker period"
+BRAID_UV_MARGIN = (0.06, 0.01)      # (u, v) fraction of the rect kept as painted overlap at its borders so bilinear filtering never reads a neighbour rect
+
+
+def braid_check_colour(direction, w, s):
+    """0 = colour A (rank leather), 1 = colour B (2nd colour) of the checker at (w, s) on a ribbon of the given direction (+1 / -1)."""
+    return int(math.floor(w - 2 * direction * braid_rate() * s)) % 2
+
+
+def braid_uv(direction, w, ring_in_period):
+    """Atlas UV of a ribbon vertex at fraction w across the ribbon, `ring_in_period` (0..BRAID_CHECK_RINGS) sample rings into the colour period.
+    The -1 ribbons run the rect backwards (v -> 1 - v), which turns floor(w - 2qs) into floor(w + 2qs)."""
+    mu, mv = BRAID_UV_MARGIN
+    u = mu + w * (1 - 2 * mu)
+    f = ring_in_period / BRAID_CHECK_RINGS
+    v = mv + (f if direction > 0 else 1 - f) * (1 - 2 * mv)
+    x0, y0, x1, y1 = UV_BRAID
+    return (x0 + (x1 - x0) * u, y0 + (y1 - y0) * v)
 
 
 # ---- UV atlas (1024), v up: rows 0 .. 0.34 = the handle parts (handle_layout.py, same as the paddle), thong + fall above ----
 UV_THONG = (0.00, HL.BODY_V0, 0.50, 1.00)       # dark core tube: u around, v along (repeats every THONG_UV_REPEAT m)
 UV_FALL = (0.50, HL.BODY_V0, 0.625, 1.00)       # flat fall + cracker strands; v 0.30 = rank leather (cord A), v 0.88 = 2nd colour (cord B)
 UV_GOLD = (0.625, HL.BODY_V0, 0.75, 1.00)       # the thin edge strings (one flat colour per rank)
-CORD_UV = {0: (0.5, 0.30), 1: (0.5, 0.88)}      # point inside UV_FALL per ribbon colour (0 = A rank leather, 1 = B 2nd colour)
+UV_BRAID = (0.75, HL.BODY_V0, 0.875, 1.00)      # checkered braid ribbons (D-075): u across a ribbon, v = one colour period (BRAID_CHECK_PERIOD), see braid_uv
 GOLD_UV = (0.5, 0.5)                            # point inside UV_GOLD (the thin edge strings, painted in the medallion brown)
 UV_WOOD, UV_WRAP, UV_METAL, UV_POMMEL_FACE = HL.UV_WOOD, HL.UV_WRAP, HL.UV_METAL, HL.UV_POMMEL_FACE
 UV_RING_BAND, UV_VALK_SQ, UV_RING_METAL = HL.UV_RING_BAND, HL.UV_VALK_SQ, HL.UV_RING_METAL
