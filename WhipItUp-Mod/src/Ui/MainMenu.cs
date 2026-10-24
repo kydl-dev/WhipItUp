@@ -48,12 +48,24 @@ namespace WhipItUp.Ui
             ModLog.Verbose("MainMenu: opened with " + weapons.Count + " weapon(s)");
         }
 
+        const string DropdownName = "kydl-dropdown";   // the name the shared UiControls.Dropdown gives its list
         static void Close(string why)
         {
             if (_window != null) _window.RemoveFromHierarchy();
             _window = null;
+            // D-077 F-4: an open drop-down list (shared Kydl.Ui, a sibling of the window in UiKit.Root) is not part of the window, so it would stay on screen
+            int lists = RemoveDropdownLists();
             UiInputLock.Release(LockName);
-            ModLog.Verbose("MainMenu: closed (" + why + ")");
+            ModLog.Verbose("MainMenu: closed (" + why + "), drop-down lists removed with it: " + lists);
+        }
+
+        static int RemoveDropdownLists()
+        {
+            var root = UiKit.Root;
+            if (root == null) { ModLog.Verbose("MainMenu: no UI root while closing, no drop-down list to remove"); return 0; }
+            var found = root.Query<VisualElement>(DropdownName).ToList();
+            foreach (var list in found) list.RemoveFromHierarchy();
+            return found.Count;
         }
     }
 }
