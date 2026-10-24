@@ -14,9 +14,16 @@ namespace WhipItUp.Tests.Integration
     {
         static MethodInfo[] Candidates()
         {
-            var types = ModAssembly.Load().GetTypes().Where(t => t.Name == "InGameTests").ToArray();
+            var types = LoadableTypes().Where(t => t.Name == "InGameTests").ToArray();
             return types.SelectMany(t => t.GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
                         .Where(m => m.Name.StartsWith("Startup_", StringComparison.Ordinal) || m.Name.StartsWith("World_", StringComparison.Ordinal)).ToArray();
+        }
+
+        // A mod that references another mod (WaterAndTarPools -> DrainTarPit) has types the test runner cannot load: skip those, keep the rest.
+        static Type[] LoadableTypes()
+        {
+            try { return ModAssembly.Load().GetTypes(); }
+            catch (ReflectionTypeLoadException e) { return e.Types.Where(t => t != null).ToArray(); }
         }
 
         [Test]
