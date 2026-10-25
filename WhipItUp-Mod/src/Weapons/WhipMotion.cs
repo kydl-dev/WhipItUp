@@ -31,7 +31,7 @@ namespace WhipItUp.Weapons
         float _grabTime = -99f;
         string _mode = "";
 
-        void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; _attachTried = false; _standChecked = -1; _dropSeen = -1f; Live.Add(this); }
+        void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; _attachTried = false; _standChecked = -1; _standPosed = false; _coilNormal = Vector3.zero; Live.Add(this); }
         void OnDisable()
         {
             Live.Remove(this);
@@ -142,9 +142,13 @@ namespace WhipItUp.Weapons
                 // user bug report 2026-10-25 (D-108): a whip on an item stand or an armor stand must hang coiled, not as a loose rope.
                 // Those stands show the item's visual without a Character; a dropped whip (ItemDrop) stays free.
                 string stand = StandName();
-                if (stand != null) { DriveCoil(chains, 1f, "coiled (" + stand + ")"); return; }
+                if (stand != null)
+                {
+                    if (stand == "item stand" && !_standPosed && chains.ChainCount > 0 && chains.SegmentLength(0, 1) > 1e-5f) PoseOnItemStand(chains);
+                    DriveCoil(chains, 1f, "coiled (" + stand + ")");
+                    return;
+                }
                 SetMode("free (dropped)");
-                ProbeDropped();
                 return;
             }
             if (!_attachTried)
@@ -187,39 +191,75 @@ namespace WhipItUp.Weapons
             DriveCoil(chains, Mathf.Clamp01(_sinceAttack / Mathf.Max(0.01f, ModSettings.WhipCoilReturnSeconds.Value)), null);
         }
 
-        float _dropSeen = -1f, _dropNextLog;
-        static readonly HarmonyLib.AccessTools.FieldRef<Player, float> AutoPickupRangeRef = HarmonyLib.AccessTools.FieldRefAccess<Player, float>("m_autoPickupRange");
-        static readonly HarmonyLib.AccessTools.FieldRef<Player, int> AutoPickupMaskRef = HarmonyLib.AccessTools.FieldRefAccess<Player, int>("m_autoPickupMask");
-        /// D-109 diagnosis (debug log only): for 8 s after a whip lands as a dropped item, once a second: where it is, how far from the
-        /// local player's pickup point, and every condition the game's Player.AutoPickup checks (auto pickup flag, CanPickup, rigidbody /
-        /// collider on the pickup layers, inventory room). Tells why a whip taken off a stand is not picked up.
-        void ProbeDropped()
+        bool _standPosed;
+        Vector3 _coilNormal;                 // zero = the hand rule (coil hangs under the handle); set = the coil lies in this plane
+        const float StandHandleTiltDeg = 30f;   // the handle crosses the board this much below the horizontal (user: like the armor stand / viewer)
+
+        /// User 2026-10-25 (D-110, screenshots 001 / 002 of session 143136): on an item stand the coil hung edge-on (wall stand) or into the
+        /// rock (ground stand) and off centre. Here the whole whip is laid INTO the stand's board: the board's thin axis is its normal
+        /// (wall stand: out of the wall, ground stand: up), the coil lies in that plane, the handle crosses it StandHandleTiltDeg below the
+        /// board's horizontal with the pommel to one side, and the middle between the coil centre and the grip sits on the board centre.
+        /// Runs once per stand visual (the stand does not move). Expected outcome: true when the visual was moved into the board.
+        bool PoseOnItemStand(FallChains chains)
         {
-            if (!ModSettings.DebugLog.Value) return;
-            if (_dropSeen < 0f) { _dropSeen = Time.time; _dropNextLog = 0f; }
-            if (Time.time - _dropSeen > 8f || Time.time < _dropNextLog) return;
-            _dropNextLog = Time.time + 1f;
-            var drop = GetComponentInParent<ItemDrop>();
-            var p = Player.m_localPlayer;
-            if (drop == null) { ModLog.Verbose("WhipDrop: no ItemDrop above the dropped whip visual (" + transform.root.name + ")"); return; }
-            var rb = drop.GetComponent<Rigidbody>();
-            int mask = p != null ? AutoPickupMaskRef(p) : 0;
-            var cols = drop.GetComponentsInChildren<Collider>(true);
-            var sb = new System.Text.StringBuilder();
-            foreach (var c in cols)
-                sb.Append(c.GetType().Name).Append('@').Append(c.gameObject.name).Append(" layer ").Append(LayerMask.LayerToName(c.gameObject.layer))
-                  .Append(((mask >> c.gameObject.layer) & 1) == 1 ? " (pickup layer)" : "").Append(c.enabled ? "" : " DISABLED").Append(c.isTrigger ? " trigger" : "")
-                  .Append(c.attachedRigidbody == rb ? "" : " other-rb").Append("; ");
-            string who = "no local player";
-            if (p != null)
+            _standPosed = true;
+            var stand = GetComponentInParent<ItemStand>();
+            MeshFilter board = null;
+            float bestVol = 0f;
+            foreach (var mf in stand.GetComponentsInChildren<MeshFilter>())
             {
-                var from = p.transform.position + Vector3.up;     // AutoPickup's sphere centre
-                float d = Vector3.Distance(from, drop.transform.position);
-                who = "pickup point " + d.ToString("0.00") + " m away (range " + AutoPickupRangeRef(p).ToString("0.0") + " m), can add " + p.GetInventory().CanAddItem(drop.m_itemData, -1);
+                if (mf.sharedMesh == null || mf.transform.IsChildOf(transform)) continue;
+                var sz = Vector3.Scale(mf.sharedMesh.bounds.size, mf.transform.lossyScale);
+                float vol = sz.x * sz.y * sz.z;
+                if (vol > bestVol) { bestVol = vol; board = mf; }
             }
-            ModLog.Verbose("WhipDrop: " + drop.name + " t+" + (Time.time - _dropSeen).ToString("0.0") + " s at " + drop.transform.position.ToString("F2") + ", autoPickup " + drop.m_autoPickup
-                + ", CanPickup(delay) " + drop.CanPickup(true) + ", rb " + (rb == null ? "none" : (rb.isKinematic ? "kinematic" : "dynamic") + " v " + rb.linearVelocity.magnitude.ToString("0.00"))
-                + ", " + who + ", colliders: " + (cols.Length == 0 ? "NONE" : sb.ToString()));
+            if (board == null) { ModLog.Verbose("WhipMotion: item stand " + stand.name + " has no board mesh - coil left as is"); return false; }
+            var b = board.sharedMesh.bounds;
+            var size = Vector3.Scale(b.size, board.transform.lossyScale);
+            Vector3 localN = size.x <= size.y && size.x <= size.z ? Vector3.right : size.y <= size.z ? Vector3.up : Vector3.forward;
+            var n = board.transform.TransformDirection(localN).normalized;
+            var boardCentre = board.transform.TransformPoint(b.center);
+            float outward = Vector3.Dot(transform.position - boardCentre, n);    // keep the item's distance in front of the board
+            if (outward < 0f) { n = -n; outward = -outward; }
+            // in-plane directions: 'down' = world down on the board (a ground board: keep the handle's current heading instead)
+            var start = chains.RootPosition(0);
+            var axisNow = start - transform.position;
+            float h = axisNow.magnitude;
+            if (h < 1e-4f) { ModLog.Verbose("WhipMotion: item stand pose skipped - lash start on the grip"); return false; }
+            var dn = Vector3.ProjectOnPlane(Vector3.down, n);
+            if (dn.sqrMagnitude < 0.05f) dn = Vector3.ProjectOnPlane(-axisNow, n);
+            dn.Normalize();
+            var side = Vector3.Cross(n, dn).normalized;
+            // grip -> collar points up-and-across; the pommel ends low on the other side
+            float t = StandHandleTiltDeg * Mathf.Deg2Rad;
+            var axisT = (side * Mathf.Cos(t) - dn * Mathf.Sin(t)).normalized;
+            transform.rotation = Quaternion.FromToRotation(axisNow.normalized, axisT) * transform.rotation;
+            _coilNormal = n;
+            float r = Mathf.Max(0.03f, ModSettings.WhipCoilRadius.Value);
+            var downT = CoilDown(axisT, n);
+            var coilCentre = transform.position + axisT * h + downT * r;
+            var mid = (coilCentre + transform.position) * 0.5f;
+            var target = boardCentre + n * outward;
+            var move = target - mid;
+            transform.position += move;
+            ModLog.Verbose("WhipMotion: laid into " + stand.name + " board '" + board.name + "' (" + size.ToString("F2") + " m, normal " + n.ToString("F2") + ", " + outward.ToString("0.000")
+                + " m in front): handle " + StandHandleTiltDeg + " deg below the board's horizontal, moved " + move.magnitude.ToString("0.000") + " m to centre coil + grip on the board");
+            return move.sqrMagnitude >= 0f;
+        }
+
+        /// The coil's 'down' for a handle axis: in the hand the world down across the handle; on a board the in-plane perpendicular that points down.
+        Vector3 CoilDown(Vector3 axis, Vector3 planeNormal)
+        {
+            Vector3 down;
+            if (planeNormal != Vector3.zero)
+            {
+                down = Vector3.Cross(planeNormal, axis);
+                if (Vector3.Dot(down, Vector3.down) < 0f) down = -down;
+                if (down.sqrMagnitude > 1e-6f) return down.normalized;
+            }
+            down = Vector3.ProjectOnPlane(Vector3.down, axis);
+            if (down.sqrMagnitude < 1e-4f) down = Vector3.ProjectOnPlane(transform.right, axis);
+            return down.normalized;
         }
 
         int _standChecked = -1;
@@ -309,9 +349,7 @@ namespace WhipItUp.Weapons
             var axis = start - transform.position;
             if (axis.sqrMagnitude < 1e-8f) axis = transform.up;
             axis.Normalize();
-            var down = Vector3.ProjectOnPlane(Vector3.down, axis);
-            if (down.sqrMagnitude < 1e-4f) down = Vector3.ProjectOnPlane(transform.right, axis);
-            down.Normalize();
+            var down = CoilDown(axis, _coilNormal);
             var normal = Vector3.Cross(axis, down).normalized;
             float r = Mathf.Max(0.03f, ModSettings.WhipCoilRadius.Value);     // world metres
             // centre straight below the lash start: the lash leaves the handle going forward (tangent = handle axis), loops down,
