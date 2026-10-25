@@ -5,6 +5,7 @@
 
 ## 1.0.1
 - Whips placed on an item stand or an armor stand now hang coiled instead of as a loose lash.
+- On item stands the coiled whip lies flat on the stand, centred, and clear of the ground stand's block.
 
 ## 1.0.0
 - First release.
