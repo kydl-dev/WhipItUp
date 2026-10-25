@@ -193,6 +193,7 @@ namespace WhipItUp.Weapons
 
         bool _standPosed;
         Vector3 _coilNormal;                 // zero = the hand rule (coil hangs under the handle); set = the coil lies in this plane
+        const float StandClearance = 0.05f;     // m between the board surface and the whip's centre line (grip rings ~0.04 m radius at scale 1.5)
         const float StandHandleTiltDeg = 30f;   // the handle crosses the board this much below the horizontal (user: like the armor stand / viewer)
 
         /// User 2026-10-25 (D-110, screenshots 001 / 002 of session 143136): on an item stand the coil hung edge-on (wall stand) or into the
@@ -221,6 +222,11 @@ namespace WhipItUp.Weapons
             var boardCentre = board.transform.TransformPoint(b.center);
             float outward = Vector3.Dot(transform.position - boardCentre, n);    // keep the item's distance in front of the board
             if (outward < 0f) { n = -n; outward = -outward; }
+            // user 2026-10-25 (TEST-038): on the ground stand the game puts the item 0.027 m above the middle of a 0.05 m block, so the
+            // lash and the grip rings sank into it. Keep at least half the board's thickness + StandClearance in front of its middle.
+            float thin = Mathf.Min(size.x, Mathf.Min(size.y, size.z));
+            float minOut = thin * 0.5f + StandClearance;
+            if (outward < minOut) { ModLog.Verbose("WhipMotion: " + stand.name + ": " + outward.ToString("0.000") + " m in front of the board middle is inside the whip's thickness - lifted to " + minOut.ToString("0.000") + " m"); outward = minOut; }
             // in-plane directions: 'down' = world down on the board (a ground board: keep the handle's current heading instead)
             var start = chains.RootPosition(0);
             var axisNow = start - transform.position;
