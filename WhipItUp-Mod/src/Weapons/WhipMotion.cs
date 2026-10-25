@@ -31,7 +31,7 @@ namespace WhipItUp.Weapons
         float _grabTime = -99f;
         string _mode = "";
 
-        void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; _attachTried = false; Live.Add(this); }
+        void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; _attachTried = false; _standChecked = -1; Live.Add(this); }
         void OnDisable()
         {
             Live.Remove(this);
@@ -137,7 +137,15 @@ namespace WhipItUp.Weapons
         {
             // the game instantiates the equipped visual first and parents it to the hand afterwards: look the holder up until found
             if (_holder == null) _holder = GetComponentInParent<Character>();
-            if (_holder == null) { SetMode("free (dropped)"); return; }
+            if (_holder == null)
+            {
+                // user bug report 2026-10-25 (D-108): a whip on an item stand or an armor stand must hang coiled, not as a loose rope.
+                // Those stands show the item's visual without a Character; a dropped whip (ItemDrop) stays free.
+                string stand = StandName();
+                if (stand != null) { DriveCoil(chains, 1f, "coiled (" + stand + ")"); return; }
+                SetMode("free (dropped)");
+                return;
+            }
             if (!_attachTried)
             {
                 _attachTried = true;
@@ -175,15 +183,37 @@ namespace WhipItUp.Weapons
                 return;
             }
             // idle: wind into the coil quickly (linear blend over CoilReturnSeconds), no gravity once coiled
-            float back = Mathf.Clamp01(_sinceAttack / Mathf.Max(0.01f, ModSettings.WhipCoilReturnSeconds.Value));
+            DriveCoil(chains, Mathf.Clamp01(_sinceAttack / Mathf.Max(0.01f, ModSettings.WhipCoilReturnSeconds.Value)), null);
+        }
+
+        int _standChecked = -1;
+        float _standNextCheck;
+        string _stand;
+        /// "item stand" / "armor stand" when this visual sits on one, else null. A found stand is kept (until the next enable); "none" is
+        /// looked up again every 0.5 s, because the game may parent the visual to the stand after creating it. Logged when it changes.
+        string StandName()
+        {
+            if (_standChecked == 1 && (_stand != null || Time.time < _standNextCheck)) return _stand;
+            string was = _standChecked == 1 ? _stand ?? "none" : "unknown";
+            _standChecked = 1;
+            _standNextCheck = Time.time + 0.5f;
+            _stand = GetComponentInParent<ItemStand>() != null ? "item stand" : GetComponentInParent<ArmorStand>() != null ? "armor stand" : null;
+            if ((_stand ?? "none") != was)
+                ModLog.Verbose("WhipMotion: no character holds this whip - " + (_stand != null ? "on an " + _stand + ": coiled" : "not on a stand (dropped): free") + " (" + transform.root.name + ")");
+            return _stand;
+        }
+
+        /// The idle coil. back = 0..1 blend from the lash into the coil (1 = settled, kinematic). standMode = the mode name for a stand, null in a hand.
+        void DriveCoil(FallChains chains, float back, string standMode)
+        {
             if (!BuildCoil(chains)) { SetMode("free (no chain)"); return; }
             chains.Override = (c, i) => _coil[Mathf.Clamp(i, 0, _coil.Length - 1)];
             chains.Pull = Mathf.Lerp(ModSettings.WhipLashStiffness.Value, ModSettings.WhipCoilPull.Value, back);
             chains.GravityScale = 1f - back;
             chains.Snap = back * back;                 // ends fully kinematic: the settled coil does not wobble or spin
             // first health check 1 s after the coil settled: the very first coiled frame still has the un-primed chain (false CHECK OFF, TEST-020)
-            if (back >= 1f && _mode != "coiled") _nextDiag = Time.time + 1f;
-            SetMode(back < 1f ? "coiling" : "coiled");
+            if (back >= 1f && _mode != "coiled" && _mode != standMode) _nextDiag = Time.time + 1f;
+            SetMode(standMode ?? (back < 1f ? "coiling" : "coiled"));
             if (back >= 1f && _coil != null && !_coilLogged)
             {
                 _coilLogged = true;

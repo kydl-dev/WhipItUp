@@ -1,6 +1,6 @@
 {
   "name": "WhipItUp",
-  "version_number": "1.0.0",
+  "version_number": "1.0.1",
   "website_url": "",
   "description": "Adds three craftable weapon families: Paddle, Flogger and Whip, seven colour ranks each, with a new Whips skill.",
   "dependencies": [

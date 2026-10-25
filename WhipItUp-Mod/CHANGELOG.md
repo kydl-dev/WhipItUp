@@ -3,6 +3,9 @@
 <!-- Newest version first. The top `## x.y.z` heading = `Plugin.ModVersion` = `manifest.json` `version_number` (tests check it).
      Write "not tested in game" for anything that was not run in game (the release gate refuses it in the newest section). -->
 
+## 1.0.1
+- Whips placed on an item stand or an armor stand now hang coiled instead of as a loose lash.
+
 ## 1.0.0
 - First release.
 - Paddle, Flogger and Whip in seven ranks each (21 weapons), crafted at the workbench, forge and black forge; the rank metal
