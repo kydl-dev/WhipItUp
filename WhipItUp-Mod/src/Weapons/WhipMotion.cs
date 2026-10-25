@@ -31,7 +31,7 @@ namespace WhipItUp.Weapons
         float _grabTime = -99f;
         string _mode = "";
 
-        void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; _attachTried = false; _standChecked = -1; Live.Add(this); }
+        void OnEnable() { _holder = GetComponentInParent<Character>(); _sinceAttack = 99f; _grabTarget = null; _attachTried = false; _standChecked = -1; _dropSeen = -1f; Live.Add(this); }
         void OnDisable()
         {
             Live.Remove(this);
@@ -144,6 +144,7 @@ namespace WhipItUp.Weapons
                 string stand = StandName();
                 if (stand != null) { DriveCoil(chains, 1f, "coiled (" + stand + ")"); return; }
                 SetMode("free (dropped)");
+                ProbeDropped();
                 return;
             }
             if (!_attachTried)
@@ -184,6 +185,41 @@ namespace WhipItUp.Weapons
             }
             // idle: wind into the coil quickly (linear blend over CoilReturnSeconds), no gravity once coiled
             DriveCoil(chains, Mathf.Clamp01(_sinceAttack / Mathf.Max(0.01f, ModSettings.WhipCoilReturnSeconds.Value)), null);
+        }
+
+        float _dropSeen = -1f, _dropNextLog;
+        static readonly HarmonyLib.AccessTools.FieldRef<Player, float> AutoPickupRangeRef = HarmonyLib.AccessTools.FieldRefAccess<Player, float>("m_autoPickupRange");
+        static readonly HarmonyLib.AccessTools.FieldRef<Player, int> AutoPickupMaskRef = HarmonyLib.AccessTools.FieldRefAccess<Player, int>("m_autoPickupMask");
+        /// D-109 diagnosis (debug log only): for 8 s after a whip lands as a dropped item, once a second: where it is, how far from the
+        /// local player's pickup point, and every condition the game's Player.AutoPickup checks (auto pickup flag, CanPickup, rigidbody /
+        /// collider on the pickup layers, inventory room). Tells why a whip taken off a stand is not picked up.
+        void ProbeDropped()
+        {
+            if (!ModSettings.DebugLog.Value) return;
+            if (_dropSeen < 0f) { _dropSeen = Time.time; _dropNextLog = 0f; }
+            if (Time.time - _dropSeen > 8f || Time.time < _dropNextLog) return;
+            _dropNextLog = Time.time + 1f;
+            var drop = GetComponentInParent<ItemDrop>();
+            var p = Player.m_localPlayer;
+            if (drop == null) { ModLog.Verbose("WhipDrop: no ItemDrop above the dropped whip visual (" + transform.root.name + ")"); return; }
+            var rb = drop.GetComponent<Rigidbody>();
+            int mask = p != null ? AutoPickupMaskRef(p) : 0;
+            var cols = drop.GetComponentsInChildren<Collider>(true);
+            var sb = new System.Text.StringBuilder();
+            foreach (var c in cols)
+                sb.Append(c.GetType().Name).Append('@').Append(c.gameObject.name).Append(" layer ").Append(LayerMask.LayerToName(c.gameObject.layer))
+                  .Append(((mask >> c.gameObject.layer) & 1) == 1 ? " (pickup layer)" : "").Append(c.enabled ? "" : " DISABLED").Append(c.isTrigger ? " trigger" : "")
+                  .Append(c.attachedRigidbody == rb ? "" : " other-rb").Append("; ");
+            string who = "no local player";
+            if (p != null)
+            {
+                var from = p.transform.position + Vector3.up;     // AutoPickup's sphere centre
+                float d = Vector3.Distance(from, drop.transform.position);
+                who = "pickup point " + d.ToString("0.00") + " m away (range " + AutoPickupRangeRef(p).ToString("0.0") + " m), can add " + p.GetInventory().CanAddItem(drop.m_itemData, -1);
+            }
+            ModLog.Verbose("WhipDrop: " + drop.name + " t+" + (Time.time - _dropSeen).ToString("0.0") + " s at " + drop.transform.position.ToString("F2") + ", autoPickup " + drop.m_autoPickup
+                + ", CanPickup(delay) " + drop.CanPickup(true) + ", rb " + (rb == null ? "none" : (rb.isKinematic ? "kinematic" : "dynamic") + " v " + rb.linearVelocity.magnitude.ToString("0.00"))
+                + ", " + who + ", colliders: " + (cols.Length == 0 ? "NONE" : sb.ToString()));
         }
 
         int _standChecked = -1;
