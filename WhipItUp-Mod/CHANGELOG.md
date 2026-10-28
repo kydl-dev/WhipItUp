@@ -1,8 +1,5 @@
 # Changelog
 
-<!-- Newest version first. The top `## x.y.z` heading = `Plugin.ModVersion` = `manifest.json` `version_number` (tests check it).
-     Write "not tested in game" for anything that was not run in game (the release gate refuses it in the newest section). -->
-
 ## 1.0.1
 - Whips placed on an item stand or an armor stand now hang coiled instead of as a loose lash.
 - On item stands the coiled whip lies flat on the stand, centred, and clear of the ground stand's block.
