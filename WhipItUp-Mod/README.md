@@ -1,3 +1,7 @@
+#Note
+
+Mod requested by MissBeaHive from twitch.tv
+
 # WhipItUp
 
 Three new weapon families for Valheim, the **Paddle**, the **Flogger** and the **Whip**, each in seven colour ranks from the

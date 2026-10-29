@@ -92,3 +92,10 @@ WhipItUp-Blender/previews/anim/*/
 # research copies of vanilla clips (from the rip, never shipped, T-013 lean comparison)
 WhipItUp-Unity/Assets/_VanillaReference/
 WhipItUp-Unity/Assets/_VanillaReference.meta
+
+# --- not published to GitHub (user, 2026-10-29) ---
+/_testruns/
+/_agent/
+/.claude/
+/CLAUDE.md
+/*-Mod/build/*.dll
