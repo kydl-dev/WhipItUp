@@ -16,12 +16,25 @@ namespace WhipItUp
     {
         // [General]
         public static ConfigEntry<bool> EnableAll;
-        public static ConfigEntry<KeyCode> MenuKey;
+        // [Paddle] / [Flogger] / [Whip] / [Viewer]: one Enable per functionality (D-074)
+        public static ConfigEntry<bool> PaddleEnable, FloggerEnable, WhipEnable, ViewerEnable;
         // [DebugLog]
         public static ConfigEntry<bool> DebugLog;
 
         /// Is the mod switched on ([General] EnableAll)? Off = inert: no effects, no menus; nothing built is removed.
         public static bool On { get { return EnableAll == null || EnableAll.Value; } }
+
+        /// A functionality is on only when EnableAll AND its own Enable are on (D-074; the rule itself is Functions.IsOn).
+        public static bool PaddleOn { get { return Functions.IsOn(On, PaddleEnable == null || PaddleEnable.Value); } }
+        public static bool FloggerOn { get { return Functions.IsOn(On, FloggerEnable == null || FloggerEnable.Value); } }
+        public static bool WhipOn { get { return Functions.IsOn(On, WhipEnable == null || WhipEnable.Value); } }
+        /// The Whips skill belongs to the flogger and the whip: it is registered when at least one of them is on (Functions.SkillNeeded).
+        public static bool SkillOn { get { return Functions.SkillNeeded(FloggerOn, WhipOn); } }
+        public static bool ViewerOn { get { return Functions.IsOn(On, ViewerEnable == null || ViewerEnable.Value); } }
+        /// Is that weapon family on (Paddle / Flogger / Whip)?
+        public static bool FamilyOn(string family) { return Functions.FamilyOn(family, PaddleOn, FloggerOn, WhipOn); }
+        /// Are the viewer / details tabs shown in the hub?
+        public static bool ViewerShown { get { return Functions.ViewerShown(ViewerOn, PaddleOn, FloggerOn, WhipOn); } }
 
         // --- dev-only fixed values (Tunables): not in the config file, KydlTools changes them for testing -----------------------------------
         // Weapon sounds (whoosh = swing, slap = hit). Live: a change applies to the next sound played.
@@ -148,8 +161,14 @@ namespace WhipItUp
 
             EnableAll = c.Bind("General", "EnableAll", true,
                 "Switches the whole mod on / off while playing. Off: no effects and no menus from this mod; things already built stay in the world.");
-            MenuKey = c.Bind("General", "MenuKey", KeyCode.F6,
-                "Opens / closes the WhipItUp menu. None = no menu.");
+            PaddleEnable = c.Bind("Paddle", "Enable", true,
+                "The Paddle weapons (7 ranks, Clubs skill). Off: they are not added to the game. Needs a game restart.");
+            FloggerEnable = c.Bind("Flogger", "Enable", true,
+                "The Flogger weapons (7 ranks, Whips skill). Off: they are not added to the game. Needs a game restart.");
+            WhipEnable = c.Bind("Whip", "Enable", true,
+                "The Whip weapons (7 ranks, Whips skill) with their own animations and lash. Off: they are not added to the game. Needs a game restart.");
+            ViewerEnable = c.Bind("Viewer", "Enable", true,
+                "The weapon viewer and details tabs in the KY hub (F6). Off: the tabs are not shown. Needs a game restart.");
             DebugLog = c.Bind("DebugLog", "Enable", false,
                 "Writes detailed lines about everything the mod does to the BepInEx log (for bug reports). Leave off while playing normally.");
 
@@ -157,8 +176,8 @@ namespace WhipItUp
             ConfigTools.DropRemoved(c);
 
             EnableAll.SettingChanged += (s, e) => ModLog.Info("Config: EnableAll = " + EnableAll.Value + (EnableAll.Value ? ", the mod is on" : ", the mod is inert (no effects or menus)"));
-            ModLog.Verbose("Config: bound (EnableAll " + EnableAll.Value + ", menu key " + MenuKey.Value + ", debug log " + DebugLog.Value + ")");
-            return EnableAll != null && MenuKey != null && DebugLog != null;
+            ModLog.Verbose("Config: bound (EnableAll " + EnableAll.Value + ", paddle " + PaddleOn + ", flogger " + FloggerOn + ", whip " + WhipOn + ", skill " + SkillOn + ", viewer " + ViewerOn + ", debug log " + DebugLog.Value + ")");
+            return EnableAll != null && PaddleEnable != null && FloggerEnable != null && WhipEnable != null && ViewerEnable != null && DebugLog != null;
         }
     }
 }

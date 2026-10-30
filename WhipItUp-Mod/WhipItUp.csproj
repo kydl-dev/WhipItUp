@@ -13,6 +13,8 @@
     <PackageId>WhipItUp</PackageId>
     <!-- AssetBundle built by the Unity project (Valheim > Build AssetBundles); embedded into the DLL when Assets\whipitup exists -->
     <BundleName>whipitup</BundleName>
+    <!-- 2.0.0: the UI kit, the input lock and the KY hub come from KydlCore.dll (a hard dependency), not from a copy in this DLL -->
+    <KydlUseCore>true</KydlUseCore>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0
+- Breaking: WhipItUp now needs the KydlCore mod (hard dependency). Install KydlCore as well.
+- The menu is now tabs (Viewer, Details, Settings) in the KY hub window of KydlCore (F6); the own menu window and the `[General] MenuKey` setting are gone.
+- New config switches: `[General] EnableAll`, `[Paddle] Enable`, `[Flogger] Enable`, `[Whip] Enable`, `[Viewer] Enable`. A switched-off weapon family is not registered at all (restart the game after changing it); the viewer tabs are hidden when the viewer is off.
+- `[DebugLog] Enable` writes detailed lines to the BepInEx log.
+
 ## 1.0.1
 - Whips placed on an item stand or an armor stand now hang coiled instead of as a loose lash.
 - On item stands the coiled whip lies flat on the stand, centred, and clear of the ground stand's block.

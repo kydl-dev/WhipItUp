@@ -19,7 +19,7 @@ namespace WhipItUp.Testing
         static string Startup_ConfigBound()
         {
             if (ModSettings.EnableAll == null || ModSettings.DebugLog == null) return "FAIL: ModSettings.Bind did not run (EnableAll / DebugLog null)";
-            string r = ModSettings.On ? "PASS: EnableAll on, menu key " + ModSettings.MenuKey.Value + ", debug log " + ModSettings.DebugLog.Value : "SKIP: EnableAll is off in the config";
+            string r = ModSettings.On ? "PASS: EnableAll on, paddle " + ModSettings.PaddleOn + ", flogger " + ModSettings.FloggerOn + ", whip " + ModSettings.WhipOn + ", viewer " + ModSettings.ViewerOn + ", debug log " + ModSettings.DebugLog.Value : "SKIP: EnableAll is off in the config";
             ModLog.Verbose("InGameTests: Startup_ConfigBound -> " + r);
             return r;
         }
@@ -34,6 +34,7 @@ namespace WhipItUp.Testing
 
         static string Startup_WhipSkillRegistered()
         {
+            if (!ModSettings.SkillOn) return "SKIP: flogger and whip are off, the Whips skill is not registered";
             var t = Weapons.WhipSkill.Type;
             string r = t != Skills.SkillType.None ? "PASS: skill type " + (int)t : "FAIL: the Whips skill is not registered (items fall back to Clubs)";
             ModLog.Verbose("InGameTests: Startup_WhipSkillRegistered -> " + r);
@@ -63,6 +64,7 @@ namespace WhipItUp.Testing
         /// The whip in the local player's hand, coiled: bones follow the coil (mismatch ~0) and bend by the chord angle (WhipMotion.LogCoilHealth).
         static string World_WhipCoilHealth()
         {
+            if (!ModSettings.WhipOn) return "SKIP: the whip is off in the config";
             var player = Player.m_localPlayer;
             if (player == null) return "SKIP: no local player";
             var held = Weapons.WhipMotion.Live.FirstOrDefault(w => w != null && w.Holder == player);
@@ -78,6 +80,7 @@ namespace WhipItUp.Testing
         /// T-017 (D-061): every whip's attack 2 does Whip.GrabDamage (default 2) x the damage of attack 1 (attack 1 multiplier 1).
         static string World_WhipAttack2Damage()
         {
+            if (!ModSettings.WhipOn) return "SKIP: the whip is off in the config";
             if (ObjectDB.instance == null) return "SKIP: ObjectDB not ready";
             float want = ModSettings.WhipGrabDamage.Value;
             var bad = new List<string>();
@@ -103,6 +106,7 @@ namespace WhipItUp.Testing
         /// T-023: the 4 body clips (bundle) and the 4 keyed lash clips are loaded.
         static string World_WhipClipsLoaded()
         {
+            if (!ModSettings.WhipOn) return "SKIP: the whip is off in the config";
             var lash = Weapons.WhipAnimations.Lash;
             string r = WhipAnimChecks.Clips(Weapons.WhipAnimations.BodyClipsLoaded, Weapons.WhipAnimations.BodyClipsExpected, lash != null ? lash.Count : 0, Weapons.WhipAnimations.LashClipsExpected);
             ModLog.Verbose("InGameTests: World_WhipClipsLoaded -> " + r);
@@ -112,6 +116,7 @@ namespace WhipItUp.Testing
         /// T-023: with a whip in hand the local player's animator plays the whip clips (all slots); without one it has the game's controller back.
         static string World_WhipControllerState()
         {
+            if (!ModSettings.WhipOn) return "SKIP: the whip is off in the config";
             var player = Player.m_localPlayer;
             string r;
             if (player == null) r = "SKIP: no local player";
@@ -132,6 +137,7 @@ namespace WhipItUp.Testing
         /// T-023: no controller swap this session lost an animator layer state (TEST-020: lying on the floor after a weapon switch).
         static string World_WhipSwapsKeptState()
         {
+            if (!ModSettings.WhipOn) return "SKIP: the whip is off in the config";
             string r = WhipAnimChecks.Swaps(Weapons.WhipAnimations.Swaps, Weapons.WhipAnimations.SwapsLosingState, Weapons.WhipAnimations.LastSwapLoss);
             ModLog.Verbose("InGameTests: World_WhipSwapsKeptState -> " + r);
             return r;
@@ -141,6 +147,10 @@ namespace WhipItUp.Testing
         /// (asked through the game's own Piece.Requirement.GetAmount, so FlatUpgradePatch is part of the check).
         static string World_MetalCostFlat()
         {
+            // FlatUpgradePatch does nothing while [General] EnableAll is off (by design), so the game's own 1x / 2x / 4x cost is what the recipes show then:
+            // that is not a bug, and reporting it as FAIL hid real results in every report while the test profile had EnableAll off
+            if (!ModSettings.On) return "SKIP: EnableAll is off in the config - the flat upgrade cost patch is inert while the mod is off";
+            if (OnFamilies().Count == 0) return "SKIP: every weapon family is off in the config";
             if (ObjectDB.instance == null) return "SKIP: ObjectDB not ready";
             int found = Weapons.FlatUpgradePatch.Scan(), checkedN = 0;
             var bad = new List<string>();
@@ -166,16 +176,21 @@ namespace WhipItUp.Testing
             return r2;
         }
 
+        /// The prefab names of the families that are on ([Paddle] / [Flogger] / [Whip] Enable): a family that is off is not registered, so it is not expected.
         static IEnumerable<string> Expected()
         {
-            foreach (var f in Families)
+            foreach (var f in OnFamilies())
                 for (int rank = 1; rank <= Weapons.Ladder.Ranks; rank++) yield return Weapons.Ladder.PrefabName(f, rank);
         }
 
+        static List<string> OnFamilies() { return Families.Where(ModSettings.FamilyOn).ToList(); }
+
         static string Result(string where, List<string> missing)
         {
-            int expected = Families.Length * Weapons.Ladder.Ranks;
-            return missing.Count == 0 ? "PASS: all " + expected + " weapons (" + string.Join(", ", Families) + " V1-V" + Weapons.Ladder.Ranks + ") in " + where
+            var on = OnFamilies();
+            if (on.Count == 0) return "SKIP: every weapon family is off in the config";
+            int expected = on.Count * Weapons.Ladder.Ranks;
+            return missing.Count == 0 ? "PASS: all " + expected + " weapons (" + string.Join(", ", on.ToArray()) + " V1-V" + Weapons.Ladder.Ranks + ") in " + where
                 : "FAIL: " + missing.Count + " of " + expected + " missing in " + where + ": " + string.Join(", ", missing.ToArray());
         }
     }

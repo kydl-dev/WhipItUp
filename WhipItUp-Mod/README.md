@@ -17,7 +17,7 @@ out when you attack, and a second attack that wraps the lash around an enemy and
   - Attack 2 wraps the lash around the enemy's body and pulls it toward you (x2 damage, 5 m).
   - The lash coils in your hand while idle, cracks at full extension, and hit sounds play once per swing.
 - **Whips skill**: a new skill that levels with the flogger and the whip.
-- **Weapon viewer (F6)**: look at every weapon in 3D (rotate, pan, zoom; the whip coiled or straight) and read its stats,
+- **Weapon viewer (KY hub, F6)**: look at every weapon in 3D (rotate, pan, zoom; the whip coiled or straight) and read its stats,
   attacks and recipe for every quality level.
 
 ## Weapons
@@ -37,7 +37,7 @@ The F6 menu shows the exact numbers of every weapon at every quality level.
 
 ## How to use
 - Craft the weapons at the workbench, forge or black forge (see the table); they show up once you know the materials.
-- Press **F6** (config `[General] MenuKey`) to open the WhipItUp menu: weapon viewer and details.
+- Press **F6** to open the KY hub (KydlCore); the WhipItUp tabs hold the weapon viewer, the details and the settings.
 
 ## Configuration
 `BepInEx/config/com.kydldev.WhipItUp.cfg` (or the in-game configuration manager):
@@ -45,7 +45,10 @@ The F6 menu shows the exact numbers of every weapon at every quality level.
 | Section | Setting | Default | What it does |
 |---------|---------|---------|--------------|
 | General | EnableAll | true | Switches the whole mod on / off while playing |
-| General | MenuKey | F6 | Opens / closes the WhipItUp menu (None = no menu) |
+| Paddle | Enable | true | Paddle family (restart the game after changing) |
+| Flogger | Enable | true | Flogger family and the Whips skill (restart the game after changing) |
+| Whip | Enable | true | Whip family and the Whips skill (restart the game after changing) |
+| Viewer | Enable | true | Weapon viewer and details tabs in the KY hub |
 | DebugLog | Enable | false | Detailed lines in the BepInEx log for bug reports |
 
 Edits to the file are picked up while the game runs.

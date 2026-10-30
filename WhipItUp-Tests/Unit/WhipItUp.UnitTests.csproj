@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\WhipItUp-Mod\src\Functions.cs" Link="Mod\Functions.cs" />
     <Compile Include="..\..\WhipItUp-Mod\src\Weapons\Ladder.cs" Link="Mod\Ladder.cs" />
     <Compile Include="..\..\WhipItUp-Mod\src\Weapons\WeaponNames.cs" Link="Mod\WeaponNames.cs" />
     <Compile Include="..\..\WhipItUp-Mod\src\Weapons\WhipLashFrames.cs" Link="Mod\WhipLashFrames.cs" />

@@ -14,6 +14,7 @@ namespace WhipItUp.Ui
             { "whipitup_menu_footer", "Esc to close" },
             { "whipitup_tab_viewer", "Viewer" },
             { "whipitup_tab_details", "Details" },
+            { "whipitup_tab_settings", "Settings" },
             { "whipitup_menu_family", "Family" },
             { "whipitup_menu_weapon", "Weapon" },
             { "whipitup_family_paddle", "Paddle" },

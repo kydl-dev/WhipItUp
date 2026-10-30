@@ -13,13 +13,14 @@ namespace WhipItUp.Ui
         /// `text` turns a localization key into the shown text (game: Loc.T). `log` gets the debug lines (null = silent). `stats` returns the numbers
         /// of a (family, rank) weapon, null for none (game: WeaponStatsReader.Read; null provider = no details at all).
         /// Expected outcome: Families x Ladder.Ranks entries, weakest rank first within each family.
-        internal static List<WeaponInfo> Build(Func<string, string> text, Action<string> log = null, Func<string, int, WeaponStats> stats = null)
+        internal static List<WeaponInfo> Build(Func<string, string> text, Action<string> log = null, Func<string, int, WeaponStats> stats = null, Func<string, bool> familyOn = null)
         {
             var list = new List<WeaponInfo>();
             int withDetails = 0;
             // `Weapons.Ladder`, not `Ladder`: the game has its own global class named Ladder, which wins over the using-imported one in this namespace
             foreach (var family in WeaponSelection.Families)
             {
+                if (familyOn != null && !familyOn(family)) { if (log != null) log("WeaponCatalog: " + family + " is off, its weapons are not listed"); continue; }   // [Paddle] / [Flogger] / [Whip] Enable
                 for (int rank = 1; rank <= Weapons.Ladder.Ranks; rank++)
                 {
                     string nameKey = WeaponNames.Key(family, rank), descKey = WeaponNames.DescKey(family, rank);
@@ -38,7 +39,7 @@ namespace WhipItUp.Ui
                     list.Add(info);
                 }
             }
-            if (log != null) log("WeaponCatalog: " + list.Count + " weapon(s) built (" + WeaponSelection.Families.Length + " families x " + Weapons.Ladder.Ranks + " ranks), " + withDetails + " with details");
+            if (log != null) log("WeaponCatalog: " + list.Count + " weapon(s) built (" + WeaponSelection.Families.Length + " families x " + Weapons.Ladder.Ranks + " ranks, off families left out), " + withDetails + " with details");
             return list;
         }
     }

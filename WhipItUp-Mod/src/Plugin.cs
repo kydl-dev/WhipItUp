@@ -15,13 +15,14 @@ namespace WhipItUp
     /// </summary>
     [BepInPlugin(ModGuid, ModName, ModVersion)]
     [BepInDependency(Jotunn.Main.ModGuid)]
+    [BepInDependency(KydlCore.Plugin.ModGuid, "0.1.0")]     // the UI (hub, windows, input lock): manifest KydlDev-KydlCore-0.1.0, same version
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
     public class Plugin : BaseUnityPlugin
     {
         // ModGuid never changes after the first release. ModVersion = manifest.json version_number = newest CHANGELOG heading (tests check it).
         public const string ModGuid = "com.kydldev.WhipItUp";
         public const string ModName = "WhipItUp";
-        public const string ModVersion = "1.0.1";
+        public const string ModVersion = "2.0.0";
         public const string BundleName = "whipitup";
 
         internal static Plugin Instance;
@@ -35,26 +36,28 @@ namespace WhipItUp
             ModLog.Init(Logger, ModName, () => ModSettings.DebugLog != null && ModSettings.DebugLog.Value);
             ModLog.Info(ModName + " " + ModVersion + " loaded (dll built " + File.GetLastWriteTime(Assembly.GetExecutingAssembly().Location).ToString("yyyy-MM-dd HH:mm:ss") + ")");
 
-            // the shared UI kit (Kydl.Ui) logs through the mod's log: debug lines only with the debug switch on
-            Kydl.Ui.UiLog.VerboseSink = s => ModLog.Verbose(s);
-            Kydl.Ui.UiLog.WarnSink = s => ModLog.Warn(s);
-            Kydl.Ui.UiLog.ErrorSink = s => ModLog.Error(s);
-            Kydl.Ui.UiKit.Owner = ModName;
-
             ModSettings.Bind(Config);
             _cfgWatcher = new ConfigReloader(Config);
             Loc.Register(Weapons.WeaponNames.MergeInto(UiText.En));   // English only (PROJECT_RULES 15)
 
             Bundle = LoadBundle();
-            Weapons.WhipSkill.Register();          // before the game creates the player's Skills
+            // a weapon family that is off ([Paddle] / [Flogger] / [Whip] Enable, or EnableAll) is not added to the game (needs a restart to change)
+            if (ModSettings.SkillOn) Weapons.WhipSkill.Register();          // before the game creates the player's Skills
+            else ModLog.Verbose("Plugin: flogger and whip are off, the Whips skill is not registered");
             Sounds.WeaponSounds.Load(Bundle);
-            new Weapons.PaddleItems().Register(Bundle, a => ModSettings.PaddleAlignmentChanged += a);
-            new Weapons.FloggerItems().Register(Bundle, a => ModSettings.FloggerAlignmentChanged += a);
-            new Weapons.WhipItems().Register(Bundle, a => ModSettings.WhipAlignmentChanged += a);
-            Weapons.WhipAnimations.Load(Bundle);   // T-013 custom whip clips + keyed lash
-            UiInputLock.Install(ModGuid);           // the character does not move while one of the mod's menus is open
+            if (ModSettings.PaddleOn) new Weapons.PaddleItems().Register(Bundle, a => ModSettings.PaddleAlignmentChanged += a);
+            else ModLog.Verbose("Plugin: paddle is off, its items are not registered");
+            if (ModSettings.FloggerOn) new Weapons.FloggerItems().Register(Bundle, a => ModSettings.FloggerAlignmentChanged += a);
+            else ModLog.Verbose("Plugin: flogger is off, its items are not registered");
+            if (ModSettings.WhipOn)
+            {
+                new Weapons.WhipItems().Register(Bundle, a => ModSettings.WhipAlignmentChanged += a);
+                Weapons.WhipAnimations.Load(Bundle);   // T-013 custom whip clips + keyed lash
+            }
+            else ModLog.Verbose("Plugin: whip is off, its items and animations are not registered");
+            HubTabs.Register(Config);               // the weapon viewer / details / settings tabs in the KY hub of KydlCore (it owns the menu key, window and input lock)
             new Harmony(ModGuid).PatchAll(Assembly.GetExecutingAssembly());
-            ModLog.Verbose("Plugin: Awake finished (Harmony patches applied, menu key " + ModSettings.MenuKey.Value + ")");
+            ModLog.Verbose("Plugin: Awake finished (Harmony patches applied; paddle " + ModSettings.PaddleOn + ", flogger " + ModSettings.FloggerOn + ", whip " + ModSettings.WhipOn + ", viewer " + ModSettings.ViewerOn + ")");
         }
 
         // 1) embedded in the DLL (Kydl.Mod.targets embeds Assets\<bundle>; read fully into memory: LoadFromStream breaks once the stream
@@ -86,8 +89,6 @@ namespace WhipItUp
         {
             if (_cfgWatcher != null) _cfgWatcher.Tick();
             Weapons.WhipAnimations.Tick();     // T-013: put the game's controller back one frame after a whip visual went away (also when off)
-            if (!ModSettings.On) return;
-            MainMenu.Tick();
         }
 
         void OnDestroy()
