@@ -1,0 +1,59 @@
+{
+  "name": "give-and-equip",
+  "description": "A whip can be put in the inventory and equipped into the hand",
+  "timeout": 60,
+  "steps": [
+    {
+      "do": "give",
+      "prefab": "Whip_V1",
+      "count": 1,
+      "equip": true
+    },
+    {
+      "do": "wait",
+      "until": {
+        "check": "hook",
+        "name": "whipitup.owned",
+        "args": {
+          "prefab": "Whip_V1"
+        },
+        "expect": true
+      },
+      "timeout": 5
+    },
+    {
+      "do": "wait",
+      "until": {
+        "check": "hook",
+        "name": "whipitup.inHand",
+        "args": {
+          "prefab": "Whip_V1"
+        },
+        "expect": true
+      },
+      "timeout": 8
+    },
+    {
+      "do": "wait",
+      "seconds": 2
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.skillLevel",
+      "args": {
+        "prefab": "Whip_V1"
+      },
+      "min": 0
+    }
+  ],
+  "asserts": [
+    {
+      "check": "hasItem",
+      "prefab": "Whip_V1"
+    },
+    {
+      "check": "noErrors",
+      "source": "WhipItUp"
+    }
+  ]
+}

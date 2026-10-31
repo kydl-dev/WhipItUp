@@ -1,0 +1,18 @@
+{
+  "name": "all-21-weapons",
+  "description": "Paddle, Flogger and Whip exist in seven ranks each",
+  "timeout": 60,
+  "steps": [
+    {
+      "do": "hook",
+      "name": "whipitup.weapons",
+      "contains": "21:"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "WhipItUp"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "name": "flat-metal-cost",
+  "description": "The rank metal costs 6 to craft and a flat 2 for each upgrade (not 2x / 4x)",
+  "timeout": 60,
+  "steps": [
+    {
+      "do": "hook",
+      "name": "whipitup.cost",
+      "args": {
+        "prefab": "Paddle_V1",
+        "quality": 1
+      },
+      "contains": "Tin:6"
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.cost",
+      "args": {
+        "prefab": "Paddle_V1",
+        "quality": 2
+      },
+      "contains": "Tin:2"
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.cost",
+      "args": {
+        "prefab": "Paddle_V1",
+        "quality": 4
+      },
+      "contains": "Tin:2"
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.cost",
+      "args": {
+        "prefab": "Whip_V4",
+        "quality": 1
+      },
+      "contains": "Iron:6"
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.cost",
+      "args": {
+        "prefab": "Whip_V4",
+        "quality": 3
+      },
+      "contains": "Iron:2"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "WhipItUp"
+    }
+  ]
+}

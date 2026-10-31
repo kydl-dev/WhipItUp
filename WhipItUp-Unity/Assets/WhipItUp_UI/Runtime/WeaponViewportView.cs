@@ -14,13 +14,13 @@ namespace WhipItUp.Ui
     /// </summary>
     internal static class WeaponViewportView
     {
-        internal static VisualElement Build(Func<string, string> text, WeaponSelection selection, Func<IWeaponScene> makeScene = null, ViewerSettings settings = null)
+        internal static VisualElement Build(Func<string, string> text, WeaponSelection selection, Func<IWeaponScene> makeScene = null, ViewerSettings settings = null, bool withPicker = true)
         {
             settings = settings ?? new ViewerSettings();
             settings.Clamp(UiLog.Verbose);
             var tab = new VisualElement { name = "whipitup-viewer-tab" };
             tab.style.flexShrink = 0;
-            tab.Add(WeaponPicker.Build(text, selection));
+            if (withPicker) tab.Add(WeaponPicker.Build(text, selection));
 
             var frame = new VisualElement { name = "whipitup-viewport" };
             frame.style.flexShrink = 0; frame.style.height = settings.FrameHeight; frame.style.marginTop = 10;

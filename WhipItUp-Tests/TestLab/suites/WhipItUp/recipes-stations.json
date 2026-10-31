@@ -1,0 +1,53 @@
+{
+  "name": "recipes-stations",
+  "description": "Every weapon has a recipe at the station the README names",
+  "timeout": 60,
+  "steps": [
+    {
+      "do": "hook",
+      "name": "whipitup.hasRecipe",
+      "args": {
+        "prefab": "Paddle_V1"
+      },
+      "expect": true
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.station",
+      "args": {
+        "prefab": "Paddle_V1"
+      },
+      "contains": "workbench"
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.station",
+      "args": {
+        "prefab": "Whip_V3"
+      },
+      "contains": "forge"
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.station",
+      "args": {
+        "prefab": "Flogger_V6"
+      },
+      "contains": "blackforge"
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.hasRecipe",
+      "args": {
+        "prefab": "Whip_V7"
+      },
+      "expect": true
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "WhipItUp"
+    }
+  ]
+}

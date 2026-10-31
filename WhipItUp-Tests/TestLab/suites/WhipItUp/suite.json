@@ -1,0 +1,46 @@
+{
+  "name": "WhipItUp",
+  "description": "WhipItUp: 21 weapons, Whips skill, damage ladder, recipes, flat metal cost, equip, craft (KydlCore D-084)",
+  "requireMods": [
+    {
+      "guid": "com.kydldev.WhipItUp"
+    }
+  ],
+  "configOverrides": [
+    {
+      "guid": "com.kydldev.WhipItUp",
+      "section": "General",
+      "key": "EnableAll",
+      "value": true
+    },
+    {
+      "guid": "com.kydldev.WhipItUp",
+      "section": "Paddle",
+      "key": "Enable",
+      "value": true
+    },
+    {
+      "guid": "com.kydldev.WhipItUp",
+      "section": "Flogger",
+      "key": "Enable",
+      "value": true
+    },
+    {
+      "guid": "com.kydldev.WhipItUp",
+      "section": "Whip",
+      "key": "Enable",
+      "value": true
+    }
+  ],
+  "resetBetweenTests": true,
+  "tests": [
+    "selftest",
+    "all-21-weapons",
+    "skills",
+    "damage-ladder",
+    "recipes-stations",
+    "flat-metal-cost",
+    "give-and-equip",
+    "craft-a-paddle"
+  ]
+}

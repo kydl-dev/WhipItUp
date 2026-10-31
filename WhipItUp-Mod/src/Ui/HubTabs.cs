@@ -1,6 +1,5 @@
 using BepInEx.Configuration;
 using Kydl.Common;
-using UnityEngine.UIElements;
 
 namespace WhipItUp.Ui
 {
@@ -24,30 +23,15 @@ namespace WhipItUp.Ui
         {
             KydlCore.KyHub.SetModTitle(Plugin.ModGuid, Plugin.ModName);
             bool shown = ModSettings.ViewerShown;
-            var viewer = shown ? KydlCore.KyHub.AddTab(Plugin.ModGuid, ViewerId, Loc.T("whipitup_tab_viewer"), ViewerPage, 0) : null;
-            var details = shown ? KydlCore.KyHub.AddTab(Plugin.ModGuid, DetailsId, Loc.T("whipitup_tab_details"), DetailsPage, 1) : null;
+            var viewer = shown ? KydlCore.KyHub.AddPage(Plugin.ModGuid, ViewerId, Loc.T("whipitup_tab_viewer"), WeaponKyPages.Viewer, 0, 30) : null;
+            var details = shown ? KydlCore.KyHub.AddPage(Plugin.ModGuid, DetailsId, Loc.T("whipitup_tab_details"), WeaponKyPages.Details, 1, 10) : null;
             var settings = KydlCore.KyHub.AddTab(Plugin.ModGuid, SettingsId, Loc.T("whipitup_tab_settings"), () => KydlCore.KyHub.ConfigEntries(config), 10);
             ModLog.Verbose("HubTabs: weapon tabs " + (shown ? "on" : "off (viewer " + ModSettings.ViewerOn + ", paddle " + ModSettings.PaddleOn + ", flogger " + ModSettings.FloggerOn + ", whip " + ModSettings.WhipOn + ")")
                 + "; registered viewer " + (viewer != null) + ", details " + (details != null) + ", settings " + (settings != null));
         }
 
-        static VisualElement ViewerPage()
-        {
-            var selection = NewSelection();
-            var viewer = ModSettings.Viewer();
-            ModLog.Verbose("HubTabs: viewer page built (" + selection.Family + " V" + selection.Rank + ")");
-            return WeaponViewportView.Build(k => Loc.T(k), selection, () => WeaponViewerScene.Make(viewer), viewer);
-        }
-
-        static VisualElement DetailsPage()
-        {
-            var selection = NewSelection();
-            ModLog.Verbose("HubTabs: details page built (" + selection.Family + " V" + selection.Rank + ")");
-            return WeaponDetailsView.Build(k => Loc.T(k), selection);
-        }
-
         /// A fresh weapon list (stats are read from the game now) with the weapon chosen last time selected again. Expected outcome: a selection that remembers its changes.
-        static WeaponSelection NewSelection()
+        internal static WeaponSelection NewSelection()
         {
             var weapons = WeaponCatalog.Build(k => Loc.T(k), s => ModLog.Verbose(s), WeaponStatsReader.Read, ModSettings.FamilyOn);
             var selection = new WeaponSelection(weapons, s => ModLog.Verbose(s));

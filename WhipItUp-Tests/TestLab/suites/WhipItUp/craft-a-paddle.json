@@ -1,0 +1,28 @@
+{
+  "name": "craft-a-paddle",
+  "description": "The paddle can be crafted through the game's own crafting code",
+  "timeout": 90,
+  "steps": [
+    {
+      "do": "give",
+      "materialsFor": "Paddle_V1"
+    },
+    {
+      "do": "craft",
+      "prefab": "Paddle_V1",
+      "count": 1,
+      "free": false,
+      "station": "piece_workbench"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "hasItem",
+      "prefab": "Paddle_V1"
+    },
+    {
+      "check": "noErrors",
+      "source": "WhipItUp"
+    }
+  ]
+}

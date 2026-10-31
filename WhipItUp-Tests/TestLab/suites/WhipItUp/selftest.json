@@ -1,0 +1,23 @@
+{
+  "name": "selftest",
+  "description": "WhipItUp's own in-game checks pass (weapons in ObjectDB / ZNetScene, skill, flat metal cost, coil, attack 2)",
+  "timeout": 60,
+  "steps": [
+    {
+      "do": "wait",
+      "seconds": 6
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.selftest",
+      "notContains": "FAIL",
+      "contains": "PASS"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "WhipItUp"
+    }
+  ]
+}

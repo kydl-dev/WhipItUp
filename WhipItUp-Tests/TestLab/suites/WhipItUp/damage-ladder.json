@@ -1,0 +1,75 @@
+{
+  "name": "damage-ladder",
+  "description": "Base damage of rank 1 and rank 7 matches the README table",
+  "timeout": 60,
+  "steps": [
+    {
+      "do": "hook",
+      "name": "whipitup.blunt",
+      "args": {
+        "prefab": "Paddle_V1"
+      },
+      "min": 29.5,
+      "max": 30.5
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.blunt",
+      "args": {
+        "prefab": "Paddle_V7"
+      },
+      "min": 187.5,
+      "max": 190
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.slash",
+      "args": {
+        "prefab": "Flogger_V1"
+      },
+      "min": 19.5,
+      "max": 20.5
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.slash",
+      "args": {
+        "prefab": "Flogger_V7"
+      },
+      "min": 149.5,
+      "max": 152
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.slash",
+      "args": {
+        "prefab": "Whip_V1"
+      },
+      "min": 19.5,
+      "max": 20.5
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.slash",
+      "args": {
+        "prefab": "Whip_V7"
+      },
+      "min": 149.5,
+      "max": 152
+    },
+    {
+      "do": "hook",
+      "name": "whipitup.maxQuality",
+      "args": {
+        "prefab": "Whip_V4"
+      },
+      "expect": 4
+    }
+  ],
+  "asserts": [
+    {
+      "check": "noErrors",
+      "source": "WhipItUp"
+    }
+  ]
+}
