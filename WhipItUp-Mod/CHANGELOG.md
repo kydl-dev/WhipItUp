@@ -1,6 +1,8 @@
 # Changelog
 
 ## 2.0.0
+- Ported to the KydlDev layout (KydlCore feature switches, new source layout, TestLab suites). No gameplay change. Not tested in game yet.
+- Network check is now `EveryoneMustHaveMod` with exact version match (Patch level; it was Minor).
 - Breaking: WhipItUp now needs the KydlCore mod (hard dependency). Install KydlCore as well.
 - The menu is now tabs (Viewer, Details, Settings) in the KY hub window of KydlCore (F6); the own menu window and the `[General] MenuKey` setting are gone.
 - New config switches: `[General] EnableAll`, `[Paddle] Enable`, `[Flogger] Enable`, `[Whip] Enable`, `[Viewer] Enable`. A switched-off weapon family is not registered at all (restart the game after changing it); the viewer tabs are hidden when the viewer is off.

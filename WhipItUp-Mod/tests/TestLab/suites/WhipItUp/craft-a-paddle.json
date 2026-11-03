@@ -1,0 +1,36 @@
+{
+  "name": "craft-a-paddle",
+  "description": "The paddle can be crafted through the game's own crafting code - at its own workbench (spawned by the test: since the arena / SteveTheTroll's reset the player no longer starts next to the lab house's workbench; ecosystem run 20261103-030128)",
+  "timeout": 90,
+  "steps": [
+    { "do": "hook", "name": "whipitup.arena", "contains": "arena at", "label": "start on the arena spot" },
+    {
+      "do": "spawn",
+      "prefab": "piece_workbench",
+      "dz": 4,
+      "owner": "me",
+      "as": "piece_workbench"
+    },
+    {
+      "do": "give",
+      "materialsFor": "Paddle_V1"
+    },
+    {
+      "do": "craft",
+      "prefab": "Paddle_V1",
+      "count": 1,
+      "free": false,
+      "station": "piece_workbench"
+    }
+  ],
+  "asserts": [
+    {
+      "check": "hasItem",
+      "prefab": "Paddle_V1"
+    },
+    {
+      "check": "noErrors",
+      "source": "WhipItUp"
+    }
+  ]
+}

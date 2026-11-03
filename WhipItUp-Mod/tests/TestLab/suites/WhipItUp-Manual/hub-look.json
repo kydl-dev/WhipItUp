@@ -1,0 +1,15 @@
+{
+  "name": "hub-look",
+  "description": "The weapon viewer and details tabs look right in the shared KydlCore theme, the 3D weapon turns and zooms, and F6 / Esc open and close the hub with real keys",
+  "manualOnly": true,
+  "timeout": 300,
+  "steps": [
+    { "do": "hook", "name": "whipitup.arena", "contains": "arena at", "label": "start on the arena spot" },
+    { "do": "checkpoint", "message": "Press F6, pick WhipItUp. Do the Viewer, Details and Settings tabs use the shared look (dark panel, gold accents, readable text, nothing cut off)?" },
+    { "do": "checkpoint", "message": "On the Viewer tab pick a weapon and rank: does the 3D weapon show, turn when you drag, zoom with the wheel and reset?" },
+    { "do": "checkpoint", "message": "Press Esc. Is the hub closed and can you move / look around again (input released)?" }
+  ],
+  "asserts": [
+    { "check": "noErrors", "source": "WhipItUp" }
+  ]
+}

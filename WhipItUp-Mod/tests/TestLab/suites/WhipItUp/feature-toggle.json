@@ -1,0 +1,40 @@
+{
+  "name": "feature-toggle",
+  "description": "EnableAll off stops every feature and removes the viewer tabs (no stale UI registration); each Enable switch stops only its own feature; on starts them again. The weapon items themselves stay until the next game start (a restart changes a family).",
+  "timeout": 90,
+  "steps": [
+    { "do": "hook", "name": "whipitup.arena", "contains": "arena at", "label": "start on the arena spot" },
+    { "do": "hook", "name": "whipitup.featureRunning", "args": { "id": "skill" }, "expect": true, "label": "skill running at start" },
+    { "do": "hook", "name": "whipitup.featureRunning", "args": { "id": "paddle" }, "expect": true, "label": "paddle running at start" },
+    { "do": "hook", "name": "whipitup.featureRunning", "args": { "id": "flogger" }, "expect": true, "label": "flogger running at start" },
+    { "do": "hook", "name": "whipitup.featureRunning", "args": { "id": "whip" }, "expect": true, "label": "whip running at start" },
+    { "do": "hook", "name": "whipitup.featureRunning", "args": { "id": "viewer" }, "expect": true, "label": "viewer running at start" },
+    { "do": "hook", "name": "whipitup.tabRegistered", "args": { "id": "viewer" }, "expect": true, "label": "viewer tab registered" },
+    { "do": "hook", "name": "whipitup.tabRegistered", "args": { "id": "details" }, "expect": true, "label": "details tab registered" },
+    { "do": "hook", "name": "whipitup.tabRegistered", "args": { "id": "settings" }, "expect": true, "label": "settings tab registered" },
+    { "do": "setConfig", "values": { "General/EnableAll": false } },
+    { "do": "wait", "until": { "check": "hook", "name": "whipitup.featureRunning", "args": { "id": "viewer" }, "expect": false }, "timeout": 5 },
+    { "do": "hook", "name": "whipitup.featureRunning", "args": { "id": "paddle" }, "expect": false, "label": "paddle stopped by EnableAll" },
+    { "do": "hook", "name": "whipitup.featureRunning", "args": { "id": "whip" }, "expect": false, "label": "whip stopped by EnableAll" },
+    { "do": "hook", "name": "whipitup.tabRegistered", "args": { "id": "viewer" }, "expect": false, "label": "viewer tab removed while off" },
+    { "do": "hook", "name": "whipitup.tabRegistered", "args": { "id": "details" }, "expect": false, "label": "details tab removed while off" },
+    { "do": "hook", "name": "whipitup.tabRegistered", "args": { "id": "settings" }, "expect": true, "label": "settings tab stays" },
+    { "do": "setConfig", "values": { "General/EnableAll": true } },
+    { "do": "wait", "until": { "check": "hook", "name": "whipitup.featureRunning", "args": { "id": "viewer" }, "expect": true }, "timeout": 5 },
+    { "do": "hook", "name": "whipitup.tabRegistered", "args": { "id": "viewer" }, "expect": true, "label": "viewer tab back" },
+    { "do": "setConfig", "values": { "Viewer/Enable": false } },
+    { "do": "wait", "until": { "check": "hook", "name": "whipitup.featureRunning", "args": { "id": "viewer" }, "expect": false }, "timeout": 5 },
+    { "do": "hook", "name": "whipitup.featureRunning", "args": { "id": "paddle" }, "expect": true, "label": "paddle unaffected by Viewer/Enable" },
+    { "do": "hook", "name": "whipitup.tabRegistered", "args": { "id": "details" }, "expect": false, "label": "details tab removed" },
+    { "do": "setConfig", "values": { "Viewer/Enable": true } },
+    { "do": "wait", "until": { "check": "hook", "name": "whipitup.featureRunning", "args": { "id": "viewer" }, "expect": true }, "timeout": 5 },
+    { "do": "setConfig", "values": { "Paddle/Enable": false } },
+    { "do": "wait", "until": { "check": "hook", "name": "whipitup.featureRunning", "args": { "id": "paddle" }, "expect": false }, "timeout": 5 },
+    { "do": "hook", "name": "whipitup.featureRunning", "args": { "id": "flogger" }, "expect": true, "label": "flogger unaffected by Paddle/Enable" },
+    { "do": "setConfig", "values": { "Paddle/Enable": true } },
+    { "do": "wait", "until": { "check": "hook", "name": "whipitup.featureRunning", "args": { "id": "paddle" }, "expect": true }, "timeout": 5 }
+  ],
+  "asserts": [
+    { "check": "noErrors", "source": "WhipItUp" }
+  ]
+}

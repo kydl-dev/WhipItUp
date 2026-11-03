@@ -15,13 +15,22 @@
     <BundleName>whipitup</BundleName>
     <!-- 2.0.0: the UI kit, the input lock and the KY hub come from KydlCore.dll (a hard dependency), not from a copy in this DLL -->
     <KydlUseCore>true</KydlUseCore>
+    <!-- spec layout (MIGRATION_DECISIONS A8): the DLL goes to assets\ only, no build\ folder -->
+    <KydlBuildFolder>false</KydlBuildFolder>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- tests\ (NUnit + TestLab suites), docs\ and release\ live inside this folder but are never part of the mod (spec 3: excluded from the release) -->
+    <Compile Remove="tests\**;docs\**;release\**" />
+    <None Remove="tests\**;docs\**;release\**" />
+    <EmbeddedResource Remove="tests\**;docs\**;release\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- the mod's menu views live in the Unity project (previewed there) and are compiled into the mod from there -->
     <Compile Include="..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\*.cs" Link="UiViews\%(Filename)%(Extension)" />
     <!-- T-013: the keyed whip lash (made in Blender: WhipItUp-Blender/scripts/anim_lash_frames.py) -->
-    <EmbeddedResource Include="src\Weapons\whip_lash_frames.txt" LogicalName="whip_lash_frames.txt" />
+    <EmbeddedResource Include="src\Features\Whip\Infrastructure\whip_lash_frames.txt" LogicalName="whip_lash_frames.txt" />
   </ItemGroup>
 
   <Import Project="..\..\Claude\shared\Kydl.Mod.targets" />

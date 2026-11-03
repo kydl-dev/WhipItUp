@@ -1,0 +1,29 @@
+{
+  "name": "WhipItUp",
+  "description": "WhipItUp: 21 weapons, Whips skill, damage ladder, recipes, flat metal cost, equip, craft, KY hub tabs, live feature switching (KydlCore D-084)",
+  "requireMods": [
+    { "guid": "com.kydldev.WhipItUp", "minVersion": "2.0.0" },
+    { "guid": "com.kydldev.KydlCore", "minVersion": "0.1.0" }
+  ],
+  "configOverrides": [
+    { "guid": "com.kydldev.WhipItUp", "section": "General", "key": "EnableAll", "value": "true" },
+    { "guid": "com.kydldev.WhipItUp", "section": "Paddle", "key": "Enable", "value": "true" },
+    { "guid": "com.kydldev.WhipItUp", "section": "Flogger", "key": "Enable", "value": "true" },
+    { "guid": "com.kydldev.WhipItUp", "section": "Whip", "key": "Enable", "value": "true" },
+    { "guid": "com.kydldev.WhipItUp", "section": "Viewer", "key": "Enable", "value": "true" },
+    { "guid": "com.kydldev.WhipItUp", "section": "DebugLog", "key": "Enable", "value": "true" }
+  ],
+  "resetBetweenTests": true,
+  "tests": [
+    "selftest",
+    "hub-page",
+    "feature-toggle",
+    "all-21-weapons",
+    "skills",
+    "damage-ladder",
+    "recipes-stations",
+    "flat-metal-cost",
+    "give-and-equip",
+    "craft-a-paddle"
+  ]
+}

@@ -54,7 +54,7 @@ The F6 menu shows the exact numbers of every weapon at every quality level.
 Edits to the file are picked up while the game runs.
 
 ## Multiplayer
-Every player needs the mod (same version).
+Every player (and the server) needs WhipItUp and KydlCore, and the versions must match exactly (the mod checks this on connect). Weapons and the Whips skill are shared world state, so a player without the mod cannot join.
 
 ## Bug reports
 Turn on `[DebugLog] Enable`, reproduce the problem, and attach `BepInEx/LogOutput.log`.

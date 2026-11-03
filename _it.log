@@ -1,0 +1,7 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+  WhipItUp.IntegrationTests -> E:\Projects\Valheim\WhipItUp\WhipItUp-Mod\tests\Integration\bin\Release\net48\WhipItUp.IntegrationTests.dll
+Test run for E:\Projects\Valheim\WhipItUp\WhipItUp-Mod\tests\Integration\bin\Release\net48\WhipItUp.IntegrationTests.dll (.NETFramework,Version=v4.8)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    36, Skipped:     0, Total:    36, Duration: 391 ms - WhipItUp.IntegrationTests.dll (net48)

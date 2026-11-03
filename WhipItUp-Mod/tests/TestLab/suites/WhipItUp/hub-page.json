@@ -1,0 +1,19 @@
+{
+  "name": "hub-page",
+  "description": "KydlCore acceptance (spec 4): the mod is in the F6 hub with its Viewer, Details and Settings tabs, the page renders through the shared UI, the hub opens and closes cleanly",
+  "timeout": 60,
+  "steps": [
+    { "do": "hook", "name": "whipitup.arena", "contains": "arena at", "label": "start on the arena spot" },
+    { "do": "hook", "name": "kc.hubOpen", "args": { "mod": "com.kydldev.WhipItUp" }, "expect": true },
+    { "do": "wait", "until": { "check": "hook", "name": "kc.hubIsOpen", "expect": true }, "timeout": 5 },
+    { "do": "hook", "name": "kc.hubMods", "contains": "com.kydldev.WhipItUp" },
+    { "do": "hook", "name": "kc.hubTabs", "args": { "mod": "com.kydldev.WhipItUp" }, "contains": "viewer", "label": "viewer tab" },
+    { "do": "hook", "name": "kc.hubTabs", "args": { "mod": "com.kydldev.WhipItUp" }, "contains": "details", "label": "details tab" },
+    { "do": "hook", "name": "kc.hubTabs", "args": { "mod": "com.kydldev.WhipItUp" }, "contains": "settings", "label": "settings tab" },
+    { "do": "hook", "name": "kc.hubClose" },
+    { "do": "wait", "until": { "check": "hook", "name": "kc.hubIsOpen", "expect": false }, "timeout": 5 }
+  ],
+  "asserts": [
+    { "check": "noErrors", "source": "WhipItUp" }
+  ]
+}
