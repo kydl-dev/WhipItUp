@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Kydl.Common;
+using KydlCore.Common;
 using UnityEngine;
 
 namespace WhipItUp.Testing

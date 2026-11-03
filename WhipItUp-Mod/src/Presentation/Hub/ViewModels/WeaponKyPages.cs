@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using Kydl.Common;
+using KydlCore.Common;
 using KydlCore;
+using KydlCore.Features.Hub.Contracts;
 
 namespace WhipItUp.Ui
 {

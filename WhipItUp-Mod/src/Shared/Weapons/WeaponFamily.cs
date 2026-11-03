@@ -4,7 +4,7 @@ using System.Linq;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
-using Kydl.Common;
+using KydlCore.Common;
 using UnityEngine;
 
 namespace WhipItUp.Weapons
@@ -85,8 +85,8 @@ namespace WhipItUp.Weapons
             var ingredients = ResolveIngredients(name, i);
             var config = new ItemConfig
             {
-                Name = Kydl.Common.Loc.Token(WeaponNames.Key(Family, rank)),
-                Description = Kydl.Common.Loc.Token(WeaponNames.DescKey(Family, rank)),
+                Name = KydlCore.Common.Loc.Token(WeaponNames.Key(Family, rank)),
+                Description = KydlCore.Common.Loc.Token(WeaponNames.DescKey(Family, rank)),
                 CraftingStation = Ladder.Station[i],
                 MinStationLevel = Ladder.StationLevel[i],
                 Requirements = ingredients.Select(g => new RequirementConfig(g.Item, g.Amount, g.AmountPerLevel, true)).ToArray(),
@@ -102,7 +102,7 @@ namespace WhipItUp.Weapons
             ItemManager.Instance.AddItem(item);
             Items.Add(item);
             RenderIcon(item, shared, name, rank);
-            ModLog.Verbose(Family + "Items: " + name + " '" + Kydl.Common.Loc.T(WeaponNames.Key(Family, rank)) + "' (" + Kydl.Common.Loc.T(WeaponNames.DescKey(Family, rank)) + ") added (" + config.CraftingStation + " " + config.MinStationLevel + ", " + string.Join(", ", ingredients.Select(g => g.ToString())) + ")");
+            ModLog.Verbose(Family + "Items: " + name + " '" + KydlCore.Common.Loc.T(WeaponNames.Key(Family, rank)) + "' (" + KydlCore.Common.Loc.T(WeaponNames.DescKey(Family, rank)) + ") added (" + config.CraftingStation + " " + config.MinStationLevel + ", " + string.Join(", ", ingredients.Select(g => g.ToString())) + ")");
         }
 
         /// The recipe of one rank with every item id resolved against the game's prefabs (Ladder.Resolve: the user's metal id first, the rip's name as fallback).

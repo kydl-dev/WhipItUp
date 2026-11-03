@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using Kydl.Ui;
+using KydlCore.Ui;
 using UnityEngine;
 using UnityEngine.UIElements;
 #if UNITY_EDITOR
@@ -12,12 +12,12 @@ namespace WhipItUp.Ui
 {
     /// <summary>
     /// Unity-only preview of the mod's menu (NOT compiled into the mod: only Runtime/ is). Add this component to any GameObject of an empty
-    /// scene and press Play: the menu opens in the Game view in the same look as in game (game fonts from Assets/Kydl.Ui/Preview/GameAssets).
+    /// scene and press Play: the menu opens in the Game view in the same look as in game (game fonts from Assets/KydlCore.Ui/Preview/GameAssets).
     /// Set the Game view to 1920x1080 (the panel scales from that like in game).
     /// </summary>
     public sealed class MenuPreview : MonoBehaviour
     {
-        const string FontFolder = "Assets/Kydl.Ui/Preview/GameAssets/";
+        const string FontFolder = "Assets/KydlCore.Ui/Preview/GameAssets/";
 
         [Tooltip("Tab shown when Play starts: 0 = Viewer, 1 = Details (the preview has no click tool for the tab bar, so this checks the other tab without clicking).")]
         [SerializeField] int startTab;

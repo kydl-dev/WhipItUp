@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 using HarmonyLib;
-using Kydl.Common;
+using KydlCore.Common;
 
 namespace WhipItUp
 {

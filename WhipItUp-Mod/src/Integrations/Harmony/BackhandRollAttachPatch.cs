@@ -1,5 +1,5 @@
 using HarmonyLib;
-using Kydl.Common;
+using KydlCore.Common;
 namespace WhipItUp.Weapons
 {
     /// Puts a BackhandRoll on every Player when it is created (local and remote).

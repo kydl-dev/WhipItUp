@@ -1,5 +1,5 @@
 using BepInEx.Configuration;
-using Kydl.Common;
+using KydlCore.Common;
 using UnityEngine;
 
 namespace WhipItUp

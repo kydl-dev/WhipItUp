@@ -1,5 +1,5 @@
-using Kydl.Common;
-using Kydl.Core.Features;
+using KydlCore.Common;
+using KydlCore.Core;
 using WhipItUp.Ui;
 
 namespace WhipItUp.Features.Viewer.Infrastructure

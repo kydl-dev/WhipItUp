@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using Kydl.Ui;
+using KydlCore.Ui;
 using UnityEngine.UIElements;
 
 namespace WhipItUp.Ui

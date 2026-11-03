@@ -1,5 +1,5 @@
-using Kydl.Common;
-using Kydl.Ui;
+using KydlCore.Common;
+using KydlCore.Ui;
 using UnityEngine;
 
 namespace WhipItUp.Ui

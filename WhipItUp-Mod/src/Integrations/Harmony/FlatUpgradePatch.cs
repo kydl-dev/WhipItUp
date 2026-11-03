@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using HarmonyLib;
-using Kydl.Common;
+using KydlCore.Common;
 
 namespace WhipItUp.Weapons
 {

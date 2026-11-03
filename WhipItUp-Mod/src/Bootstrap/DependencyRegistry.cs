@@ -1,7 +1,6 @@
 using System;
-using Kydl.Common;
-using Kydl.Core.Commands;
-using Kydl.Core.Time;
+using KydlCore.Common;
+using KydlCore.Core;
 using WhipItUp.Integrations.Valheim;
 
 namespace WhipItUp.Bootstrap

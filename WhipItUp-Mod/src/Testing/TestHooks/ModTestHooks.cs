@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Kydl.Common;
+using KydlCore.Common;
 using UnityEngine;
 using WhipItUp.Bootstrap;
 
@@ -29,7 +29,7 @@ namespace WhipItUp.Testing
 
         /// Is this tab (viewer, details, settings) registered in the KY hub right now (no stale tab after a feature stops)?
         [TestHook("whipitup.tabRegistered")]
-        static bool TabRegistered(string id) { return KydlCore.KyHub.HasTab(Plugin.ModGuid, id); }
+        static bool TabRegistered(string id) { return KydlCore.Features.Hub.Contracts.KyHub.HasTab(Plugin.ModGuid, id); }
         [TestHook("whipitup.selftest")]
         static string SelfTest() { return TestLabSupport.RunInGameTests(typeof(InGameTests)); }
 

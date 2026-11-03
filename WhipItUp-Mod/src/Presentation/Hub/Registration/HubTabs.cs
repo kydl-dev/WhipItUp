@@ -1,5 +1,5 @@
 using BepInEx.Configuration;
-using Kydl.Common;
+using KydlCore.Common;
 
 namespace WhipItUp.Ui
 {
@@ -21,8 +21,8 @@ namespace WhipItUp.Ui
         /// Once from ModInstaller.Install: the mod's title and its settings tab. Expected outcome: the settings tab is registered.
         internal static bool RegisterModPage(ConfigFile config)
         {
-            KydlCore.KyHub.SetModTitle(Plugin.ModGuid, Plugin.ModName);
-            var settings = KydlCore.KyHub.AddTab(Plugin.ModGuid, SettingsId, Loc.T("whipitup_tab_settings"), () => KydlCore.KyHub.ConfigEntries(config), 10);
+            KydlCore.Features.Hub.Contracts.KyHub.SetModTitle(Plugin.ModGuid, Plugin.ModName);
+            var settings = KydlCore.Features.Hub.Contracts.KyHub.AddTab(Plugin.ModGuid, SettingsId, Loc.T("whipitup_tab_settings"), () => KydlCore.Features.Hub.Contracts.KyHub.ConfigEntries(config), 10);
             ModLog.Verbose("HubTabs: title + settings tab " + (settings != null ? "registered" : "FAILED"));
             return settings != null;
         }
@@ -30,8 +30,8 @@ namespace WhipItUp.Ui
         /// The Viewer feature's Start: the weapon list and the details page. Expected outcome: both tabs are registered.
         internal static bool AddWeaponTabs()
         {
-            var viewer = KydlCore.KyHub.AddPage(Plugin.ModGuid, ViewerId, Loc.T("whipitup_tab_viewer"), WeaponKyPages.Viewer, 0, 30);
-            var details = KydlCore.KyHub.AddPage(Plugin.ModGuid, DetailsId, Loc.T("whipitup_tab_details"), WeaponKyPages.Details, 1, 10);
+            var viewer = KydlCore.Features.Hub.Contracts.KyHub.AddPage(Plugin.ModGuid, ViewerId, Loc.T("whipitup_tab_viewer"), WeaponKyPages.Viewer, 0, 30);
+            var details = KydlCore.Features.Hub.Contracts.KyHub.AddPage(Plugin.ModGuid, DetailsId, Loc.T("whipitup_tab_details"), WeaponKyPages.Details, 1, 10);
             ModLog.Verbose("HubTabs: weapon tabs registered viewer " + (viewer != null) + ", details " + (details != null));
             return viewer != null && details != null;
         }
@@ -44,8 +44,8 @@ namespace WhipItUp.Ui
 
         static bool RemoveTab(string id)
         {
-            bool removed = KydlCore.KyHub.RemoveTab(Plugin.ModGuid, id);
-            bool gone = !KydlCore.KyHub.HasTab(Plugin.ModGuid, id);
+            bool removed = KydlCore.Features.Hub.Contracts.KyHub.RemoveTab(Plugin.ModGuid, id);
+            bool gone = !KydlCore.Features.Hub.Contracts.KyHub.HasTab(Plugin.ModGuid, id);
             ModLog.Verbose("HubTabs: tab '" + id + "' " + (removed ? "removed" : "was not registered") + (gone ? "" : " - STILL THERE"));
             return gone;
         }

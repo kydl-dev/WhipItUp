@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using Kydl.Ui;
+using KydlCore.Ui;
 using UnityEngine.UIElements;
 
 namespace WhipItUp.Ui
 {
     /// <summary>
-    /// WHAT the mod's menu shows (UI Toolkit, shared Kydl.Ui look): a window with two tabs, Viewer and Details, that share one weapon selection.
+    /// WHAT the mod's menu shows (UI Toolkit, shared KydlCore.Ui look): a window with two tabs, Viewer and Details, that share one weapon selection.
     /// Compiled into the mod AND shown by the Unity preview (Assets/WhipItUp_UI/Preview/MenuPreview.cs: enter Play mode in the Preview scene).
     /// Keep game types (Player, ZNet, ...) OUT of this folder: the Unity project does not have them. The game side (keys, input lock,
     /// game data) is src/Ui/MainMenu.cs + WeaponCatalog.cs in the mod; pass data in through Build's parameters.

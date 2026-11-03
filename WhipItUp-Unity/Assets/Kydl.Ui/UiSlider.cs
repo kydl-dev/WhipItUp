@@ -4,20 +4,17 @@ using System.Globalization;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Kydl.Ui
+namespace KydlCore.Ui
 {
     /// <summary>
     /// SHARED (added 2026-10-26 for ChestDecor). The same thin slider as UiControls.Slider (round handle, typed number box), but as an object
     /// the menu can change later: SetValueWithoutNotify, SetRange (min / max move with the selection), Enabled, and optional clickable MARKS
     /// (dots under the track at fractions 0..1: a click puts the handle there). UiControls.Slider is unchanged for the older menus.
     /// </summary>
-#if KYDL_CORE_PUBLIC
     public sealed class UiSlider
-#else
-    internal sealed class UiSlider
-#endif
     {
-        internal readonly VisualElement Root;
+        /// <summary>The slider element to add to a parent.</summary>
+        public readonly VisualElement Root;
         readonly VisualElement _hit, _fill, _handle, _marks;
         readonly TextField _input;
         readonly string _format;
@@ -25,11 +22,15 @@ namespace Kydl.Ui
         float _min, _max, _value;
         bool _editing, _enabled = true;
 
-        internal float Value { get { return _value; } }
-        internal float Min { get { return _min; } }
-        internal float Max { get { return _max; } }
+        /// <summary>The current value.</summary>
+        public float Value { get { return _value; } }
+        /// <summary>The lowest value.</summary>
+        public float Min { get { return _min; } }
+        /// <summary>The highest value.</summary>
+        public float Max { get { return _max; } }
 
-        internal UiSlider(float min, float max, float value, string format, Action<float> changed, IList<float> marks = null)
+        /// <summary>A slider from `min` to `max` at `value`; `format` is the number format of the typed box; `changed` gets every change made by the user; `marks` = dots under the track at fractions 0..1.</summary>
+        public UiSlider(float min, float max, float value, string format, Action<float> changed, IList<float> marks = null)
         {
             _format = format; _changed = changed;
             _min = Mathf.Min(min, max); _max = Mathf.Max(min, max);
@@ -126,7 +127,7 @@ namespace Kydl.Ui
         }
 
         /// Puts the handle on `v` (clamped) without calling the change callback. Expected outcome: Value equals the clamped v.
-        internal bool SetValueWithoutNotify(float v)
+        public bool SetValueWithoutNotify(float v)
         {
             _value = Mathf.Clamp(v, _min, _max);
             Show();
@@ -134,7 +135,7 @@ namespace Kydl.Ui
         }
 
         /// New range; the value is clamped into it (no callback). Expected outcome: Min <= Value <= Max.
-        internal bool SetRange(float min, float max)
+        public bool SetRange(float min, float max)
         {
             _min = Mathf.Min(min, max); _max = Mathf.Max(min, max);
             _value = Mathf.Clamp(_value, _min, _max);
@@ -143,7 +144,7 @@ namespace Kydl.Ui
         }
 
         /// Greyed out and not draggable while false.
-        internal bool Enabled
+        public bool Enabled
         {
             get { return _enabled; }
             set { _enabled = value; Root.style.opacity = value ? 1f : 0.45f; _input.isReadOnly = !value; }

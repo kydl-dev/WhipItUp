@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
-using Kydl.Ui;
+using KydlCore.Ui;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace WhipItUp.Ui
 {
     /// <summary>
-    /// A row of tabs in the shared Kydl.Ui look (flat buttons, the chosen one gold with a gold underline). The shared kit has no tab control and
+    /// A row of tabs in the shared KydlCore.Ui look (flat buttons, the chosen one gold with a gold underline). The shared kit has no tab control and
     /// D-048 Q5 keeps it local to this mod. Root goes into the window; `changed` gets the index of the tab that was picked.
     /// </summary>
     internal sealed class TabBar
