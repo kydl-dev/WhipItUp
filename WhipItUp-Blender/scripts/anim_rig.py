@@ -12,7 +12,7 @@ import os
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 
-ROOT = globals().get("ROOT", r"E:\Projects\Valheim\WhipItUp\WhipItUp-Blender")
+ROOT = globals().get("ROOT", os.path.join(os.environ.get("KYDL_WORKSPACE", os.getcwd()), "WhipItUp", "WhipItUp-Blender"))
 SOURCE_BLEND = os.path.join(ROOT, "WhipItUp.blend")
 OUT_BLEND = os.path.join(ROOT, "WhipAnim.blend")
 LOG = []

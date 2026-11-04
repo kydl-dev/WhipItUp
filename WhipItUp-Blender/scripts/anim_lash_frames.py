@@ -13,7 +13,7 @@ CLIPS = ("W1_SideFlick", "W2_Backhand", "W3_Overhand", "G_LashGrab")
 # the frame of the game's hit event per clip (PLAN T-013 S2); the crack (D-086: the sound when the lash is fully extended) is the
 # frame of the longest reach in [hit, hit + 5]
 HIT = {"W1_SideFlick": 14, "W2_Backhand": 8, "W3_Overhand": 8, "G_LashGrab": 22}
-OUT = globals().get("OUT", r"E:\Projects\Valheim\WhipItUp\WhipItUp-Mod\src\Weapons\whip_lash_frames.txt")
+OUT = globals().get("OUT", os.path.join(os.environ.get("KYDL_WORKSPACE", os.getcwd()), "WhipItUp", "WhipItUp-Mod", "src", "Weapons", "whip_lash_frames.txt"))
 
 
 def main():

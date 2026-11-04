@@ -3,7 +3,7 @@
   "description": "WhipItUp: 21 weapons, Whips skill, damage ladder, recipes, flat metal cost, equip, craft, KY hub tabs, live feature switching (KydlCore D-084)",
   "requireMods": [
     { "guid": "com.kydldev.WhipItUp", "minVersion": "2.0.0" },
-    { "guid": "com.kydldev.KydlCore", "minVersion": "0.1.0" }
+    { "guid": "com.kydldev.KydlCore", "minVersion": "1.0.0" }
   ],
   "configOverrides": [
     { "guid": "com.kydldev.WhipItUp", "section": "General", "key": "EnableAll", "value": "true" },

@@ -16,7 +16,7 @@ namespace WhipItUp;
 /// </summary>
 [BepInPlugin(ModGuid, ModName, ModVersion)]
 [BepInDependency(Jotunn.Main.ModGuid)]
-[BepInDependency(KydlCore.Bootstrap.Plugin.ModGuid, "0.1.0")]     // the UI (hub, windows, input lock): manifest KydlDev-KydlCore-0.1.0, same version
+[BepInDependency(KydlCore.Bootstrap.Plugin.ModGuid, "1.0.0")]     // the UI (hub, windows, input lock): manifest KydlDev-KydlCore-1.0.0, same version
 // Weapons, recipes and skill levels exist in the shared world: everybody needs the same version (MIGRATION_DECISIONS "Network compatibility").
 [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Patch)]
 public class Plugin : BaseUnityPlugin
