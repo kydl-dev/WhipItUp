@@ -1,30 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- Unit tests: pure logic, no game running. Logic worth testing lives in classes without Unity / Valheim types; link those files here
-       (<Compile Include="..\..\WhipItUp-Mod\src\...\X.cs" Link="Mod\X.cs" />) or reach them in the built DLL through ModAssembly. -->
+       (<Compile Include="..\..\WhipItUp-Mod\src\...\X.cs" Link="Mod\X.cs" Condition="'$(KydlQuality)' != 'true'" />) or reach them in the built DLL through ModAssembly. -->
   <PropertyGroup>
     <AssemblyName>WhipItUp.UnitTests</AssemblyName>
     <RootNamespace>WhipItUp.Tests.Unit</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\src\Core\Functions.cs" Link="Mod\Functions.cs" />
-    <Compile Include="..\..\src\Core\Ladder.cs" Link="Mod\Ladder.cs" />
-    <Compile Include="..\..\src\Core\WeaponNames.cs" Link="Mod\WeaponNames.cs" />
-    <Compile Include="..\..\src\Features\Whip\Domain\WhipLashFrames.cs" Link="Mod\WhipLashFrames.cs" />
-    <Compile Include="..\..\src\Features\Whip\Domain\HitStopMath.cs" Link="Mod\HitStopMath.cs" />
-    <Compile Include="..\..\src\Testing\WhipAnimChecks.cs" Link="Mod\WhipAnimChecks.cs" />
+    <Compile Include="..\..\src\Core\Functions.cs" Link="Mod\Functions.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\src\Core\Ladder.cs" Link="Mod\Ladder.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\src\Core\WeaponNames.cs" Link="Mod\WeaponNames.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\src\Features\Whip\Domain\WhipLashFrames.cs" Link="Mod\WhipLashFrames.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\src\Features\Whip\Domain\HitStopMath.cs" Link="Mod\HitStopMath.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\src\Testing\WhipAnimChecks.cs" Link="Mod\WhipAnimChecks.cs" Condition="'$(KydlQuality)' != 'true'" />
     <!-- the menu's pure logic: no Unity / Valheim types (the Runtime folder of the Unity project is also compiled into the mod) -->
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponInfo.cs" Link="Mod\WeaponInfo.cs" />
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponSelection.cs" Link="Mod\WeaponSelection.cs" />
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\DetailRow.cs" Link="Mod\DetailRow.cs" />
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\DetailGroup.cs" Link="Mod\DetailGroup.cs" />
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponStats.cs" Link="Mod\WeaponStats.cs" />
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponDetailsBuilder.cs" Link="Mod\WeaponDetailsBuilder.cs" />
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\UiText.cs" Link="Mod\UiText.cs" />
-    <Compile Include="..\..\src\Presentation\Hub\ViewModels\WeaponCatalog.cs" Link="Mod\WeaponCatalog.cs" />
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerSettings.cs" Link="Mod\ViewerSettings.cs" />
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerMath.cs" Link="Mod\ViewerMath.cs" />
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerOrbit.cs" Link="Mod\ViewerOrbit.cs" />
-    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerPose.cs" Link="Mod\ViewerPose.cs" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponInfo.cs" Link="Mod\WeaponInfo.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponSelection.cs" Link="Mod\WeaponSelection.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\DetailRow.cs" Link="Mod\DetailRow.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\DetailGroup.cs" Link="Mod\DetailGroup.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponStats.cs" Link="Mod\WeaponStats.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\WeaponDetailsBuilder.cs" Link="Mod\WeaponDetailsBuilder.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\UiText.cs" Link="Mod\UiText.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\src\Presentation\Hub\ViewModels\WeaponCatalog.cs" Link="Mod\WeaponCatalog.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerSettings.cs" Link="Mod\ViewerSettings.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerMath.cs" Link="Mod\ViewerMath.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerOrbit.cs" Link="Mod\ViewerOrbit.cs" Condition="'$(KydlQuality)' != 'true'" />
+    <Compile Include="..\..\..\WhipItUp-Unity\Assets\WhipItUp_UI\Runtime\ViewerPose.cs" Link="Mod\ViewerPose.cs" Condition="'$(KydlQuality)' != 'true'" />
   </ItemGroup>
 </Project>

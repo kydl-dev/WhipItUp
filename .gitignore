@@ -118,3 +118,7 @@ CLAUDE.md
 
 # logs
 *.log
+
+# test-quality output (coverage, Stryker): rebuilt by _agent/tools/test-quality.ps1
+/*-Mod/tests/_quality/
+/*-Mod/release/

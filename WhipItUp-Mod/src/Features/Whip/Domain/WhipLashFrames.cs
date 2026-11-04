@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 
@@ -54,7 +54,7 @@ internal sealed class WhipLashFrames
             {
                 close();
                 var p = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                int frames, nodes;
+                int frames = 0, nodes = 0;   // assigned up front: chained out-variables break Stryker mutants (Safe Mode)
                 if (p.Length != 4 || !int.TryParse(p[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out frames) || !int.TryParse(p[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out nodes) || frames < 1 || nodes < 2)
                 { skipped++; if (log != null) log("WhipLashFrames: line " + lineNo + " is not 'clip <name> <frames> <nodes>': " + line); continue; }
                 cur = new Clip { Name = p[1], Frames = frames, Nodes = nodes };
@@ -62,7 +62,7 @@ internal sealed class WhipLashFrames
             }
             if (line.StartsWith("crack ", StringComparison.Ordinal) && cur != null)
             {
-                int crack;
+                int crack = 0;
                 if (int.TryParse(line.Substring(6).Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out crack) && crack >= 0 && crack < cur.Frames) cur.Crack = crack;
                 else { skipped++; if (log != null) log("WhipLashFrames: line " + lineNo + " of " + cur.Name + " is not 'crack <frame 0.." + (cur.Frames - 1) + ">': " + line); }
                 continue;
@@ -83,7 +83,7 @@ internal sealed class WhipLashFrames
 
     internal Clip Get(string name)
     {
-        Clip c;
+        Clip c = null;
         return name != null && _clips.TryGetValue(name, out c) ? c : null;
     }
 
