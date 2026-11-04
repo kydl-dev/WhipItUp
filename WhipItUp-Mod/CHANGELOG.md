@@ -1,7 +1,7 @@
 # Changelog
 
 ## 2.0.0
-- Ported to the KydlDev layout (KydlCore feature switches, new source layout, TestLab suites). No gameplay change. Not tested in game yet.
+- Ported to the KydlDev layout (KydlCore feature switches, new source layout, TestLab suites). No gameplay change. Checked in game on 2026-11-04 (clean start and quit with all mods loaded, no errors from this mod).
 - Network check is now `EveryoneMustHaveMod` with exact version match (Patch level; it was Minor).
 - Breaking: WhipItUp now needs the KydlCore mod (hard dependency). Install KydlCore as well.
 - The menu is now tabs (Viewer, Details, Settings) in the KY hub window of KydlCore (F6); the own menu window and the `[General] MenuKey` setting are gone.
