@@ -163,7 +163,6 @@ def build(out_dir):
         h = np.where(st, 0.62, np.where(np.abs(de - 0.0035) < 0.0012, h - 0.12, h))
         sm = np.where(mg | vg | bg, 0.22, 0.38 + 0.06 * grain)
         H[y0:y1, x0:x1] = h
-        label[y0:y1, x0:x1] = 1
         shade[y0:y1, x0:x1] = sh
         stitch[y0:y1, x0:x1] = st
         tooled[y0:y1, x0:x1] = bg | mg | vg | mf | vf

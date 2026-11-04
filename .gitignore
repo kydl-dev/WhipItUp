@@ -111,3 +111,7 @@ CLAUDE.md
 /model.png
 /model-nobg.png
 *.dll
+
+# SonarQube scanner work files (H30/H31)
+.sonarqube/
+**/tests/_quality/sonar-coverage/
