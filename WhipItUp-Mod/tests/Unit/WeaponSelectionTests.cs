@@ -19,9 +19,12 @@ public class WeaponSelectionTests
     public void Starts_OnTheFirstWeapon()
     {
         var s = new WeaponSelection(Full());
-        Assert.That(s.Family, Is.EqualTo("Paddle"));
-        Assert.That(s.Rank, Is.EqualTo(1));
-        Assert.That(s.Current.Name, Is.EqualTo("Paddle 1"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(s.Family, Is.EqualTo("Paddle"));
+            Assert.That(s.Rank, Is.EqualTo(1));
+            Assert.That(s.Current.Name, Is.EqualTo("Paddle 1"));
+        }
     }
 
     [Test]
@@ -30,9 +33,12 @@ public class WeaponSelectionTests
         var s = new WeaponSelection(Full());
         int fired = 0;
         s.Changed += () => fired++;
-        Assert.That(s.Set("Flogger", 4), Is.True);
-        Assert.That(fired, Is.EqualTo(1));
-        Assert.That(s.Current.Name, Is.EqualTo("Flogger 4"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(s.Set("Flogger", 4), Is.True);
+            Assert.That(fired, Is.EqualTo(1));
+            Assert.That(s.Current.Name, Is.EqualTo("Flogger 4"));
+        }
     }
 
     [Test]
@@ -42,8 +48,11 @@ public class WeaponSelectionTests
         s.Set("Whip", 3);
         int fired = 0;
         s.Changed += () => fired++;
-        Assert.That(s.Set("Whip", 3), Is.True, "already selected = the selection is that weapon");
-        Assert.That(fired, Is.EqualTo(0));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(s.Set("Whip", 3), Is.True, "already selected = the selection is that weapon");
+            Assert.That(fired, Is.EqualTo(0));
+        }
     }
 
     [Test]
@@ -52,11 +61,14 @@ public class WeaponSelectionTests
         var s = new WeaponSelection(Full());
         int fired = 0;
         s.Changed += () => fired++;
-        Assert.That(s.Set("Spatula", 1), Is.False);
-        Assert.That(s.Set("Paddle", 8), Is.False);
-        Assert.That(s.Set("Paddle", 0), Is.False);
-        Assert.That(fired, Is.EqualTo(0));
-        Assert.That(s.Family + s.Rank, Is.EqualTo("Paddle1"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(s.Set("Spatula", 1), Is.False);
+            Assert.That(s.Set("Paddle", 8), Is.False);
+            Assert.That(s.Set("Paddle", 0), Is.False);
+            Assert.That(fired, Is.EqualTo(0));
+            Assert.That(s.Family + s.Rank, Is.EqualTo("Paddle1"));
+        }
     }
 
     [Test]
@@ -64,9 +76,12 @@ public class WeaponSelectionTests
     {
         var s = new WeaponSelection(Full());
         s.SetRank(5);
-        Assert.That(s.SetFamily("Whip"), Is.True);
-        Assert.That(s.Family, Is.EqualTo("Whip"));
-        Assert.That(s.Rank, Is.EqualTo(5));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(s.SetFamily("Whip"), Is.True);
+            Assert.That(s.Family, Is.EqualTo("Whip"));
+            Assert.That(s.Rank, Is.EqualTo(5));
+        }
     }
 
     [Test]
@@ -76,8 +91,11 @@ public class WeaponSelectionTests
         list.RemoveAll(w => w.Family == "Whip" && w.Rank > 2);
         var s = new WeaponSelection(list);
         s.SetRank(6);
-        Assert.That(s.SetFamily("Whip"), Is.True);
-        Assert.That(s.Rank, Is.EqualTo(1));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(s.SetFamily("Whip"), Is.True);
+            Assert.That(s.Rank, Is.EqualTo(1));
+        }
     }
 
     [Test]
@@ -86,8 +104,11 @@ public class WeaponSelectionTests
         var s = new WeaponSelection(Full());
         int fired = 0;
         s.Changed += () => fired++;
-        Assert.That(s.SetFamily("Spatula"), Is.False);
-        Assert.That(fired, Is.EqualTo(0));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(s.SetFamily("Spatula"), Is.False);
+            Assert.That(fired, Is.EqualTo(0));
+        }
     }
 
     [Test]
@@ -104,10 +125,13 @@ public class WeaponSelectionTests
     {
         foreach (var s in new[] { new WeaponSelection(null), new WeaponSelection(new List<WeaponInfo>()) })
         {
-            Assert.That(s.Current, Is.Null);
-            Assert.That(s.Set("Paddle", 1), Is.True, "the start values are Paddle V1");
-            Assert.That(s.Set("Whip", 2), Is.False);
-            Assert.That(s.InFamily("Paddle"), Is.Empty);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(s.Current, Is.Null);
+                Assert.That(s.Set("Paddle", 1), Is.True, "the start values are Paddle V1");
+                Assert.That(s.Set("Whip", 2), Is.False);
+                Assert.That(s.InFamily("Paddle"), Is.Empty);
+            }
         }
     }
 

@@ -21,10 +21,13 @@ public class WeaponCatalogTests
     {
         var list = WeaponCatalog.Build(Text);
         Assert.That(list.Count, Is.EqualTo(WeaponSelection.Families.Length * Ladder.Ranks));
-        Assert.That(list.Select(w => w.Family + w.Rank).Distinct().Count(), Is.EqualTo(list.Count), "no weapon twice");
-        Assert.That(list[0].Family + list[0].Rank, Is.EqualTo("Paddle1"));
-        Assert.That(list[Ladder.Ranks].Family + list[Ladder.Ranks].Rank, Is.EqualTo("Flogger1"));
-        Assert.That(list.Last().Family + list.Last().Rank, Is.EqualTo("Whip" + Ladder.Ranks));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(list.Select(w => w.Family + w.Rank).Distinct().Count(), Is.EqualTo(list.Count), "no weapon twice");
+            Assert.That(list[0].Family + list[0].Rank, Is.EqualTo("Paddle1"));
+            Assert.That(list[Ladder.Ranks].Family + list[Ladder.Ranks].Rank, Is.EqualTo("Flogger1"));
+            Assert.That(list.Last().Family + list.Last().Rank, Is.EqualTo("Whip" + Ladder.Ranks));
+        }
     }
 
     [Test]
@@ -32,8 +35,11 @@ public class WeaponCatalogTests
     {
         foreach (var w in WeaponCatalog.Build(Text))
         {
-            Assert.That(w.Name, Is.EqualTo(WeaponNames.En[WeaponNames.Key(w.Family, w.Rank)]), w.ToString());
-            Assert.That(w.Description, Is.EqualTo(WeaponNames.Desc[WeaponNames.DescKey(w.Family, w.Rank)]), w.ToString());
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(w.Name, Is.EqualTo(WeaponNames.En[WeaponNames.Key(w.Family, w.Rank)]), w.ToString());
+                Assert.That(w.Description, Is.EqualTo(WeaponNames.Desc[WeaponNames.DescKey(w.Family, w.Rank)]), w.ToString());
+            }
         }
     }
 
@@ -75,8 +81,11 @@ public class WeaponCatalogTests
     {
         var log = new List<string>();
         var list = WeaponCatalog.Build(Text, log.Add, Stats);
-        Assert.That(list.All(w => w.Groups.Count == 5), Is.True, string.Join(", ", list.Where(w => w.Groups.Count != 5).Select(w => w.ToString()).ToArray()));
-        Assert.That(log.Any(l => l.Contains(list.Count + " with details")), Is.True, string.Join(" | ", log.ToArray()));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(list.All(w => w.Groups.Count == 5), Is.True, string.Join(", ", list.Where(w => w.Groups.Count != 5).Select(w => w.ToString()).ToArray()));
+            Assert.That(log.Any(l => l.Contains(list.Count + " with details")), Is.True, string.Join(" | ", log.ToArray()));
+        }
     }
 
     [Test]
@@ -91,10 +100,13 @@ public class WeaponCatalogTests
         var log = new List<string>();
         var list = WeaponCatalog.Build(Text, log.Add, (f, r) => f == "Whip" && r == 3 ? null : Stats(f, r));
         var whip3 = list.Single(w => w.Family == "Whip" && w.Rank == 3);
-        Assert.That(whip3.Groups, Is.Empty);
-        Assert.That(whip3.Name, Is.EqualTo(WeaponNames.En["whipitup_whip_v3"]));
-        Assert.That(whip3.Description, Is.EqualTo(WeaponNames.Desc["whipitup_whip_v3_desc"]));
-        Assert.That(list.Count(w => w.Groups.Count == 5), Is.EqualTo(list.Count - 1));
-        Assert.That(log.Any(l => l.Contains("no stats for") && l.Contains("Whip V3")), Is.True, string.Join(" | ", log.ToArray()));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(whip3.Groups, Is.Empty);
+            Assert.That(whip3.Name, Is.EqualTo(WeaponNames.En["whipitup_whip_v3"]));
+            Assert.That(whip3.Description, Is.EqualTo(WeaponNames.Desc["whipitup_whip_v3_desc"]));
+            Assert.That(list.Count(w => w.Groups.Count == 5), Is.EqualTo(list.Count - 1));
+            Assert.That(log.Any(l => l.Contains("no stats for") && l.Contains("Whip V3")), Is.True, string.Join(" | ", log.ToArray()));
+        }
     }
 }

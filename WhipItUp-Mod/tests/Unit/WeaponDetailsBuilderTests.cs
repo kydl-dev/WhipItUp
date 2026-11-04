@@ -54,16 +54,22 @@ public class WeaponDetailsBuilderTests
     {
         var info = new WeaponInfo("Paddle", 1, "N", "D");
         bool ok = WeaponDetailsBuilder.Fill(info, PaddleStats(1), Text);
-        Assert.That(ok, Is.True);
-        Assert.That(info.Groups.Select(g => g.Title).ToArray(), Is.EqualTo(new[] { "General", "Attack 1", "Defence", "Durability", "Crafting" }));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(ok, Is.True);
+            Assert.That(info.Groups.Select(g => g.Title).ToArray(), Is.EqualTo(new[] { "General", "Attack 1", "Defence", "Durability", "Crafting" }));
+        }
     }
 
     [Test]
     public void AWeaponWithAttack2_HasSixGroups_AndAnEffectLinePerFamily()
     {
         var paddle = Filled(PaddleStats(3, true));
-        Assert.That(paddle.Groups.Select(g => g.Title).ToArray(), Is.EqualTo(new[] { "General", "Attack 1", "Attack 2", "Defence", "Durability", "Crafting" }));
-        Assert.That(Row(paddle, "Attack 2", "Effect").Value, Is.EqualTo("Back-handed swing"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(paddle.Groups.Select(g => g.Title).ToArray(), Is.EqualTo(new[] { "General", "Attack 1", "Attack 2", "Defence", "Durability", "Crafting" }));
+            Assert.That(Row(paddle, "Attack 2", "Effect").Value, Is.EqualTo("Back-handed swing"));
+        }
 
         var whipStats = PaddleStats(3, true);
         whipStats.Family = "Whip";
@@ -74,16 +80,22 @@ public class WeaponDetailsBuilderTests
     public void Damage_ShowsQuality1BesideMaxQuality()
     {
         var blunt = Row(Filled(PaddleStats(1)), "Attack 1", "Blunt");
-        Assert.That(blunt.Value, Is.EqualTo("30"), "crop blunt 20 + one bleed tick 10");
-        Assert.That(blunt.MaxValue, Is.EqualTo("48"), "30 + 3 upgrade levels x 6");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(blunt.Value, Is.EqualTo("30"), "crop blunt 20 + one bleed tick 10");
+            Assert.That(blunt.MaxValue, Is.EqualTo("48"), "30 + 3 upgrade levels x 6");
+        }
     }
 
     [Test]
     public void Attack2_DamageIsItemDamageTimesItsMultiplier()
     {
         var blunt = Row(Filled(PaddleStats(1, true)), "Attack 2", "Blunt");
-        Assert.That(blunt.Value, Is.EqualTo("75"), "30 x 2.5");
-        Assert.That(blunt.MaxValue, Is.EqualTo("120"), "48 x 2.5");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(blunt.Value, Is.EqualTo("75"), "30 x 2.5");
+            Assert.That(blunt.MaxValue, Is.EqualTo("120"), "48 x 2.5");
+        }
     }
 
     [Test]
@@ -104,11 +116,14 @@ public class WeaponDetailsBuilderTests
         {
             int i = rank - 1;
             var info = Filled(PaddleStats(rank));
-            Assert.That(Row(info, "Attack 1", "Blunt").Value, Is.EqualTo(Ladder.PaddleBlunt(rank).ToString("0.#", CultureInfo.InvariantCulture)), "blunt, rank " + rank);
-            Assert.That(Row(info, "Attack 1", "Knockback").Value, Is.EqualTo(Ladder.Knockback[i].ToString("0.#", CultureInfo.InvariantCulture)), "knockback, rank " + rank);
-            Assert.That(Row(info, "Attack 1", "Stamina").Value, Is.EqualTo(Ladder.Stamina[i].ToString("0.#", CultureInfo.InvariantCulture)), "stamina, rank " + rank);
-            Assert.That(Row(info, "Defence", "Block power").Value, Is.EqualTo(Ladder.BlockArmor[i].ToString("0.#", CultureInfo.InvariantCulture)), "block, rank " + rank);
-            Assert.That(Row(info, "Durability", "Durability").Value, Is.EqualTo(Ladder.Durability(rank).ToString("0.#", CultureInfo.InvariantCulture)), "durability, rank " + rank);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(Row(info, "Attack 1", "Blunt").Value, Is.EqualTo(Ladder.PaddleBlunt(rank).ToString("0.#", CultureInfo.InvariantCulture)), "blunt, rank " + rank);
+                Assert.That(Row(info, "Attack 1", "Knockback").Value, Is.EqualTo(Ladder.Knockback[i].ToString("0.#", CultureInfo.InvariantCulture)), "knockback, rank " + rank);
+                Assert.That(Row(info, "Attack 1", "Stamina").Value, Is.EqualTo(Ladder.Stamina[i].ToString("0.#", CultureInfo.InvariantCulture)), "stamina, rank " + rank);
+                Assert.That(Row(info, "Defence", "Block power").Value, Is.EqualTo(Ladder.BlockArmor[i].ToString("0.#", CultureInfo.InvariantCulture)), "block, rank " + rank);
+                Assert.That(Row(info, "Durability", "Durability").Value, Is.EqualTo(Ladder.Durability(rank).ToString("0.#", CultureInfo.InvariantCulture)), "durability, rank " + rank);
+            }
         }
     }
 
@@ -117,20 +132,29 @@ public class WeaponDetailsBuilderTests
     {
         var info = Filled(PaddleStats(1));
         var dur = Row(info, "Durability", "Durability");
-        Assert.That(dur.Value, Is.EqualTo("200"));
-        Assert.That(dur.MaxValue, Is.EqualTo("320"), "200 + 3 x 40");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(dur.Value, Is.EqualTo("200"));
+            Assert.That(dur.MaxValue, Is.EqualTo("320"), "200 + 3 x 40");
+        }
         var maxQ = Row(info, "Durability", "Max quality");
-        Assert.That(maxQ.Value, Is.EqualTo("4"));
-        Assert.That(maxQ.HasMax, Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(maxQ.Value, Is.EqualTo("4"));
+            Assert.That(maxQ.HasMax, Is.False);
+        }
     }
 
     [Test]
     public void AValueThatDoesNotGrowWithQuality_HasNoMaxColumnText()
     {
         var info = Filled(PaddleStats(1));
-        Assert.That(Row(info, "Defence", "Block power").HasMax, Is.False, "no block power per level");
-        Assert.That(Row(info, "Attack 1", "Knockback").HasMax, Is.False);
-        Assert.That(Row(info, "Defence", "Parry bonus").Value, Is.EqualTo("x2"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(Row(info, "Defence", "Block power").HasMax, Is.False, "no block power per level");
+            Assert.That(Row(info, "Attack 1", "Knockback").HasMax, Is.False);
+            Assert.That(Row(info, "Defence", "Parry bonus").Value, Is.EqualTo("x2"));
+        }
     }
 
     [Test]
@@ -142,10 +166,13 @@ public class WeaponDetailsBuilderTests
         s.DeflectionForce = 10f;
         s.DeflectionForcePerLevel = 1.5f;
         var info = Filled(s);
-        Assert.That(Row(info, "Defence", "Block power").Value, Is.EqualTo("20"));
-        Assert.That(Row(info, "Defence", "Block power").MaxValue, Is.EqualTo("26"), "20 + 3 x 2");
-        Assert.That(Row(info, "Defence", "Deflection force").Value, Is.EqualTo("10"));
-        Assert.That(Row(info, "Defence", "Deflection force").MaxValue, Is.EqualTo("14.5"), "10 + 3 x 1.5");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(Row(info, "Defence", "Block power").Value, Is.EqualTo("20"));
+            Assert.That(Row(info, "Defence", "Block power").MaxValue, Is.EqualTo("26"), "20 + 3 x 2");
+            Assert.That(Row(info, "Defence", "Deflection force").Value, Is.EqualTo("10"));
+            Assert.That(Row(info, "Defence", "Deflection force").MaxValue, Is.EqualTo("14.5"), "10 + 3 x 1.5");
+        }
     }
 
     [Test]
@@ -172,10 +199,13 @@ public class WeaponDetailsBuilderTests
     public void TheRecipe_ShowsStationAndEveryIngredientWithItsUpgradeCost()
     {
         var info = Filled(PaddleStats(1));
-        Assert.That(Row(info, "Crafting", "Station").Value, Is.EqualTo("Workbench, level 1"));
-        Assert.That(Row(info, "Crafting", "LeatherScraps").Value, Is.EqualTo("10 (+5 per upgrade)"));
-        Assert.That(Row(info, "Crafting", "Resin").Value, Is.EqualTo("2 (+1 per upgrade)"));
-        Assert.That(info.Groups.Last().Rows.Count, Is.EqualTo(1 + Ladder.Ingredients[0].Length));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(Row(info, "Crafting", "Station").Value, Is.EqualTo("Workbench, level 1"));
+            Assert.That(Row(info, "Crafting", "LeatherScraps").Value, Is.EqualTo("10 (+5 per upgrade)"));
+            Assert.That(Row(info, "Crafting", "Resin").Value, Is.EqualTo("2 (+1 per upgrade)"));
+            Assert.That(info.Groups.Last().Rows.Count, Is.EqualTo(1 + Ladder.Ingredients[0].Length));
+        }
     }
 
     [Test]
@@ -191,9 +221,12 @@ public class WeaponDetailsBuilderTests
     public void TheColumnHeaders_NameQuality1AndTheMaxQuality()
     {
         var info = Filled(PaddleStats(1));
-        Assert.That(info.QualityHeader, Is.EqualTo("Quality 1"));
-        Assert.That(info.MaxQualityHeader, Is.EqualTo("Quality 4"));
-        Assert.That(info.HasMaxColumn, Is.True);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(info.QualityHeader, Is.EqualTo("Quality 1"));
+            Assert.That(info.MaxQualityHeader, Is.EqualTo("Quality 4"));
+            Assert.That(info.HasMaxColumn, Is.True);
+        }
     }
 
     [Test]
@@ -202,8 +235,11 @@ public class WeaponDetailsBuilderTests
         var s = PaddleStats(1);
         s.MaxQuality = 1;
         var info = Filled(s);
-        Assert.That(info.MaxQualityHeader, Is.EqualTo(""));
-        Assert.That(info.HasMaxColumn, Is.False);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(info.MaxQualityHeader, Is.EqualTo(""));
+            Assert.That(info.HasMaxColumn, Is.False);
+        }
     }
 
     [Test]
@@ -212,9 +248,12 @@ public class WeaponDetailsBuilderTests
         var log = new List<string>();
         var info = new WeaponInfo("Whip", 2, "N", "D");
         bool ok = WeaponDetailsBuilder.Fill(info, null, Text, log.Add);
-        Assert.That(ok, Is.True, "no stats = no groups is the expected state");
-        Assert.That(info.Groups, Is.Empty);
-        Assert.That(log.Any(l => l.Contains("no stats")), Is.True, string.Join(" | ", log.ToArray()));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(ok, Is.True, "no stats = no groups is the expected state");
+            Assert.That(info.Groups, Is.Empty);
+            Assert.That(log.Any(l => l.Contains("no stats")), Is.True, string.Join(" | ", log.ToArray()));
+        }
     }
 
     [Test]

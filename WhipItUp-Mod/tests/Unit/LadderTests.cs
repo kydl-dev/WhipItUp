@@ -12,19 +12,25 @@ public class LadderTests
     {
         Assert.That(Ladder.Ranks, Is.EqualTo(7));
         foreach (var table in new[] { Ladder.Stagger, Ladder.Knockback, Ladder.Stamina, Ladder.BlockArmor, Ladder.BlockForce })
-            Assert.That(table.Length, Is.EqualTo(Ladder.Ranks));
-        Assert.That(Ladder.Station.Length, Is.EqualTo(Ladder.Ranks));
-        Assert.That(Ladder.StationLevel.Length, Is.EqualTo(Ladder.Ranks));
-        Assert.That(Ladder.Ingredients.Length, Is.EqualTo(Ladder.Ranks));
-        Assert.That(Ladder.CropTexture.Length, Is.EqualTo(Ladder.Ranks));
+            Assert.That(table, Has.Length.EqualTo(Ladder.Ranks));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(Ladder.Station, Has.Length.EqualTo(Ladder.Ranks));
+            Assert.That(Ladder.StationLevel, Has.Length.EqualTo(Ladder.Ranks));
+            Assert.That(Ladder.Ingredients, Has.Length.EqualTo(Ladder.Ranks));
+            Assert.That(Ladder.CropTexture, Has.Length.EqualTo(Ladder.Ranks));
+        }
     }
 
     [Test]
     public void RankFive_UsesCropV6Texture_UserExample()
     {
-        // the user's rule: crop V6 is the 5th crop of the ladder -> our V5
-        Assert.That(Ladder.CropTexture[Ladder.Index(5)], Is.EqualTo("crop_Albedo_V6"));
-        Assert.That(Ladder.CropTexture, Is.EqualTo(new[] { "crop_Albedo", "crop_Albedo_V1", "crop_Albedo_V3", "crop_Albedo_V4", "crop_Albedo_V6", "crop_Albedo_V2", "crop_Albedo_V5" }));
+        using (Assert.EnterMultipleScope())
+        {
+            // the user's rule: crop V6 is the 5th crop of the ladder -> our V5
+            Assert.That(Ladder.CropTexture[Ladder.Index(5)], Is.EqualTo("crop_Albedo_V6"));
+            Assert.That(Ladder.CropTexture, Is.EqualTo(new[] { "crop_Albedo", "crop_Albedo_V1", "crop_Albedo_V3", "crop_Albedo_V4", "crop_Albedo_V6", "crop_Albedo_V2", "crop_Albedo_V5" }));
+        }
     }
 
     [TestCase(1, 30f)]
@@ -57,12 +63,15 @@ public class LadderTests
     [Test]
     public void Durability_And_Upgrades_MatchTheCrop()
     {
-        Assert.That(Ladder.Durability(1), Is.EqualTo(200f));
-        Assert.That(Ladder.Durability(7), Is.EqualTo(500f));
-        Assert.That(Ladder.BluntPerLevel, Is.EqualTo(6f).Within(0.001f));
-        Assert.That(Ladder.DurabilityPerLevel, Is.EqualTo(40f).Within(0.001f));
-        Assert.That(Ladder.Ingredients[0][0].AmountPerLevel, Is.EqualTo(5));
-        Assert.That(Ladder.Ingredients[0][1].AmountPerLevel, Is.EqualTo(1));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(Ladder.Durability(1), Is.EqualTo(200f));
+            Assert.That(Ladder.Durability(7), Is.EqualTo(500f));
+            Assert.That(Ladder.BluntPerLevel, Is.EqualTo(6f).Within(0.001f));
+            Assert.That(Ladder.DurabilityPerLevel, Is.EqualTo(40f).Within(0.001f));
+            Assert.That(Ladder.Ingredients[0][0].AmountPerLevel, Is.EqualTo(5));
+            Assert.That(Ladder.Ingredients[0][1].AmountPerLevel, Is.EqualTo(1));
+        }
     }
 
     [Test]
@@ -72,11 +81,14 @@ public class LadderTests
         for (int i = 0; i < Ladder.Ranks; i++)
         {
             var metal = Ladder.Ingredients[i].Last();
-            Assert.That(metal.Item, Is.EqualTo(expected[i]), "rank " + (i + 1));
-            Assert.That(metal.Amount, Is.EqualTo(6));
-            Assert.That(metal.AmountPerLevel, Is.EqualTo(2));
-            Assert.That(metal.FlatUpgrade, Is.True, "D-105: a flat 2 for every upgrade");
-            Assert.That(Ladder.Ingredients[i].Length, Is.EqualTo(4), "the three crop ingredients stay (D-062: added, nothing removed)");
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(metal.Item, Is.EqualTo(expected[i]), "rank " + (i + 1));
+                Assert.That(metal.Amount, Is.EqualTo(6));
+                Assert.That(metal.AmountPerLevel, Is.EqualTo(2));
+                Assert.That(metal.FlatUpgrade, Is.True, "D-105: a flat 2 for every upgrade");
+                Assert.That(Ladder.Ingredients[i], Has.Length.EqualTo(4), "the three crop ingredients stay (D-062: added, nothing removed)");
+            }
         }
     }
 
@@ -112,9 +124,12 @@ public class LadderTests
     public void Resolve_PicksTheFirstCandidateTheGameHas()
     {
         var flametal = Ladder.Ingredients[5].Last();
-        Assert.That(Ladder.Resolve(flametal, id => id == "Flametal_New" || id == "FlametalNew"), Is.EqualTo("Flametal_New"));
-        Assert.That(Ladder.Resolve(flametal, id => id == "FlametalNew"), Is.EqualTo("FlametalNew"));
-        Assert.That(Ladder.Resolve(flametal, id => false), Is.EqualTo("Flametal_New"), "nothing found: the ingredient's own id (the caller logs the error)");
-        Assert.That(Ladder.Resolve(Ladder.Ingredients[0][0], id => false), Is.EqualTo("LeatherScraps"), "no candidates: the ingredient's own id");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(Ladder.Resolve(flametal, id => id == "Flametal_New" || id == "FlametalNew"), Is.EqualTo("Flametal_New"));
+            Assert.That(Ladder.Resolve(flametal, id => id == "FlametalNew"), Is.EqualTo("FlametalNew"));
+            Assert.That(Ladder.Resolve(flametal, id => false), Is.EqualTo("Flametal_New"), "nothing found: the ingredient's own id (the caller logs the error)");
+            Assert.That(Ladder.Resolve(Ladder.Ingredients[0][0], id => false), Is.EqualTo("LeatherScraps"), "no candidates: the ingredient's own id");
+        }
     }
 }

@@ -1,6 +1,6 @@
-﻿# SonarQube WhipItUp - OK
+﻿# SonarQube WhipItUp - OK (Medium/High impact issues: 0; Sonar server gate: ERROR)
 
-Run 2026-11-04 00:55:39, http://localhost:9000/dashboard?id=WhipItUp
+Run 2026-11-04 12:28:41, http://localhost:9000/dashboard?id=WhipItUp
 
 | Measure | Value |
 |---|---|
