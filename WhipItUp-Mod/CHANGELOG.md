@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2.0.0
+- Tested in game with the full TestLab suite (10 tests): 3 green runs in a row on 2026-11-05, plus the ecosystem run with all 12 KydlDev mods loaded together.
 - Ported to the KydlDev layout (KydlCore feature switches, new source layout, TestLab suites). No gameplay change. Checked in game on 2026-11-04 (clean start and quit with all mods loaded, no errors from this mod).
 - Network check is now `EveryoneMustHaveMod` with exact version match (Patch level; it was Minor).
 - Breaking: WhipItUp now needs the KydlCore mod (hard dependency). Install KydlCore as well.
